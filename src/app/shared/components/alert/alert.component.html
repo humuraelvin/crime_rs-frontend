@@ -1,0 +1,23 @@
+<div class="rounded-md p-4 border mb-4" [ngClass]="alertClass">
+  <div class="flex">
+    <div class="flex-shrink-0">
+      <span class="material-icons" [ngClass]="iconClass">{{ iconName }}</span>
+    </div>
+    <div class="ml-3">
+      <p class="text-sm font-medium">{{ message }}</p>
+    </div>
+    <div *ngIf="dismissible" class="ml-auto pl-3">
+      <div class="-mx-1.5 -my-1.5">
+        <button
+          type="button"
+          class="inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2"
+          [ngClass]="iconClass"
+          (click)="dismiss()"
+        >
+          <span class="sr-only">Dismiss</span>
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div> 

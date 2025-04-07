@@ -1,0 +1,165 @@
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ greeting }}, {{ username }}</h1>
+        <p class="text-gray-600 mt-1">Welcome to your crime reporting dashboard</p>
+      </div>
+      <div class="mt-4 md:mt-0">
+        <button *ngIf="isCitizen" routerLink="/complaints/new" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md flex items-center">
+          <span class="material-icons mr-2">add</span>
+          Report Crime
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div *ngFor="let stat of stats" class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center {{ stat.color }} text-white">
+              <span class="material-icons">{{ stat.icon }}</span>
+            </div>
+          </div>
+          <div class="ml-5">
+            <p class="text-gray-500 text-sm font-medium">{{ stat.title }}</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ stat.value }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Recent Activity Feed -->
+    <div class="lg:col-span-2 bg-white rounded-lg shadow-sm">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Recent Activity</h2>
+      </div>
+      <div class="divide-y divide-gray-200">
+        <div *ngFor="let activity of recentActivities" class="px-6 py-4 hover:bg-gray-50">
+          <div class="flex items-start">
+            <div class="flex-shrink-0 pt-1">
+              <div [ngClass]="{'bg-blue-100 text-blue-600': activity.type === 'report',
+                              'bg-green-100 text-green-600': activity.type === 'case',
+                              'bg-yellow-100 text-yellow-600': activity.type === 'notification',
+                              'bg-red-100 text-red-600': activity.type === 'alert',
+                              'bg-purple-100 text-purple-600': activity.type === 'user',
+                              'bg-gray-100 text-gray-600': activity.type === 'system'}"
+                  class="w-10 h-10 rounded-full flex items-center justify-center">
+                <span class="material-icons">{{ activity.icon }}</span>
+              </div>
+            </div>
+            <div class="ml-4 flex-1">
+              <div class="flex justify-between items-baseline">
+                <h3 class="text-sm font-medium text-gray-900">{{ activity.title }}</h3>
+                <span class="text-xs text-gray-500">{{ activity.date }}</span>
+              </div>
+              <div class="mt-1 flex items-center">
+                <span [ngClass]="{'bg-blue-100 text-blue-800': activity.status === 'received' || activity.status === 'new',
+                                 'bg-yellow-100 text-yellow-800': activity.status === 'pending' || activity.status === 'assigned' || activity.status === 'action',
+                                 'bg-green-100 text-green-800': activity.status === 'closed' || activity.status === 'approved' || activity.status === 'completed',
+                                 'bg-purple-100 text-purple-800': activity.status === 'updated',
+                                 'bg-red-100 text-red-800': activity.status === 'alert'}"
+                      class="px-2 py-0.5 rounded-full text-xs font-medium">
+                  {{ activity.status }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="recentActivities.length === 0" class="px-6 py-4 text-center text-gray-500">
+        No recent activity to display
+      </div>
+    </div>
+
+    <!-- Quick Actions & Information -->
+    <div class="bg-white rounded-lg shadow-sm">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
+      </div>
+      <div class="p-6 space-y-6">
+        <!-- Admin actions -->
+        <div *ngIf="isAdmin" class="space-y-3">
+          <a routerLink="/admin/users" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-blue-600 mr-3">people</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">Manage Users</h3>
+              <p class="text-xs text-gray-500">Review and approve user registrations</p>
+            </div>
+          </a>
+          <a routerLink="/admin/reports" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-green-600 mr-3">assignment</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">Manage Reports</h3>
+              <p class="text-xs text-gray-500">Review submitted crime reports</p>
+            </div>
+          </a>
+          <a routerLink="/admin/analytics" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-purple-600 mr-3">insights</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">Analytics</h3>
+              <p class="text-xs text-gray-500">View crime statistics and trends</p>
+            </div>
+          </a>
+        </div>
+
+        <!-- Police actions -->
+        <div *ngIf="isPolice" class="space-y-3">
+          <a routerLink="/complaints" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-blue-600 mr-3">folder</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">View Assigned Cases</h3>
+              <p class="text-xs text-gray-500">Access cases assigned to you</p>
+            </div>
+          </a>
+          <a routerLink="/map" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-red-600 mr-3">map</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">Crime Map</h3>
+              <p class="text-xs text-gray-500">View incidents on interactive map</p>
+            </div>
+          </a>
+          <a routerLink="/complaints/search" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-purple-600 mr-3">search</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">Search Reports</h3>
+              <p class="text-xs text-gray-500">Search for specific case reports</p>
+            </div>
+          </a>
+        </div>
+
+        <!-- Citizen actions -->
+        <div *ngIf="isCitizen" class="space-y-3">
+          <a routerLink="/complaints/new" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-blue-600 mr-3">add_circle</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">File New Report</h3>
+              <p class="text-xs text-gray-500">Report a crime or incident</p>
+            </div>
+          </a>
+          <a routerLink="/complaints" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-green-600 mr-3">history</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">My Reports</h3>
+              <p class="text-xs text-gray-500">View your submitted reports</p>
+            </div>
+          </a>
+          <a routerLink="/map" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-150">
+            <span class="material-icons text-red-600 mr-3">place</span>
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">Crime Map</h3>
+              <p class="text-xs text-gray-500">View incidents near your location</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

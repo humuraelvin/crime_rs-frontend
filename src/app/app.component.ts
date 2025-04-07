@@ -1,12 +1,32 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  template: `
+    <div class="app-container">
+      <app-nav></app-nav>
+      <main class="main-content">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  `,
+  styles: [`
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .main-content {
+      flex: 1;
+      background-color: #f9fafb;
+    }
+  `]
 })
-export class AppComponent {
-  title = 'crime-reporting-frontend';
+export class AppComponent implements OnInit {
+  
+  constructor() { }
+
+  ngOnInit(): void {
+    // Initialize any app-wide services or configurations
+  }
 }
