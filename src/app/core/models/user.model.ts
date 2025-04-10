@@ -3,10 +3,19 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
-  role: UserRole;
+  username?: string;
+  phone?: string;
   phoneNumber?: string;
   address?: string;
+  role: UserRole;
+  roles?: string[];
+  emailNotifications: boolean;
+  smsNotifications: boolean;
   mfaEnabled: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  accessToken?: string;
+  refreshToken?: string;
 }
 
 export enum UserRole {

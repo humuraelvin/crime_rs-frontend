@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { UserRole } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -30,8 +31,11 @@ export class RoleGuard implements CanActivate {
       return true; // No specific roles required
     }
 
+    // Convert string roles to UserRole enum values
+    const userRoles = requiredRoles.map(role => UserRole[role as keyof typeof UserRole]);
+
     // Check if the user has any of the required roles
-    if (this.authService.hasAnyRole(requiredRoles)) {
+    if (this.authService.hasAnyRole(userRoles)) {
       return true;
     }
 

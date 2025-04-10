@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { UserRole } from '../../models/user.model';
 
 interface NavItem {
   label: string;
   route: string;
   icon: string;
-  roles?: string[];
+  roles?: UserRole[];
 }
 
 @Component({
@@ -26,8 +27,8 @@ export class NavComponent implements OnInit {
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
     { label: 'Crime Map', route: '/map', icon: 'map' },
     { label: 'Reports', route: '/complaints', icon: 'description' },
-    { label: 'Report Crime', route: '/complaints/new', icon: 'add_circle', roles: ['ROLE_CITIZEN'] },
-    { label: 'Admin Panel', route: '/admin', icon: 'admin_panel_settings', roles: ['ROLE_ADMIN'] }
+    { label: 'Report Crime', route: '/complaints/new', icon: 'add_circle', roles: [UserRole.CITIZEN] },
+    { label: 'Admin Panel', route: '/admin', icon: 'admin_panel_settings', roles: [UserRole.ADMIN] }
   ];
 
   constructor(
@@ -45,7 +46,7 @@ export class NavComponent implements OnInit {
     return this.authService.isLoggedIn;
   }
 
-  hasRole(role: string): boolean {
+  hasRole(role: UserRole): boolean {
     return this.authService.hasRole(role);
   }
 
