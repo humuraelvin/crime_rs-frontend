@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 
 interface NavItem {
@@ -12,7 +13,9 @@ interface NavItem {
 @Component({
   selector: 'app-nav',
   templateUrl: './nav.component.html',
-  styleUrls: ['./nav.component.css']
+  styleUrls: ['./nav.component.css'],
+  standalone: true,
+  imports: [CommonModule, RouterLink, RouterLinkActive]
 })
 export class NavComponent implements OnInit {
   user: any;

@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { NavComponent } from './core/components/nav/nav.component';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet, NavComponent],
   template: `
     <div class="app-container">
       <app-nav></app-nav>

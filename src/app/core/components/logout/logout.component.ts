@@ -2,9 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-logout',
+  standalone: true,
+  imports: [LoadingSpinnerComponent],
   template: `
     <div class="flex justify-center items-center min-h-screen bg-gray-100">
       <div class="text-center">

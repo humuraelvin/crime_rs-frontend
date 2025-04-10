@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
     state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     
     // Check if the user is logged in
-    if (this.authService.isLoggedIn()) {
+    if (this.authService.isLoggedIn) {
       // Check if route has data.roles specified
       if (route.data && route.data['roles']) {
         // Check if user has the required role
