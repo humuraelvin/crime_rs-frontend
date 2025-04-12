@@ -27,7 +27,7 @@ export class NavComponent implements OnInit {
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
     { label: 'Crime Map', route: '/map', icon: 'map' },
     { label: 'Reports', route: '/complaints', icon: 'description' },
-    { label: 'Report Crime', route: '/complaints/new', icon: 'add_circle', roles: [UserRole.CITIZEN] },
+    { label: 'Report Crime', route: '/complaints/create', icon: 'add_circle', roles: [UserRole.CITIZEN] },
     { label: 'Admin Panel', route: '/admin', icon: 'admin_panel_settings', roles: [UserRole.ADMIN] }
   ];
 

@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { UserRole } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-login',
@@ -153,6 +154,8 @@ export class LoginComponent {
   ) {}
 
   onSubmit() {
+    if (this.isLoading) return;
+    
     this.isLoading = true;
     
     this.authService.login(this.loginData).subscribe({
@@ -166,9 +169,9 @@ export class LoginComponent {
           this.toastr.success('Login successful');
           
           // Navigate based on user role
-          if (response.role === 'ADMIN') {
+          if (response.role === UserRole.ADMIN) {
             this.router.navigate(['/admin/dashboard']);
-          } else if (response.role === 'POLICE_OFFICER') {
+          } else if (response.role === UserRole.POLICE_OFFICER) {
             this.router.navigate(['/police/dashboard']);
           } else {
             this.router.navigate(['/dashboard']);
@@ -177,7 +180,16 @@ export class LoginComponent {
       },
       error: (error) => {
         this.isLoading = false;
-        this.toastr.error(error.message || 'Login failed. Please check your credentials and try again.');
+        console.error('Login error:', error);
+        
+        // Handle different types of errors
+        if (error.status === 401) {
+          this.toastr.error('Invalid email or password');
+        } else if (error.status === 403) {
+          this.toastr.error('Account is locked or requires verification');
+        } else {
+          this.toastr.error(error.error?.message || error.message || 'Login failed. Please try again.');
+        }
       }
     });
   }

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { environment } from '@environments/environment';
 import { User, UserRole } from '../models/user.model';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -72,6 +72,48 @@ export class AuthService {
 
   public get isLoggedIn(): boolean {
     return !!this.currentUserValue;
+  }
+
+  public isAuthenticated(): boolean {
+    const user = this.currentUserValue;
+    if (!user || !user.accessToken) {
+      return false;
+    }
+
+    try {
+      const tokenData = this.parseJwt(user.accessToken);
+      if (!tokenData || !tokenData.exp) {
+        return false;
+      }
+
+      const expiryTime = new Date(tokenData.exp * 1000);
+      const now = new Date();
+      
+      // If token is expired or expires in less than 1 minute
+      if (expiryTime.getTime() - now.getTime() < 60000) {
+        // Try to refresh the token
+        this.refreshToken().subscribe({
+          next: () => true,
+          error: () => {
+            this.logout();
+            return false;
+          }
+        });
+      }
+      
+      return true;
+    } catch (e) {
+      console.error('Error parsing token:', e);
+      return false;
+    }
+  }
+
+  public getAuthorizationHeader(): string | null {
+    const user = this.currentUserValue;
+    if (!user || !user.accessToken) {
+      return null;
+    }
+    return `Bearer ${user.accessToken}`;
   }
 
   private getUserFromStorage(): User | null {

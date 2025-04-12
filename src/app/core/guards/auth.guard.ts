@@ -18,15 +18,15 @@ export class AuthGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     
-    // Check if the user is logged in
-    if (this.authService.isLoggedIn) {
+    // Check if the user is logged in and authenticated
+    if (this.authService.isLoggedIn && this.authService.isAuthenticated()) {
       // Check if route has data.roles specified
       if (route.data && route.data['roles']) {
         // Check if user has the required role
         if (this.authService.hasRole(route.data['roles'])) {
           return true;
         } else {
-          // User doesn't have the required role, redirect to dashboard or unauthorized page
+          // User doesn't have the required role, redirect to dashboard
           this.router.navigate(['/dashboard']);
           return false;
         }
@@ -36,8 +36,15 @@ export class AuthGuard implements CanActivate {
       return true;
     }
     
-    // Not logged in, redirect to login page with return url
-    this.toastr.error('You must be logged in to access this page');
+    // Only show toast message if there's no user at all
+    if (!this.authService.currentUserValue) {
+      this.toastr.error('You must be logged in to access this page', '', {
+        timeOut: 3000,
+        closeButton: true
+      });
+    }
+    
+    // Not logged in or invalid token, redirect to login page with return url
     this.router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url }});
     return false;
   }

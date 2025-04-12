@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { HttpClient, HttpParams, HttpEventType } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { environment } from '@environments/environment';
 
 export interface Complaint {
   id: number;
@@ -36,6 +37,34 @@ export interface ComplaintFilter {
   };
 }
 
+export interface ComplaintRequest {
+  fullName: string;
+  contact: string;
+  email: string;
+  incidentDate: string;
+  location: string;
+  type: string;
+  description: string;
+  priority?: string;
+  evidenceFiles?: File[];
+  [key: string]: any; // Add index signature to allow string indexing
+}
+
+export interface ComplaintResponse {
+  id: number;
+  fullName: string;
+  contact: string;
+  email: string;
+  incidentDate: string;
+  location: string;
+  type: string;
+  description: string;
+  status: string;
+  evidenceUrls: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -44,7 +73,7 @@ export class ComplaintService {
 
   constructor(private http: HttpClient) { }
 
-  getComplaints(filters?: ComplaintFilter): Observable<Complaint[]> {
+  getComplaints(filters?: ComplaintFilter): Observable<ComplaintResponse[]> {
     let params = new HttpParams();
     
     if (filters) {
@@ -65,15 +94,138 @@ export class ComplaintService {
       }
     }
 
-    return this.http.get<Complaint[]>(this.apiUrl, { params });
+    return this.http.get<ComplaintResponse[]>(`${environment.apiUrl}/complaints`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching complaints:', error);
+          return throwError(() => new Error(error.error?.message || 'Failed to fetch complaints'));
+        })
+      );
   }
 
-  getComplaintById(id: number): Observable<Complaint> {
-    return this.http.get<Complaint>(`${this.apiUrl}/${id}`);
+  getComplaintById(id: number): Observable<ComplaintResponse> {
+    return this.http.get<ComplaintResponse>(`${environment.apiUrl}/complaints/${id}`)
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching complaint:', error);
+          return throwError(() => new Error(error.error?.message || 'Failed to fetch complaint'));
+        })
+      );
   }
 
-  createComplaint(complaint: Partial<Complaint>): Observable<Complaint> {
-    return this.http.post<Complaint>(this.apiUrl, complaint);
+  createComplaint(complaint: ComplaintRequest): Observable<ComplaintResponse> {
+    // If no files are provided, use the standard JSON endpoint
+    if (!complaint.evidenceFiles || complaint.evidenceFiles.length === 0) {
+      console.log('Creating complaint with data:', complaint);
+      console.log('API URL:', `${environment.apiUrl}/complaints`);
+      
+      return this.http.post<ComplaintResponse>(`${environment.apiUrl}/complaints`, complaint)
+        .pipe(
+          catchError(error => {
+            console.error('Error creating complaint:', error);
+            // More detailed error handling
+            let errorMessage = 'Failed to create complaint';
+            
+            if (error.error) {
+              if (typeof error.error === 'string') {
+                errorMessage = error.error;
+              } else if (error.error.message) {
+                errorMessage = error.error.message;
+              } else if (error.status === 403) {
+                errorMessage = 'You are not authorized to create a complaint. Please log in again.';
+              } else if (error.status === 400) {
+                errorMessage = 'Invalid complaint data. Please check your form and try again.';
+              } else if (error.status === 0) {
+                errorMessage = 'Could not connect to the server. Please check your internet connection.';
+              }
+            }
+            
+            return throwError(() => new Error(errorMessage));
+          })
+        );
+    }
+    
+    // Try a completely different approach for debugging purposes
+    // We'll bypass the FormData and submit as a basic request
+    return this.createComplaintWithoutFormData(complaint);
+  }
+  
+  // Better method for handling form data with evidence
+  private createComplaintWithoutFormData(complaint: ComplaintRequest): Observable<ComplaintResponse> {
+    console.log('Creating complaint with evidence', complaint);
+    
+    const formData = new FormData();
+    
+    // Add all essential fields
+    formData.append('type', complaint.type);
+    formData.append('description', complaint.description);
+    formData.append('location', complaint.location);
+    
+    if (complaint.priority) {
+      formData.append('priority', complaint.priority);
+    }
+    
+    // Add reporter information
+    formData.append('fullName', complaint.fullName || '');
+    formData.append('contact', complaint.contact || '');
+    formData.append('email', complaint.email || '');
+    formData.append('incidentDate', complaint.incidentDate || new Date().toISOString());
+    
+    // Add files with correct key
+    if (complaint.evidenceFiles && complaint.evidenceFiles.length > 0) {
+      complaint.evidenceFiles.forEach((file, index) => {
+        // Try with just 'files' as the key (most Spring Boot implementations expect this)
+        formData.append('files', file);
+      });
+    }
+    
+    // Log what we're sending
+    console.log('Submitting complaint with FormData:');
+    formData.forEach((value, key) => {
+      if (value instanceof File) {
+        console.log(`- ${key}: File: ${value.name}, Size: ${value.size}, Type: ${value.type}`);
+      } else {
+        console.log(`- ${key}: ${value}`);
+      }
+    });
+    
+    // Use specific headers that are compatible with multipart/form-data
+    return this.http.post<ComplaintResponse>(
+      `${environment.apiUrl}/complaints/with-evidence`, 
+      formData,
+      {
+        headers: {
+          'Accept': 'application/json'
+          // Do NOT set 'Content-Type' - browser will set it with correct boundary
+        }
+      }
+    ).pipe(
+      catchError(error => {
+        console.error('Error creating complaint with evidence:', error);
+        
+        let errorMessage = 'Failed to create complaint';
+        
+        if (error.error) {
+          if (typeof error.error === 'string') {
+            errorMessage = error.error;
+          } else if (error.error.message) {
+            errorMessage = error.error.message;
+          } else if (error.status === 403) {
+            errorMessage = 'You are not authorized to create a complaint. Please log in again.';
+          } else if (error.status === 400) {
+            errorMessage = 'Invalid complaint data. Please check your form and try again.';
+          } else if (error.status === 413) {
+            errorMessage = 'File size exceeds the maximum limit allowed by the server.';
+          } else if (error.status === 415) {
+            errorMessage = 'File type not supported.';
+          } else if (error.status === 0) {
+            errorMessage = 'Could not connect to the server. Please check your internet connection.';
+          }
+        }
+        
+        return throwError(() => new Error(errorMessage));
+      })
+    );
   }
 
   updateComplaint(id: number, complaint: Partial<Complaint>): Observable<Complaint> {
@@ -92,10 +244,48 @@ export class ComplaintService {
     return this.http.post<Comment>(`${this.apiUrl}/${id}/comments`, { content });
   }
 
-  uploadEvidence(id: number, file: File): Observable<any> {
+  uploadEvidence(files: File[]): Observable<string[]> {
     const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<any>(`${this.apiUrl}/${id}/evidence`, formData);
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    return this.http.post<string[]>(`${environment.apiUrl}/complaints/upload-evidence`, formData, {
+      reportProgress: true,
+      observe: 'events',
+      headers: {
+        'Accept': 'application/json'
+        // Let browser set Content-Type with boundary for FormData
+      }
+    }).pipe(
+      map(event => {
+        if (event.type === HttpEventType.Response) {
+          return event.body as string[];
+        }
+        // Return empty array for progress events
+        return [];
+      }),
+      catchError(error => {
+        console.error('Error uploading evidence:', error);
+        let errorMessage = 'Failed to upload evidence';
+        
+        if (error.error) {
+          if (typeof error.error === 'string') {
+            errorMessage = error.error;
+          } else if (error.error.message) {
+            errorMessage = error.error.message;
+          } else if (error.status === 403) {
+            errorMessage = 'You are not authorized to upload evidence. Please log in again.';
+          } else if (error.status === 413) {
+            errorMessage = 'File size exceeds the maximum limit allowed by the server.';
+          } else if (error.status === 415) {
+            errorMessage = 'File type not supported.';
+          }
+        }
+        
+        return throwError(() => new Error(errorMessage));
+      })
+    );
   }
 
   deleteComplaint(id: number): Observable<void> {
