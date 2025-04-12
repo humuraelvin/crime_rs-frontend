@@ -41,7 +41,7 @@ const routes: Routes = [
   },
   {
     path: 'settings',
-    loadChildren: () => import('./features/settings/settings.module').then(m => m.SettingsModule),
+    loadComponent: () => import('./pages/settings/settings.component').then(c => c.SettingsComponent),
     canActivate: [AuthGuard]
   },
   {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpEventType } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpEventType, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
@@ -61,7 +61,19 @@ export interface ComplaintResponse {
   dateLastUpdated: string;
   location: string;
   priorityScore: number;
-  evidences?: any[];
+  evidences?: Array<{
+    id?: number;
+    fileUrl: string;
+    fileType?: string;
+    uploadedAt?: string;
+  }>;
+  comments?: Array<{
+    id: number;
+    content: string;
+    authorId: number;
+    authorName: string;
+    createdAt: string;
+  }>;
 }
 
 @Injectable({
@@ -71,6 +83,19 @@ export class ComplaintService {
   private apiUrl = `${environment.apiUrl}/complaints`;
 
   constructor(private http: HttpClient) { }
+
+  // Helper method to get authorization headers
+  private getAuthHeaders(): HttpHeaders {
+    const user = localStorage.getItem('currentUser') 
+      ? JSON.parse(localStorage.getItem('currentUser') || '{}')
+      : null;
+      
+    let headers = new HttpHeaders();
+    if (user?.accessToken) {
+      headers = headers.set('Authorization', `Bearer ${user.accessToken}`);
+    }
+    return headers;
+  }
 
   getComplaints(filters?: ComplaintFilter): Observable<ComplaintResponse[]> {
     let params = new HttpParams();
@@ -93,23 +118,26 @@ export class ComplaintService {
       }
     }
 
-    return this.http.get<ComplaintResponse[]>(`${environment.apiUrl}/complaints`, { params })
-      .pipe(
-        catchError(error => {
-          console.error('Error fetching complaints:', error);
-          return throwError(() => new Error(error.error?.message || 'Failed to fetch complaints'));
-        })
-      );
+    return this.http.get<ComplaintResponse[]>(`${environment.apiUrl}/complaints`, { 
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching complaints:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to fetch complaints'));
+      })
+    );
   }
 
   getComplaintById(id: number): Observable<ComplaintResponse> {
-    return this.http.get<ComplaintResponse>(`${environment.apiUrl}/complaints/${id}`)
-      .pipe(
-        catchError(error => {
-          console.error('Error fetching complaint:', error);
-          return throwError(() => new Error(error.error?.message || 'Failed to fetch complaint'));
-        })
-      );
+    return this.http.get<ComplaintResponse>(`${environment.apiUrl}/complaints/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching complaint:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to fetch complaint'));
+      })
+    );
   }
 
   createComplaint(complaint: ComplaintRequest): Observable<ComplaintResponse> {
@@ -118,30 +146,33 @@ export class ComplaintService {
       console.log('Creating complaint with data:', complaint);
       console.log('API URL:', `${environment.apiUrl}/complaints`);
       
-      return this.http.post<ComplaintResponse>(`${environment.apiUrl}/complaints`, complaint)
-        .pipe(
-          catchError(error => {
-            console.error('Error creating complaint:', error);
-            // More detailed error handling
-            let errorMessage = 'Failed to create complaint';
-            
-            if (error.error) {
-              if (typeof error.error === 'string') {
-                errorMessage = error.error;
-              } else if (error.error.message) {
-                errorMessage = error.error.message;
-              } else if (error.status === 403) {
-                errorMessage = 'You are not authorized to create a complaint. Please log in again.';
-              } else if (error.status === 400) {
-                errorMessage = 'Invalid complaint data. Please check your form and try again.';
-              } else if (error.status === 0) {
-                errorMessage = 'Could not connect to the server. Please check your internet connection.';
-              }
+      return this.http.post<ComplaintResponse>(
+        `${environment.apiUrl}/complaints`, 
+        complaint,
+        { headers: this.getAuthHeaders() }
+      ).pipe(
+        catchError(error => {
+          console.error('Error creating complaint:', error);
+          // More detailed error handling
+          let errorMessage = 'Failed to create complaint';
+          
+          if (error.error) {
+            if (typeof error.error === 'string') {
+              errorMessage = error.error;
+            } else if (error.error.message) {
+              errorMessage = error.error.message;
+            } else if (error.status === 403) {
+              errorMessage = 'You are not authorized to create a complaint. Please log in again.';
+            } else if (error.status === 400) {
+              errorMessage = 'Invalid complaint data. Please check your form and try again.';
+            } else if (error.status === 0) {
+              errorMessage = 'Could not connect to the server. Please check your internet connection.';
             }
-            
-            return throwError(() => new Error(errorMessage));
-          })
-        );
+          }
+          
+          return throwError(() => new Error(errorMessage));
+        })
+      );
     }
     
     // Try a completely different approach for debugging purposes
@@ -188,16 +219,16 @@ export class ComplaintService {
       }
     });
     
+    // Get auth headers
+    let headers = this.getAuthHeaders();
+    // For FormData, we only set Accept and let the browser handle Content-Type
+    headers = headers.set('Accept', 'application/json');
+    
     // Use specific headers that are compatible with multipart/form-data
     return this.http.post<ComplaintResponse>(
       `${environment.apiUrl}/complaints/with-evidence`, 
       formData,
-      {
-        headers: {
-          'Accept': 'application/json'
-          // Do NOT set 'Content-Type' - browser will set it with correct boundary
-        }
-      }
+      { headers }
     ).pipe(
       catchError(error => {
         console.error('Error creating complaint with evidence:', error);
@@ -228,19 +259,35 @@ export class ComplaintService {
   }
 
   updateComplaint(id: number, complaint: Partial<Complaint>): Observable<Complaint> {
-    return this.http.put<Complaint>(`${this.apiUrl}/${id}`, complaint);
+    return this.http.put<Complaint>(
+      `${this.apiUrl}/${id}`, 
+      complaint,
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   updateComplaintStatus(id: number, status: string): Observable<Complaint> {
-    return this.http.patch<Complaint>(`${this.apiUrl}/${id}/status`, { status });
+    return this.http.patch<Complaint>(
+      `${this.apiUrl}/${id}/status`, 
+      { status },
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   assignOfficer(id: number, officerId: number): Observable<Complaint> {
-    return this.http.patch<Complaint>(`${this.apiUrl}/${id}/assign`, { officerId });
+    return this.http.patch<Complaint>(
+      `${this.apiUrl}/${id}/assign`, 
+      { officerId },
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   addComment(id: number, content: string): Observable<Comment> {
-    return this.http.post<Comment>(`${this.apiUrl}/${id}/comments`, { content });
+    return this.http.post<Comment>(
+      `${this.apiUrl}/${id}/comments`, 
+      { content },
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   uploadEvidence(files: File[]): Observable<string[]> {
@@ -249,14 +296,20 @@ export class ComplaintService {
       formData.append('files', file);
     });
 
-    return this.http.post<string[]>(`${environment.apiUrl}/complaints/upload-evidence`, formData, {
-      reportProgress: true,
-      observe: 'events',
-      headers: {
-        'Accept': 'application/json'
-        // Let browser set Content-Type with boundary for FormData
+    // Get auth headers
+    let headers = this.getAuthHeaders();
+    // For FormData, we only set Accept and let the browser handle Content-Type
+    headers = headers.set('Accept', 'application/json');
+
+    return this.http.post<string[]>(
+      `${environment.apiUrl}/complaints/upload-evidence`, 
+      formData, 
+      {
+        reportProgress: true,
+        observe: 'events',
+        headers
       }
-    }).pipe(
+    ).pipe(
       map(event => {
         if (event.type === HttpEventType.Response) {
           return event.body as string[];
@@ -288,14 +341,28 @@ export class ComplaintService {
   }
 
   deleteComplaint(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(
+      `${this.apiUrl}/${id}`,
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   getComplaintTypes(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/types`);
+    return this.http.get<string[]>(
+      `${this.apiUrl}/types`,
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   getComplaintStatistics(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/statistics`);
+    return this.http.get<any>(
+      `${this.apiUrl}/statistics`, 
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error('Error fetching statistics:', error);
+        return throwError(() => error);
+      })
+    );
   }
 } 

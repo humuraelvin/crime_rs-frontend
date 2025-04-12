@@ -45,20 +45,20 @@
 
             <!-- Logged in - User menu dropdown -->
             <div *ngIf="isAuthenticated()">
-              <button type="button" (click)="toggleUserMenu()" class="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+              <button type="button" (click)="toggleUserMenu($event)" class="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
                 <span class="sr-only">Open user menu</span>
                 <span class="material-icons text-gray-300 hover:text-white p-1 rounded-full">account_circle</span>
-                <span class="text-gray-300 ml-1 hidden lg:block">{{ user?.username }}</span>
+                <span class="text-gray-300 ml-1 hidden lg:block">{{ user?.firstName || user?.email }}</span>
                 <span class="material-icons text-gray-300 text-sm">{{ isUserMenuOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
               </button>
 
               <!-- User Dropdown Menu -->
-              <div *ngIf="isUserMenuOpen" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <a routerLink="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+              <div *ngIf="isUserMenuOpen" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                <a routerLink="/profile" (click)="closeMenus()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   <span class="material-icons mr-2 text-gray-500 align-middle text-sm">person</span>
                   Profile
                 </a>
-                <a routerLink="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <a routerLink="/settings" (click)="closeMenus()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   <span class="material-icons mr-2 text-gray-500 align-middle text-sm">settings</span>
                   Settings
                 </a>
@@ -108,7 +108,7 @@
           <span class="material-icons text-gray-300">account_circle</span>
         </div>
         <div class="ml-3">
-          <div class="text-base font-medium leading-none text-white">{{ user?.username }}</div>
+          <div class="text-base font-medium leading-none text-white">{{ user?.firstName }} {{ user?.lastName }}</div>
           <div class="text-sm font-medium leading-none text-gray-400 mt-1">{{ user?.email }}</div>
         </div>
       </div>

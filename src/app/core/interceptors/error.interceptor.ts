@@ -24,10 +24,11 @@ export const errorInterceptor: HttpInterceptorFn = (
         error: error.error
       });
       
-      // Check if complaint endpoint
+      // Check specific endpoints that shouldn't trigger logout on 403
       const isComplaintEndpoint = request.url.includes(`${environment.apiUrl}/complaints`);
+      const isStatisticsEndpoint = request.url.includes(`${environment.apiUrl}/complaints/statistics`);
       
-      // Handle errors based on status code
+      // Handle errors based on status code and endpoint
       if (error.status === 401) {
         console.log('Error Interceptor - 401 Unauthorized error, logging out');
         authService.logout();
@@ -36,13 +37,17 @@ export const errorInterceptor: HttpInterceptorFn = (
         });
         toastr.error('Your session has expired. Please log in again.');
       } else if (error.status === 403) {
-        if (!isComplaintEndpoint) {
-          // Only logout on 403 if not a complaint endpoint
-          console.log('Error Interceptor - 403 Forbidden error (non-complaint), logging out');
+        // Only force logout on 403 if it's not from specific protected endpoints
+        // For statistics and other read-only endpoints, we'll handle 403 within the components
+        if (!isComplaintEndpoint && !isStatisticsEndpoint) {
+          console.log('Error Interceptor - 403 Forbidden error (requires logout), logging out');
           authService.logout();
           router.navigate(['/auth/login']);
+          toastr.error('Your session has expired or you lack sufficient permissions.');
+        } else {
+          console.log('Error Interceptor - 403 Forbidden error (handled by component)');
+          // Let the component handle this error
         }
-        toastr.error('You do not have permission to perform this action');
       } else if (error.status === 404) {
         toastr.error('The requested resource was not found');
       } else if (error.status >= 500) {

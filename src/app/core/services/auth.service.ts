@@ -6,6 +6,8 @@ import { Router } from '@angular/router';
 import { environment } from '@environments/environment';
 import { User, UserRole } from '../models/user.model';
 import { isPlatformBrowser } from '@angular/common';
+import { ToastrService } from 'ngx-toastr';
+import { inject } from '@angular/core';
 
 export interface LoginRequest {
   email: string;
@@ -59,7 +61,8 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private router: Router,
-    @Inject(PLATFORM_ID) platformId: Object
+    @Inject(PLATFORM_ID) platformId: Object,
+    private toastr: ToastrService
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
     this.currentUserSubject = new BehaviorSubject<User | null>(this.getUserFromStorage());
@@ -77,24 +80,42 @@ export class AuthService {
   public isAuthenticated(): boolean {
     const user = this.currentUserValue;
     if (!user || !user.accessToken) {
+      console.log('Auth Service - No user or token found');
       return false;
     }
 
     try {
       const tokenData = this.parseJwt(user.accessToken);
       if (!tokenData || !tokenData.exp) {
+        console.log('Auth Service - Invalid token data (no exp field)');
         return false;
       }
 
       const expiryTime = new Date(tokenData.exp * 1000);
       const now = new Date();
       
-      // If token is expired or expires in less than 1 minute
-      if (expiryTime.getTime() - now.getTime() < 60000) {
+      // Log the token expiration details
+      const timeToExpiry = expiryTime.getTime() - now.getTime();
+      const minutesToExpiry = Math.floor(timeToExpiry / 60000);
+      console.log(`Auth Service - Token expires in ${minutesToExpiry} minutes (${new Date(tokenData.exp * 1000).toLocaleTimeString()})`);
+      
+      // If token is expired
+      if (expiryTime <= now) {
+        console.log('Auth Service - Token is expired');
+        return false;
+      }
+      
+      // If token is about to expire within 1 minute, try to refresh it
+      if (timeToExpiry < 60000) {
         // Try to refresh the token
+        console.log('Auth Service - Token is about to expire, attempting refresh');
         this.refreshToken().subscribe({
-          next: () => true,
-          error: () => {
+          next: () => {
+            console.log('Auth Service - Token refreshed successfully');
+            return true;
+          },
+          error: (error) => {
+            console.error('Auth Service - Token refresh failed:', error);
             this.logout();
             return false;
           }
@@ -103,7 +124,7 @@ export class AuthService {
       
       return true;
     } catch (e) {
-      console.error('Error parsing token:', e);
+      console.error('Auth Service - Error parsing token:', e);
       return false;
     }
   }
@@ -273,17 +294,41 @@ export class AuthService {
       this.http.post(`${environment.apiUrl}/auth/logout`, {}, {
         headers: { 'Authorization': `Bearer ${user.accessToken}` }
       }).subscribe({
-        next: () => {},
-        error: (error) => console.error('Logout error:', error)
+        next: () => {
+          console.log('Successfully logged out on the server');
+        },
+        error: (error) => console.error('Logout error:', error),
+        complete: () => {
+          // Always proceed with client-side logout regardless of server response
+          this.completeLogout();
+        }
       });
+    } else {
+      // If no user or token, just do client-side logout
+      this.completeLogout();
     }
-    
+  }
+
+  private completeLogout(): void {
+    console.log('Completing logout process');
+    // Stop the token refresh timer
     this.stopRefreshTokenTimer();
+    
+    // Clear user data from localStorage
     if (this.isBrowser) {
       localStorage.removeItem('currentUser');
     }
+    
+    // Clear user from BehaviorSubject
     this.currentUserSubject.next(null);
-    this.router.navigate(['/auth/login']);
+    
+    // Show success message
+    if (this.isBrowser) {
+      this.toastr.success('You have been successfully logged out');
+    }
+    
+    // Navigate to login page
+    this.router.navigate(['/auth/login'], { replaceUrl: true });
   }
 
   refreshToken(): Observable<AuthResponse> {

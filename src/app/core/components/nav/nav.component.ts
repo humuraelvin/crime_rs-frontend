@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { UserRole } from '../../models/user.model';
 
@@ -18,10 +18,11 @@ interface NavItem {
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive]
 })
-export class NavComponent implements OnInit {
+export class NavComponent implements OnInit, OnDestroy {
   user: any;
   isMobileMenuOpen = false;
   isUserMenuOpen = false;
+  isBrowser: boolean;
   
   navItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
@@ -33,8 +34,11 @@ export class NavComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private router: Router
-  ) { }
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   ngOnInit(): void {
     this.authService.currentUser.subscribe(user => {
@@ -57,21 +61,45 @@ export class NavComponent implements OnInit {
     }
   }
 
-  toggleUserMenu(): void {
+  toggleUserMenu(event?: Event): void {
+    if (!this.isBrowser) return;
+    
+    if (event) {
+      event.stopPropagation(); // Prevent event bubbling
+    }
+    
     this.isUserMenuOpen = !this.isUserMenuOpen;
     if (this.isUserMenuOpen) {
       this.isMobileMenuOpen = false;
+      
+      // Add click listener to close menu when clicking outside
+      setTimeout(() => {
+        document.addEventListener('click', this.closeMenuOnClickOutside);
+      });
+    } else {
+      document.removeEventListener('click', this.closeMenuOnClickOutside);
     }
+  }
+
+  closeMenuOnClickOutside = (): void => {
+    if (!this.isBrowser) return;
+    
+    this.isUserMenuOpen = false;
+    document.removeEventListener('click', this.closeMenuOnClickOutside);
   }
 
   closeMenus(): void {
     this.isMobileMenuOpen = false;
     this.isUserMenuOpen = false;
+    
+    if (this.isBrowser) {
+      document.removeEventListener('click', this.closeMenuOnClickOutside);
+    }
   }
 
   logout(): void {
     this.closeMenus();
-    this.router.navigate(['/auth/logout']);
+    this.authService.logout();
   }
 
   canShowNavItem(item: NavItem): boolean {
@@ -82,5 +110,11 @@ export class NavComponent implements OnInit {
     
     // Check if user has any of the required roles
     return item.roles.some(role => this.hasRole(role));
+  }
+  
+  ngOnDestroy(): void {
+    if (this.isBrowser) {
+      document.removeEventListener('click', this.closeMenuOnClickOutside);
+    }
   }
 } 

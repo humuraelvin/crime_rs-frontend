@@ -26,7 +26,7 @@
     "@ngx-translate/core": "^15.0.0",
     "@ngx-translate/http-loader": "^8.0.0",
     "angular-svg-icon": "^17.0.0",
-    "chart.js": "^4.4.2",
+    "chart.js": "^4.4.8",
     "date-fns": "^3.4.0",
     "express": "^4.18.2",
     "jwt-decode": "^4.0.0",

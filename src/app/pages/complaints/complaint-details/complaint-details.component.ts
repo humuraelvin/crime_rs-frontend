@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ComplaintService, ComplaintResponse } from '../../../core/services/complaint.service';
+import { ComplaintService, ComplaintResponse, Comment } from '../../../core/services/complaint.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserRole } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-complaint-details',
@@ -27,15 +29,45 @@ import { ToastrService } from 'ngx-toastr';
           <div class="mb-6 flex justify-between items-start">
             <div>
               <h1 class="text-3xl font-bold text-gray-900 mb-2">Complaint #{{ complaint.id }}</h1>
-              <span class="px-3 py-1 text-sm font-semibold rounded-full" 
-                [ngClass]="{
-                  'bg-yellow-100 text-yellow-800': complaint.status === 'PENDING',
-                  'bg-blue-100 text-blue-800': complaint.status === 'UNDER_INVESTIGATION',
-                  'bg-green-100 text-green-800': complaint.status === 'RESOLVED',
-                  'bg-red-100 text-red-800': complaint.status === 'REJECTED'
-                }">
-                {{ formatStatus(complaint.status) }}
-              </span>
+              <div class="flex items-center space-x-4">
+                <span class="px-3 py-1 text-sm font-semibold rounded-full" 
+                  [ngClass]="{
+                    'bg-yellow-100 text-yellow-800': complaint.status === 'PENDING',
+                    'bg-blue-100 text-blue-800': complaint.status === 'UNDER_INVESTIGATION',
+                    'bg-green-100 text-green-800': complaint.status === 'RESOLVED',
+                    'bg-red-100 text-red-800': complaint.status === 'REJECTED'
+                  }">
+                  {{ formatStatus(complaint.status) }}
+                </span>
+                
+                <!-- Status Update Dropdown for Admin/Police -->
+                <div *ngIf="canManageComplaints()" class="relative inline-block">
+                  <button 
+                    (click)="toggleStatusDropdown()" 
+                    class="px-3 py-1 text-sm font-medium text-blue-600 border border-blue-600 rounded hover:bg-blue-50 focus:outline-none"
+                    type="button">
+                    Update Status
+                  </button>
+                  <div 
+                    *ngIf="showStatusDropdown" 
+                    class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    role="menu" 
+                    aria-orientation="vertical" 
+                    aria-labelledby="menu-button" 
+                    tabindex="-1">
+                    <div class="py-1" role="none">
+                      <a 
+                        *ngFor="let status of availableStatuses" 
+                        (click)="updateStatus(status)" 
+                        class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer" 
+                        role="menuitem" 
+                        tabindex="-1">
+                        {{ formatStatus(status) }}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="text-right">
               <p class="text-sm text-gray-500">Filed on: {{ formatDate(complaint.dateFiled) }}</p>
@@ -64,7 +96,7 @@ import { ToastrService } from 'ngx-toastr';
             </p>
           </div>
           
-          <div *ngIf="complaint.evidences && complaint.evidences.length > 0" class="mb-6">
+          <div *ngIf="hasEvidences()" class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Evidence & Attachments</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div *ngFor="let evidence of complaint.evidences" class="border rounded-lg p-2">
@@ -78,7 +110,7 @@ import { ToastrService } from 'ngx-toastr';
             </div>
           </div>
           
-          <div *ngIf="complaint.comments && complaint.comments.length > 0" class="mb-6">
+          <div *ngIf="hasComments()" class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Comments</h3>
             <div class="space-y-4">
               <div *ngFor="let comment of complaint.comments" class="bg-gray-50 p-4 rounded-lg">
@@ -103,27 +135,37 @@ import { ToastrService } from 'ngx-toastr';
             </div>
             <button 
               (click)="addComment()" 
-              [disabled]="!newComment.trim()" 
+              [disabled]="!newComment.trim() || updating" 
               class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-              Submit Comment
+              <span *ngIf="!updating">Submit Comment</span>
+              <span *ngIf="updating">Submitting...</span>
             </button>
           </div>
         </div>
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    /* Clickaway listener for dropdown */
+    :host {
+      display: block;
+    }
+  `]
 })
 export class ComplaintDetailsComponent implements OnInit {
   complaint: ComplaintResponse | null = null;
   loading = true;
+  updating = false;
   errorMessage = '';
   complaintId!: number;
   newComment = '';
+  showStatusDropdown = false;
+  availableStatuses = ['PENDING', 'UNDER_INVESTIGATION', 'RESOLVED', 'REJECTED'];
   
   constructor(
     private route: ActivatedRoute,
     private complaintService: ComplaintService,
+    private authService: AuthService,
     private toastr: ToastrService
   ) {}
   
@@ -138,6 +180,64 @@ export class ComplaintDetailsComponent implements OnInit {
         this.loading = false;
       }
     });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', this.onDocumentClick.bind(this));
+  }
+  
+  // Clean up event listener on component destruction
+  ngOnDestroy(): void {
+    document.removeEventListener('click', this.onDocumentClick.bind(this));
+  }
+  
+  // Clickaway listener for dropdown
+  onDocumentClick(event: MouseEvent): void {
+    if (this.showStatusDropdown && !(event.target as HTMLElement).closest('.dropdown-container')) {
+      this.showStatusDropdown = false;
+    }
+  }
+  
+  toggleStatusDropdown(event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation(); // Prevent document click from immediately closing it
+    }
+    this.showStatusDropdown = !this.showStatusDropdown;
+  }
+  
+  updateStatus(status: string): void {
+    if (!this.complaint || this.complaint.status === status) {
+      this.showStatusDropdown = false;
+      return;
+    }
+    
+    this.updating = true;
+    this.complaintService.updateComplaintStatus(this.complaintId, status).subscribe({
+      next: () => {
+        this.toastr.success(`Complaint status updated to ${this.formatStatus(status)}`);
+        this.loadComplaint(); // Reload to get the updated complaint
+        this.showStatusDropdown = false;
+        this.updating = false;
+      },
+      error: (error) => {
+        this.toastr.error(`Failed to update status: ${error.message || 'Unknown error'}`);
+        this.updating = false;
+        this.showStatusDropdown = false;
+      }
+    });
+  }
+  
+  // Check if user has admin or police role to manage complaints
+  canManageComplaints(): boolean {
+    return this.authService.hasAnyRole([UserRole.ADMIN, UserRole.POLICE_OFFICER]);
+  }
+  
+  // Helper methods 
+  hasComments(): boolean {
+    return !!this.complaint && !!this.complaint.comments && this.complaint.comments.length > 0;
+  }
+  
+  hasEvidences(): boolean {
+    return !!this.complaint && !!this.complaint.evidences && this.complaint.evidences.length > 0;
   }
   
   loadComplaint(): void {
@@ -196,15 +296,19 @@ export class ComplaintDetailsComponent implements OnInit {
   addComment(): void {
     if (!this.newComment.trim() || !this.complaintId) return;
     
+    this.updating = true;
+    
     this.complaintService.addComment(this.complaintId, this.newComment).subscribe({
       next: () => {
         this.toastr.success('Comment added successfully');
         this.newComment = '';
+        this.updating = false;
         // Reload the complaint to show the new comment
         this.loadComplaint();
       },
       error: (error) => {
         this.toastr.error('Failed to add comment: ' + error.message);
+        this.updating = false;
       }
     });
   }

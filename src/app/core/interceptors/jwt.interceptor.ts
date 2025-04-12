@@ -15,12 +15,16 @@ export const jwtInterceptor: HttpInterceptorFn = (
     return next(request);
   }
 
+  // Check if user is authenticated
+  const isAuthenticated = authService.isAuthenticated();
+  console.log('JWT Interceptor - Is authenticated:', isAuthenticated);
+  
   // Get authorization header from AuthService
   const authHeader = authService.getAuthorizationHeader();
   
   if (authHeader) {
-    console.log('JWT Interceptor - Adding token to request');
     // Only log the first part of the token for security
+    console.log('JWT Interceptor - Adding token to request for URL:', request.url);
     const tokenPreview = authHeader.split(' ')[1]?.substring(0, 10) + '...';
     console.log('JWT Interceptor - Token preview:', tokenPreview);
     
@@ -31,7 +35,6 @@ export const jwtInterceptor: HttpInterceptorFn = (
       }
     });
     
-    console.log('JWT Interceptor - Request prepared with Authorization header');
     return next(authReq);
   } else {
     console.log('JWT Interceptor - No valid token available for request to:', request.url);
