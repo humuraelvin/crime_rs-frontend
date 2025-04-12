@@ -9,9 +9,13 @@ import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
 import { SharedModule } from './shared/shared.module';
 
+/**
+ * @deprecated This module is being kept for backward compatibility during migration to standalone components.
+ * New development should use the standalone component approach with app.config.ts.
+ */
 @NgModule({
   declarations: [
-    AppComponent
+    // AppComponent is now standalone
   ],
   imports: [
     BrowserModule,
@@ -27,6 +31,6 @@ import { SharedModule } from './shared/shared.module';
     AppRoutingModule
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: []  // No longer bootstrapping from here, using bootstrapApplication in main.ts
 })
 export class AppModule { } 

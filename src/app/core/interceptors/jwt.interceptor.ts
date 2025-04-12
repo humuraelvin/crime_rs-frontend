@@ -8,32 +8,33 @@ export const jwtInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn
 ) => {
   const authService = inject(AuthService);
-  // Get the current user from the auth service
-  const currentUser = authService.currentUserValue;
   const isApiUrl = request.url.startsWith(environment.apiUrl);
   
-  console.log('JWT Interceptor - Request URL:', request.url);
-  console.log('JWT Interceptor - Is API URL:', isApiUrl);
-  console.log('JWT Interceptor - Current User:', currentUser ? `Logged in as ${currentUser.email}` : 'Not logged in');
-  console.log('JWT Interceptor - Has Token:', currentUser && currentUser.accessToken ? 'Yes' : 'No');
+  // Skip if not an API URL
+  if (!isApiUrl) {
+    return next(request);
+  }
+
+  // Get authorization header from AuthService
+  const authHeader = authService.getAuthorizationHeader();
   
-  // If the user is logged in and the request is to the API URL, add the JWT auth header
-  if (currentUser && currentUser.accessToken && isApiUrl) {
+  if (authHeader) {
     console.log('JWT Interceptor - Adding token to request');
-    console.log('JWT Interceptor - Token snippet:', currentUser.accessToken.substring(0, 20) + '...');
+    // Only log the first part of the token for security
+    const tokenPreview = authHeader.split(' ')[1]?.substring(0, 10) + '...';
+    console.log('JWT Interceptor - Token preview:', tokenPreview);
     
     // Create a clone of the request with our token
     const authReq = request.clone({
       setHeaders: {
-        Authorization: `Bearer ${currentUser.accessToken}`
+        Authorization: authHeader
       }
     });
     
-    // Log the modified request headers
-    console.log('JWT Interceptor - Authorization header added');
+    console.log('JWT Interceptor - Request prepared with Authorization header');
     return next(authReq);
   } else {
-    console.log('JWT Interceptor - No token added to request');
+    console.log('JWT Interceptor - No valid token available for request to:', request.url);
     return next(request);
   }
 }; 

@@ -331,6 +331,7 @@ export class CreateComplaintComponent implements OnInit {
     if (!this.authService.isAuthenticated()) {
       this.toastr.error('Please log in to submit a complaint');
       this.router.navigate(['/auth/login']);
+      this.isSubmitting = false;
       return;
     }
 
@@ -377,36 +378,42 @@ export class CreateComplaintComponent implements OnInit {
             console.error('XHR Error:', xhr.status, xhr.statusText, xhr.responseText);
             
             let errorMsg = 'Failed to submit report';
-            try {
-              const errorResponse = JSON.parse(xhr.responseText);
-              if (errorResponse && errorResponse.message) {
-                errorMsg = errorResponse.message;
-              }
-            } catch (e) {
-              if (xhr.status === 403) {
-                // Try to refresh token and retry
-                this.authService.refreshToken().subscribe({
-                  next: () => {
-                    // Retry submission after token refresh
-                    this.proceedWithComplaintSubmission(complaint);
-                  },
-                  error: () => {
-                    this.toastr.error('Your session has expired. Please log in again.');
-                    this.router.navigate(['/auth/login']);
-                  }
-                });
-                return;
-              } else if (xhr.status === 401) {
-                errorMsg = 'Your session has expired. Please log in again.';
-                this.router.navigate(['/auth/login']);
-              } else {
-                errorMsg = `Failed to submit report (${xhr.status})`;
-              }
-            }
             
-            this.toastr.error(errorMsg);
-            this.isSubmitting = false;
-            this.uploadProgress = 0;
+            // Handle different error status codes
+            if (xhr.status === 403 || xhr.status === 401) {
+              console.log('Authentication error, attempting token refresh...');
+              
+              // Try to refresh token and retry
+              this.authService.refreshToken().subscribe({
+                next: () => {
+                  console.log('Token refreshed successfully, retrying submission');
+                  // Get the new token and retry
+                  setTimeout(() => {
+                    this.proceedWithComplaintSubmission(complaint);
+                  }, 500);
+                },
+                error: (refreshError) => {
+                  console.error('Token refresh failed:', refreshError);
+                  this.toastr.error('Your session has expired. Please log in again.');
+                  this.isSubmitting = false;
+                  this.router.navigate(['/auth/login']);
+                }
+              });
+              return;
+            } else {
+              try {
+                const errorResponse = JSON.parse(xhr.responseText);
+                if (errorResponse && errorResponse.message) {
+                  errorMsg = errorResponse.message;
+                }
+              } catch (e) {
+                errorMsg = `Error (${xhr.status}): Failed to submit report`;
+              }
+              
+              this.toastr.error(errorMsg);
+              this.isSubmitting = false;
+              this.uploadProgress = 0;
+            }
           }
         });
       }
@@ -419,6 +426,7 @@ export class CreateComplaintComponent implements OnInit {
     const authHeader = this.authService.getAuthorizationHeader();
     if (!authHeader) {
       this.toastr.error('Authentication required');
+      this.isSubmitting = false;
       this.router.navigate(['/auth/login']);
       return;
     }
@@ -431,6 +439,10 @@ export class CreateComplaintComponent implements OnInit {
     
     // Set accept header
     xhr.setRequestHeader('Accept', 'application/json');
+    
+    // Log request details for debugging
+    console.log('Sending request to:', apiUrl);
+    console.log('With auth header:', authHeader.substring(0, 15) + '...');
     
     // Try to get CSRF token if it exists in cookies
     const getCsrfToken = (): string | null => {

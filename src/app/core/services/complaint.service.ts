@@ -52,17 +52,16 @@ export interface ComplaintRequest {
 
 export interface ComplaintResponse {
   id: number;
-  fullName: string;
-  contact: string;
-  email: string;
-  incidentDate: string;
-  location: string;
-  type: string;
+  userId: number;
+  userName: string;
+  crimeType: string;
   description: string;
   status: string;
-  evidenceUrls: string[];
-  createdAt: string;
-  updatedAt: string;
+  dateFiled: string;
+  dateLastUpdated: string;
+  location: string;
+  priorityScore: number;
+  evidences?: any[];
 }
 
 @Injectable({

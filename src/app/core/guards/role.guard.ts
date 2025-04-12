@@ -16,8 +16,7 @@ export class RoleGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     // First check if the user is authenticated
-    if (!this.authService.isLoggedIn) {
-      this.toastr.error('You must be logged in to access this page');
+    if (!this.authService.isLoggedIn || !this.authService.isAuthenticated()) {
       this.router.navigate(['/auth/login'], { 
         queryParams: { returnUrl: state.url }
       });
@@ -40,7 +39,10 @@ export class RoleGuard implements CanActivate {
     }
 
     // User doesn't have the required role
-    this.toastr.error('You do not have permission to access this page');
+    this.toastr.error('You do not have permission to access this page', '', {
+      timeOut: 3000,
+      closeButton: true
+    });
     this.router.navigate(['/dashboard']);
     return false;
   }

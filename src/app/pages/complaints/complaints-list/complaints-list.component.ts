@@ -6,6 +6,18 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models/user.model';
 
+// Define an interface for the paginated response
+interface PaginatedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
 @Component({
   selector: 'app-complaints-list',
   standalone: true,
@@ -61,19 +73,19 @@ import { UserRole } from '../../../core/models/user.model';
               </tr>
               <tr *ngFor="let complaint of complaints">
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{{complaint.id}}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{complaint.type}}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{complaint.crimeType}}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span [ngClass]="{
                     'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
-                    'bg-yellow-100 text-yellow-800': complaint.status === 'PENDING',
-                    'bg-blue-100 text-blue-800': complaint.status === 'UNDER_INVESTIGATION',
+                    'bg-yellow-100 text-yellow-800': complaint.status === 'SUBMITTED',
+                    'bg-blue-100 text-blue-800': complaint.status === 'UNDER_REVIEW',
                     'bg-green-100 text-green-800': complaint.status === 'RESOLVED'
                   }">
                     {{complaint.status}}
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{complaint.createdAt | date:'medium'}}
+                  {{complaint.dateFiled | date:'medium'}}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <a [routerLink]="['/complaints', complaint.id]" class="text-blue-600 hover:text-blue-900">View</a>
@@ -111,14 +123,25 @@ export class ComplaintsListComponent implements OnInit {
       () => this.complaintService.getComplaints();
 
     loadFunction().subscribe({
-      next: (data) => {
-        this.complaints = data;
+      next: (data: any) => {
+        // Check if the response is paginated
+        if (data && data.content && Array.isArray(data.content)) {
+          this.complaints = data.content;
+        } else if (Array.isArray(data)) {
+          // If response is already an array
+          this.complaints = data;
+        } else {
+          console.error('Unexpected data format:', data);
+          this.complaints = [];
+          this.toastr.error('Invalid data format received from server');
+        }
         this.loading = false;
       },
       error: (error) => {
         console.error('Error loading complaints:', error);
         this.toastr.error('Failed to load complaints');
         this.loading = false;
+        this.complaints = [];
       }
     });
   }

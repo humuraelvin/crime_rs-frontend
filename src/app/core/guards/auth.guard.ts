@@ -36,14 +36,6 @@ export class AuthGuard implements CanActivate {
       return true;
     }
     
-    // Only show toast message if there's no user at all
-    if (!this.authService.currentUserValue) {
-      this.toastr.error('You must be logged in to access this page', '', {
-        timeOut: 3000,
-        closeButton: true
-      });
-    }
-    
     // Not logged in or invalid token, redirect to login page with return url
     this.router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url }});
     return false;
