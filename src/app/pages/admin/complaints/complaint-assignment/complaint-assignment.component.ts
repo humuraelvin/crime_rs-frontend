@@ -6,32 +6,18 @@ import { environment } from '../../../../../environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
-interface ComplaintStatus {
-  id: string;
-  label: string;
-}
-
 interface Complaint {
   id: number;
-  subject: string;
+  title: string;
   description: string;
   location: string;
-  crimeType: string;
-  user: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
   status: string;
-  dateFiled: string;
-  assignedOfficer?: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    badgeNumber: string;
-    departmentName: string;
-  };
+  userId: number;
+  submitterName: string;
+  assignedOfficerId: number | null;
+  assignedOfficerName: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PoliceOfficer {
@@ -39,7 +25,6 @@ interface PoliceOfficer {
   firstName: string;
   lastName: string;
   badgeNumber: string;
-  departmentId: number;
   departmentName: string;
   activeCasesCount: number;
 }
@@ -51,7 +36,7 @@ interface PoliceOfficer {
   template: `
     <div class="container mx-auto p-4">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Complaint Assignment</h1>
+        <h1 class="text-2xl font-bold text-gray-800">Complaint Management</h1>
       </div>
 
       <div *ngIf="loading" class="flex justify-center my-8">
@@ -59,101 +44,91 @@ interface PoliceOfficer {
       </div>
 
       <div *ngIf="!loading">
-        <div class="mb-6 bg-white rounded-lg shadow-md p-4">
-          <h2 class="text-lg font-semibold mb-4">Filters</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select 
-                id="statusFilter" 
-                [(ngModel)]="filters.status" 
-                (change)="loadComplaints()"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option [value]="null">All Statuses</option>
-                <option *ngFor="let status of complaintStatuses" [value]="status.id">{{ status.label }}</option>
-              </select>
+        <div class="mb-4 flex items-center space-x-4">
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <span class="material-icons text-gray-500">search</span>
             </div>
-            <div>
-              <label for="crimeType" class="block text-sm font-medium text-gray-700 mb-1">Crime Type</label>
-              <select 
-                id="crimeType" 
-                [(ngModel)]="filters.crimeType" 
-                (change)="loadComplaints()"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option [value]="null">All Types</option>
-                <option value="ASSAULT">Assault</option>
-                <option value="THEFT">Theft</option>
-                <option value="ROBBERY">Robbery</option>
-                <option value="VANDALISM">Vandalism</option>
-                <option value="FRAUD">Fraud</option>
-                <option value="CYBERCRIME">Cybercrime</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
-            <div class="flex items-end">
-              <button 
-                (click)="resetFilters()" 
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Reset Filters
-              </button>
-            </div>
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearch()"
+              class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Search complaints..."
+            >
+          </div>
+          <div>
+            <select 
+              [(ngModel)]="statusFilter"
+              (ngModelChange)="onFilterChange()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Statuses</option>
+              <option value="SUBMITTED">Submitted</option>
+              <option value="UNDER_REVIEW">Under Review</option>
+              <option value="ASSIGNED">Assigned</option>
+              <option value="INVESTIGATING">Investigating</option>
+              <option value="PENDING_EVIDENCE">Pending Evidence</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="CLOSED">Closed</option>
+              <option value="RESOLVED">Resolved</option>
+            </select>
           </div>
         </div>
 
         <div *ngIf="complaints.length === 0" class="bg-white p-6 rounded-lg shadow-md text-center">
-          <p class="text-gray-600">No complaints found with the selected filters.</p>
+          <p class="text-gray-600">No complaints found.</p>
         </div>
 
-        <div *ngIf="complaints.length > 0" class="bg-white rounded-lg shadow-md overflow-hidden">
-          <table class="min-w-full">
-            <thead class="bg-gray-100 text-gray-700">
+        <div *ngIf="complaints.length > 0" class="bg-white shadow-md rounded-lg overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
               <tr>
-                <th class="py-3 px-4 text-left font-medium">ID</th>
-                <th class="py-3 px-4 text-left font-medium">Subject</th>
-                <th class="py-3 px-4 text-left font-medium">Type</th>
-                <th class="py-3 px-4 text-left font-medium">Status</th>
-                <th class="py-3 px-4 text-left font-medium">Date Filed</th>
-                <th class="py-3 px-4 text-left font-medium">Reported By</th>
-                <th class="py-3 px-4 text-left font-medium">Assigned Officer</th>
-                <th class="py-3 px-4 text-left font-medium">Actions</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
-              <tr *ngFor="let complaint of complaints" class="hover:bg-gray-50">
-                <td class="py-3 px-4">{{ complaint.id }}</td>
-                <td class="py-3 px-4 font-medium">{{ complaint.subject }}</td>
-                <td class="py-3 px-4">{{ formatEnumValue(complaint.crimeType) }}</td>
-                <td class="py-3 px-4">
-                  <span [ngClass]="getStatusClass(complaint.status)">
-                    {{ formatEnumValue(complaint.status) }}
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let complaint of complaints">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{complaint.id}}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{complaint.title}}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                    [ngClass]="{
+                      'bg-yellow-100 text-yellow-800': complaint.status === 'SUBMITTED',
+                      'bg-blue-100 text-blue-800': complaint.status === 'UNDER_REVIEW',
+                      'bg-indigo-100 text-indigo-800': complaint.status === 'ASSIGNED',
+                      'bg-purple-100 text-purple-800': complaint.status === 'INVESTIGATING',
+                      'bg-orange-100 text-orange-800': complaint.status === 'PENDING_EVIDENCE',
+                      'bg-red-100 text-red-800': complaint.status === 'REJECTED',
+                      'bg-gray-100 text-gray-800': complaint.status === 'CLOSED',
+                      'bg-green-100 text-green-800': complaint.status === 'RESOLVED'
+                    }">
+                    {{complaint.status.replace('_', ' ') | titlecase}}
                   </span>
                 </td>
-                <td class="py-3 px-4">{{ formatDate(complaint.dateFiled) }}</td>
-                <td class="py-3 px-4">{{ complaint.user.firstName }} {{ complaint.user.lastName }}</td>
-                <td class="py-3 px-4">
-                  <span *ngIf="complaint.assignedOfficer">
-                    {{ complaint.assignedOfficer.firstName }} {{ complaint.assignedOfficer.lastName }} 
-                    ({{ complaint.assignedOfficer.badgeNumber }})
-                  </span>
-                  <span *ngIf="!complaint.assignedOfficer" class="text-gray-500">Not assigned</span>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{complaint.submitterName}}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{complaint.assignedOfficerName || 'Not Assigned'}}
                 </td>
-                <td class="py-3 px-4">
-                  <button 
-                    *ngIf="!complaint.assignedOfficer && (complaint.status === 'SUBMITTED' || complaint.status === 'UNDER_REVIEW')"
-                    (click)="openAssignmentModal(complaint)"
-                    class="text-blue-600 hover:text-blue-800"
-                  >
-                    Assign
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{complaint.createdAt | date:'short'}}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button (click)="openAssignmentModal(complaint)" 
+                          class="text-indigo-600 hover:text-indigo-900 mr-2">
+                    <span class="material-icons text-sm">assignment_ind</span>
                   </button>
-                  <button 
-                    *ngIf="complaint.assignedOfficer"
-                    (click)="openAssignmentModal(complaint)"
-                    class="text-yellow-600 hover:text-yellow-800"
-                  >
-                    Reassign
+                  <button (click)="openStatusModal(complaint)" 
+                          class="text-blue-600 hover:text-blue-900 mr-2">
+                    <span class="material-icons text-sm">update</span>
+                  </button>
+                  <button (click)="viewComplaintDetails(complaint)" 
+                          class="text-green-600 hover:text-green-900">
+                    <span class="material-icons text-sm">visibility</span>
                   </button>
                 </td>
               </tr>
@@ -164,123 +139,133 @@ interface PoliceOfficer {
     </div>
 
     <!-- Assignment Modal -->
-    <div *ngIf="showAssignmentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold text-gray-800">Assign Complaint #{{ selectedComplaint?.id }}</h2>
-          <button (click)="closeAssignmentModal()" class="text-gray-500 hover:text-gray-700">
-            <span class="material-icons">close</span>
-          </button>
-        </div>
+    <div *ngIf="assignmentModalVisible" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+      <div class="relative bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-bold mb-4">Assign Complaint</h3>
+        <p class="mb-4">
+          <span class="font-semibold">Complaint:</span> {{selectedComplaint?.title}}
+        </p>
         
         <div *ngIf="loadingOfficers" class="flex justify-center my-4">
           <app-loading-spinner [size]="'md'" [color]="'primary'"></app-loading-spinner>
         </div>
         
         <div *ngIf="!loadingOfficers">
-          <div *ngIf="officers.length === 0" class="mb-4 text-center">
-            <p class="text-gray-600">No officers available for assignment.</p>
+          <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+              Select Officer
+            </label>
+            <select 
+              [(ngModel)]="selectedOfficerId"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option [value]="null">- Unassign -</option>
+              <option *ngFor="let officer of officers" [value]="officer.id">
+                {{officer.firstName}} {{officer.lastName}} ({{officer.badgeNumber}}) - {{officer.departmentName}} - Active cases: {{officer.activeCasesCount}}
+              </option>
+            </select>
           </div>
-          
-          <div *ngIf="officers.length > 0">
-            <div class="mb-4">
-              <label for="officerSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Officer</label>
-              <select 
-                id="officerSelect" 
-                [(ngModel)]="selectedOfficerId"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option [ngValue]="null" disabled>Select an officer</option>
-                <option *ngFor="let officer of officers" [ngValue]="officer.id">
-                  {{ officer.firstName }} {{ officer.lastName }} ({{ officer.badgeNumber }}) - 
-                  {{ officer.departmentName }} - Active Cases: {{ officer.activeCasesCount }}
-                </option>
-              </select>
-            </div>
-            
-            <div class="flex justify-end">
-              <button 
-                (click)="closeAssignmentModal()" 
-                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 mr-4"
-              >
-                Cancel
-              </button>
-              <button 
-                (click)="assignOfficer()" 
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                [disabled]="!selectedOfficerId || submitting"
-              >
-                {{ submitting ? 'Assigning...' : 'Assign Officer' }}
-              </button>
-            </div>
-          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-2">
+          <button 
+            (click)="assignmentModalVisible = false"
+            class="px-4 py-2 bg-gray-300 text-gray-800 font-medium rounded-md hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+          <button 
+            (click)="assignOfficer()"
+            [disabled]="assigningOfficer"
+            class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+          >
+            <span *ngIf="assigningOfficer">Assigning...</span>
+            <span *ngIf="!assigningOfficer">Assign</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div *ngIf="statusModalVisible" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+      <div class="relative bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-bold mb-4">Update Complaint Status</h3>
+        <p class="mb-4">
+          <span class="font-semibold">Complaint:</span> {{selectedComplaint?.title}}
+        </p>
+        
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2">
+            Current Status: 
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-800': selectedComplaint?.status === 'SUBMITTED',
+                'bg-blue-100 text-blue-800': selectedComplaint?.status === 'UNDER_REVIEW',
+                'bg-indigo-100 text-indigo-800': selectedComplaint?.status === 'ASSIGNED',
+                'bg-purple-100 text-purple-800': selectedComplaint?.status === 'INVESTIGATING',
+                'bg-orange-100 text-orange-800': selectedComplaint?.status === 'PENDING_EVIDENCE',
+                'bg-red-100 text-red-800': selectedComplaint?.status === 'REJECTED',
+                'bg-gray-100 text-gray-800': selectedComplaint?.status === 'CLOSED',
+                'bg-green-100 text-green-800': selectedComplaint?.status === 'RESOLVED'
+              }">
+                {{selectedComplaint?.status?.replace('_', ' ') | titlecase}}
+              </span>
+          </label>
+          <select 
+            [(ngModel)]="selectedStatus"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="SUBMITTED">Submitted</option>
+            <option value="UNDER_REVIEW">Under Review</option>
+            <option value="ASSIGNED">Assigned</option>
+            <option value="INVESTIGATING">Investigating</option>
+            <option value="PENDING_EVIDENCE">Pending Evidence</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="CLOSED">Closed</option>
+            <option value="RESOLVED">Resolved</option>
+          </select>
+        </div>
+        
+        <div class="flex justify-end space-x-2">
+          <button 
+            (click)="statusModalVisible = false"
+            class="px-4 py-2 bg-gray-300 text-gray-800 font-medium rounded-md hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+          <button 
+            (click)="updateStatus()"
+            [disabled]="updatingStatus"
+            class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+          >
+            <span *ngIf="updatingStatus">Updating...</span>
+            <span *ngIf="!updatingStatus">Update</span>
+          </button>
         </div>
       </div>
     </div>
   `,
-  styles: [`
-    .status-badge {
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    .status-submitted {
-      background-color: #e5e7eb;
-      color: #4b5563;
-    }
-    .status-under-review {
-      background-color: #dbeafe;
-      color: #1e40af;
-    }
-    .status-assigned {
-      background-color: #fef3c7;
-      color: #92400e;
-    }
-    .status-investigating {
-      background-color: #c7d2fe;
-      color: #3730a3;
-    }
-    .status-pending-evidence {
-      background-color: #fee2e2;
-      color: #b91c1c;
-    }
-    .status-resolved {
-      background-color: #d1fae5;
-      color: #065f46;
-    }
-    .status-rejected {
-      background-color: #fecaca;
-      color: #991b1b;
-    }
-  `]
 })
 export class ComplaintAssignmentComponent implements OnInit {
   loading = true;
-  loadingOfficers = false;
-  submitting = false;
   complaints: Complaint[] = [];
-  officers: PoliceOfficer[] = [];
+  filteredComplaints: Complaint[] = [];
+  searchTerm = '';
+  statusFilter = '';
   
-  filters = {
-    status: null as string | null,
-    crimeType: null as string | null
-  };
-  
-  complaintStatuses: ComplaintStatus[] = [
-    { id: 'SUBMITTED', label: 'Submitted' },
-    { id: 'UNDER_REVIEW', label: 'Under Review' },
-    { id: 'ASSIGNED', label: 'Assigned' },
-    { id: 'INVESTIGATING', label: 'Investigating' },
-    { id: 'PENDING_EVIDENCE', label: 'Pending Evidence' },
-    { id: 'RESOLVED', label: 'Resolved' },
-    { id: 'REJECTED', label: 'Rejected' }
-  ];
-  
-  showAssignmentModal = false;
+  // Assignment modal
+  assignmentModalVisible = false;
   selectedComplaint: Complaint | null = null;
   selectedOfficerId: number | null = null;
-
+  loadingOfficers = false;
+  officers: PoliceOfficer[] = [];
+  assigningOfficer = false;
+  
+  // Status modal
+  statusModalVisible = false;
+  selectedStatus = '';
+  updatingStatus = false;
+  
   constructor(
     private http: HttpClient,
     private toastr: ToastrService
@@ -292,128 +277,123 @@ export class ComplaintAssignmentComponent implements OnInit {
 
   loadComplaints(): void {
     this.loading = true;
-    
-    let url = `${environment.apiUrl}/complaints`;
-    const params: { [key: string]: string } = {};
-    
-    if (this.filters.status) {
-      params['status'] = this.filters.status;
-    }
-    
-    if (this.filters.crimeType) {
-      params['crimeType'] = this.filters.crimeType;
-    }
-    
-    // Build query string
-    if (Object.keys(params).length > 0) {
-      const queryString = Object.keys(params)
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-        .join('&');
-      url = `${url}?${queryString}`;
-    }
-    
-    this.http.get<Complaint[]>(url)
+    this.http.get<Complaint[]>(`${environment.apiUrl}/api/complaints`)
       .subscribe({
         next: (data) => {
           this.complaints = data;
+          this.filteredComplaints = [...data];
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading complaints:', error);
-          this.toastr.error('Failed to load complaints');
+          console.error('Error loading complaints', error);
+          this.toastr.error('Failed to load complaints', 'Error');
           this.loading = false;
         }
       });
   }
 
-  resetFilters(): void {
-    this.filters = {
-      status: null,
-      crimeType: null
-    };
-    this.loadComplaints();
+  onSearch(): void {
+    this.applyFilters();
   }
 
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    this.filteredComplaints = this.complaints.filter(complaint => {
+      const matchesSearch = this.searchTerm === '' || 
+        complaint.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        complaint.submitterName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        (complaint.assignedOfficerName && complaint.assignedOfficerName.toLowerCase().includes(this.searchTerm.toLowerCase()));
+      
+      const matchesStatus = this.statusFilter === '' || complaint.status === this.statusFilter;
+      
+      return matchesSearch && matchesStatus;
     });
-  }
-
-  formatEnumValue(value: string): string {
-    if (!value) return '';
-    return value.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  }
-
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'SUBMITTED': return 'status-badge status-submitted';
-      case 'UNDER_REVIEW': return 'status-badge status-under-review';
-      case 'ASSIGNED': return 'status-badge status-assigned';
-      case 'INVESTIGATING': return 'status-badge status-investigating';
-      case 'PENDING_EVIDENCE': return 'status-badge status-pending-evidence';
-      case 'RESOLVED': return 'status-badge status-resolved';
-      case 'REJECTED': return 'status-badge status-rejected';
-      default: return '';
-    }
   }
 
   openAssignmentModal(complaint: Complaint): void {
     this.selectedComplaint = complaint;
-    this.selectedOfficerId = complaint.assignedOfficer?.id || null;
-    this.showAssignmentModal = true;
+    this.selectedOfficerId = complaint.assignedOfficerId;
+    this.assignmentModalVisible = true;
     this.loadOfficers();
-  }
-
-  closeAssignmentModal(): void {
-    this.showAssignmentModal = false;
-    this.selectedComplaint = null;
-    this.selectedOfficerId = null;
   }
 
   loadOfficers(): void {
     this.loadingOfficers = true;
-    this.http.get<PoliceOfficer[]>(`${environment.apiUrl}/admin/officers`)
+    this.http.get<PoliceOfficer[]>(`${environment.apiUrl}/api/officers`)
       .subscribe({
         next: (data) => {
           this.officers = data;
           this.loadingOfficers = false;
         },
         error: (error) => {
-          console.error('Error loading officers:', error);
-          this.toastr.error('Failed to load officers');
+          console.error('Error loading officers', error);
+          this.toastr.error('Failed to load officers', 'Error');
           this.loadingOfficers = false;
         }
       });
   }
 
   assignOfficer(): void {
-    if (!this.selectedComplaint || !this.selectedOfficerId) {
-      this.toastr.error('Please select an officer to assign');
-      return;
-    }
-
-    this.submitting = true;
-    this.http.post(
-      `${environment.apiUrl}/admin/complaints/${this.selectedComplaint.id}/assign/${this.selectedOfficerId}`,
-      {}
-    ).subscribe({
+    if (!this.selectedComplaint) return;
+    
+    this.assigningOfficer = true;
+    
+    this.http.patch(`${environment.apiUrl}/api/complaints/${this.selectedComplaint.id}/assign`, {
+      officerId: this.selectedOfficerId
+    }).subscribe({
       next: () => {
-        this.toastr.success('Complaint assigned successfully');
-        this.closeAssignmentModal();
+        this.toastr.success(
+          this.selectedOfficerId 
+            ? 'Complaint assigned successfully' 
+            : 'Complaint unassigned successfully', 
+          'Success'
+        );
+        this.assigningOfficer = false;
+        this.assignmentModalVisible = false;
         this.loadComplaints();
-        this.submitting = false;
       },
       error: (error) => {
-        console.error('Error assigning complaint:', error);
-        this.toastr.error('Failed to assign complaint');
-        this.submitting = false;
+        console.error('Error assigning officer', error);
+        this.toastr.error('Failed to assign officer', 'Error');
+        this.assigningOfficer = false;
       }
     });
+  }
+
+  openStatusModal(complaint: Complaint): void {
+    this.selectedComplaint = complaint;
+    this.selectedStatus = complaint.status;
+    this.statusModalVisible = true;
+  }
+
+  updateStatus(): void {
+    if (!this.selectedComplaint) return;
+    
+    this.updatingStatus = true;
+    
+    this.http.patch(`${environment.apiUrl}/api/complaints/${this.selectedComplaint.id}/status`, {
+      status: this.selectedStatus
+    }).subscribe({
+      next: () => {
+        this.toastr.success('Complaint status updated successfully', 'Success');
+        this.updatingStatus = false;
+        this.statusModalVisible = false;
+        this.loadComplaints();
+      },
+      error: (error) => {
+        console.error('Error updating status', error);
+        this.toastr.error('Failed to update status', 'Error');
+        this.updatingStatus = false;
+      }
+    });
+  }
+
+  viewComplaintDetails(complaint: Complaint): void {
+    // This would typically navigate to a detail view
+    console.log('View complaint details', complaint);
+    this.toastr.info('Complaint details view not implemented yet', 'Info');
   }
 } 

@@ -78,63 +78,90 @@ export class AuthService {
   }
 
   public isAuthenticated(): boolean {
-    const user = this.currentUserValue;
-    if (!user || !user.accessToken) {
-      console.log('Auth Service - No user or token found');
-      return false;
-    }
-
     try {
-      const tokenData = this.parseJwt(user.accessToken);
-      if (!tokenData || !tokenData.exp) {
-        console.log('Auth Service - Invalid token data (no exp field)');
+      const user = this.currentUserValue;
+      if (!user || !user.accessToken) {
+        console.log('Auth Service - No user or token found');
         return false;
       }
 
-      const expiryTime = new Date(tokenData.exp * 1000);
-      const now = new Date();
-      
-      // Log the token expiration details
-      const timeToExpiry = expiryTime.getTime() - now.getTime();
-      const minutesToExpiry = Math.floor(timeToExpiry / 60000);
-      console.log(`Auth Service - Token expires in ${minutesToExpiry} minutes (${new Date(tokenData.exp * 1000).toLocaleTimeString()})`);
-      
-      // If token is expired
-      if (expiryTime <= now) {
-        console.log('Auth Service - Token is expired');
+      // Validate token format before trying to parse
+      if (!this.isValidJwtFormat(user.accessToken)) {
+        console.log('Auth Service - Invalid token format');
+        this.handleInvalidToken();
         return false;
       }
-      
-      // If token is about to expire within 1 minute, try to refresh it
-      if (timeToExpiry < 60000) {
-        // Try to refresh the token
-        console.log('Auth Service - Token is about to expire, attempting refresh');
-        this.refreshToken().subscribe({
-          next: () => {
-            console.log('Auth Service - Token refreshed successfully');
-            return true;
-          },
-          error: (error) => {
-            console.error('Auth Service - Token refresh failed:', error);
-            this.logout();
-            return false;
-          }
-        });
+
+      try {
+        const tokenData = this.parseJwt(user.accessToken);
+        if (!tokenData || !tokenData.exp) {
+          console.log('Auth Service - Invalid token data (no exp field)');
+          this.handleInvalidToken();
+          return false;
+        }
+
+        const expiryTime = new Date(tokenData.exp * 1000);
+        const now = new Date();
+        
+        // Log the token expiration details
+        const timeToExpiry = expiryTime.getTime() - now.getTime();
+        const minutesToExpiry = Math.floor(timeToExpiry / 60000);
+        console.log(`Auth Service - Token expires in ${minutesToExpiry} minutes (${new Date(tokenData.exp * 1000).toLocaleTimeString()})`);
+        
+        // If token is expired
+        if (expiryTime <= now) {
+          console.log('Auth Service - Token is expired');
+          this.handleInvalidToken();
+          return false;
+        }
+        
+        // If token is about to expire within 1 minute, try to refresh it
+        if (timeToExpiry < 60000) {
+          // Try to refresh the token
+          console.log('Auth Service - Token is about to expire, attempting refresh');
+          this.refreshToken().subscribe({
+            next: () => {
+              console.log('Auth Service - Token refreshed successfully');
+              return true;
+            },
+            error: (error) => {
+              console.error('Auth Service - Token refresh failed:', error);
+              this.handleInvalidToken();
+              return false;
+            }
+          });
+        }
+        
+        return true;
+      } catch (e) {
+        console.error('Auth Service - Error parsing token:', e);
+        this.handleInvalidToken();
+        return false;
       }
-      
-      return true;
     } catch (e) {
-      console.error('Auth Service - Error parsing token:', e);
+      console.error('Auth Service - Error in isAuthenticated:', e);
       return false;
     }
   }
 
   public getAuthorizationHeader(): string | null {
-    const user = this.currentUserValue;
-    if (!user || !user.accessToken) {
+    try {
+      const user = this.currentUserValue;
+      if (!user || !user.accessToken) {
+        return null;
+      }
+      
+      // Ensure token is in valid JWT format before returning
+      if (!this.isValidJwtFormat(user.accessToken)) {
+        console.log('Auth Service - Invalid token format in getAuthorizationHeader');
+        return null;
+      }
+      
+      return `Bearer ${user.accessToken}`;
+    } catch (e) {
+      console.error('Auth Service - Error in getAuthorizationHeader:', e);
       return null;
     }
-    return `Bearer ${user.accessToken}`;
   }
 
   private getUserFromStorage(): User | null {
@@ -154,9 +181,20 @@ export class AuthService {
   }
 
   login(loginRequest: LoginRequest): Observable<AuthResponse> {
+    console.log('Login request:', { email: loginRequest.email, passwordProvided: !!loginRequest.password, mfaCodeProvided: !!loginRequest.mfaCode });
+    
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, loginRequest)
       .pipe(
         map(response => {
+          console.log('Login response:', { 
+            success: true, 
+            userId: response.userId,
+            role: response.role,
+            mfaEnabled: response.mfaEnabled,
+            mfaRequired: response.mfaRequired,
+            tokenProvided: !!response.accessToken 
+          });
+          
           // Only store user and set currentUser if we have tokens (not requiring MFA)
           if (response.accessToken) {
             const user: User = {
@@ -183,8 +221,18 @@ export class AuthService {
           return response;
         }),
         catchError(error => {
-          console.error('Login error:', error);
-          return throwError(() => new Error(error.error?.message || 'Login failed'));
+          console.error('Login error details:', error);
+          
+          // Improve error reporting
+          if (error.status === 403) {
+            console.log('Access forbidden - might be a CORS issue or endpoint protection');
+          } else if (error.status === 401) {
+            console.log('Authentication failed - invalid credentials');
+          } else if (error.status === 0) {
+            console.log('Server connection error - network issue or CORS');
+          }
+          
+          return throwError(() => error);
         })
       );
   }
@@ -289,6 +337,29 @@ export class AuthService {
   logout(): void {
     const user = this.currentUserValue;
     
+    // Always proceed with client-side logout regardless of server response
+    const performClientLogout = () => {
+      console.log('Completing client-side logout process');
+      // Stop the token refresh timer
+      this.stopRefreshTokenTimer();
+      
+      // Clear user data from localStorage
+      if (this.isBrowser) {
+        localStorage.removeItem('currentUser');
+      }
+      
+      // Clear user from BehaviorSubject
+      this.currentUserSubject.next(null);
+      
+      // Show success message
+      if (this.isBrowser) {
+        this.toastr.success('You have been successfully logged out');
+      }
+      
+      // Navigate to login page
+      this.router.navigate(['/auth/login'], { replaceUrl: true });
+    };
+    
     if (user && user.accessToken) {
       // Call backend logout endpoint if user is logged in
       this.http.post(`${environment.apiUrl}/auth/logout`, {}, {
@@ -296,68 +367,71 @@ export class AuthService {
       }).subscribe({
         next: () => {
           console.log('Successfully logged out on the server');
+          performClientLogout();
         },
-        error: (error) => console.error('Logout error:', error),
-        complete: () => {
-          // Always proceed with client-side logout regardless of server response
-          this.completeLogout();
+        error: (error) => {
+          console.error('Logout error:', error);
+          // Even if the server-side logout fails, proceed with client-side logout
+          performClientLogout();
         }
       });
     } else {
       // If no user or token, just do client-side logout
-      this.completeLogout();
+      performClientLogout();
     }
   }
 
   private completeLogout(): void {
-    console.log('Completing logout process');
-    // Stop the token refresh timer
-    this.stopRefreshTokenTimer();
-    
-    // Clear user data from localStorage
-    if (this.isBrowser) {
-      localStorage.removeItem('currentUser');
-    }
-    
-    // Clear user from BehaviorSubject
-    this.currentUserSubject.next(null);
-    
-    // Show success message
-    if (this.isBrowser) {
-      this.toastr.success('You have been successfully logged out');
-    }
-    
-    // Navigate to login page
-    this.router.navigate(['/auth/login'], { replaceUrl: true });
+    console.log('This method is deprecated - using performClientLogout inside logout() instead');
   }
 
   refreshToken(): Observable<AuthResponse> {
-    const user = this.currentUserValue;
-    if (!user || !user.refreshToken) {
-      return throwError(() => new Error('No refresh token available'));
-    }
+    try {
+      const user = this.currentUserValue;
+      if (!user) {
+        console.log('Auth Service - No user available for token refresh');
+        return throwError(() => new Error('No user available'));
+      }
+      
+      if (!user.refreshToken) {
+        console.log('Auth Service - No refresh token available');
+        this.handleInvalidToken();
+        return throwError(() => new Error('No refresh token available'));
+      }
 
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/refresh-token`, { refreshToken: user.refreshToken })
-      .pipe(
-        map(response => {
-          const updatedUser: User = {
-            ...user,
-            accessToken: response.accessToken,
-            refreshToken: response.refreshToken
-          };
-          
-          if (this.isBrowser) {
-            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-          }
-          this.currentUserSubject.next(updatedUser);
-          this.startRefreshTokenTimer();
-          return response;
-        }),
-        catchError(error => {
-          this.logout();
-          return throwError(() => new Error('Failed to refresh token'));
-        })
-      );
+      return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/refresh-token`, { refreshToken: user.refreshToken })
+        .pipe(
+          map(response => {
+            if (!response.accessToken || !response.refreshToken) {
+              throw new Error('Invalid response from refresh token endpoint');
+            }
+            
+            const updatedUser: User = {
+              ...user,
+              accessToken: response.accessToken,
+              refreshToken: response.refreshToken
+            };
+            
+            if (this.isBrowser) {
+              localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+            }
+            this.currentUserSubject.next(updatedUser);
+            this.startRefreshTokenTimer();
+            return response;
+          }),
+          catchError(error => {
+            console.error('Auth Service - Failed to refresh token:', error);
+            // Don't call full logout as it may cause redirect loops
+            // Just clear tokens and update the subject
+            this.handleInvalidToken();
+            return throwError(() => new Error('Failed to refresh token'));
+          })
+        );
+    } catch (error) {
+      console.error('Auth Service - Error in refreshToken:', error);
+      this.handleInvalidToken();
+      return throwError(() => new Error('Error during token refresh'));
+    }
   }
 
   updateUserProfile(userData: any): Observable<User> {
@@ -431,14 +505,63 @@ export class AuthService {
 
   private parseJwt(token: string): any {
     try {
+      // Validate token format
+      if (!this.isValidJwtFormat(token)) {
+        return null;
+      }
+      
       const base64Url = token.split('.')[1];
+      if (!base64Url) {
+        console.error('Auth Service - Token missing payload segment');
+        return null;
+      }
+      
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      return JSON.parse(jsonPayload);
+      try {
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (decodingError) {
+        console.error('Auth Service - Error decoding token payload:', decodingError);
+        return null;
+      }
     } catch (error) {
+      console.error('Auth Service - Error parsing JWT:', error);
       return null;
+    }
+  }
+  
+  // Helper to validate JWT format (should have 3 segments separated by 2 periods)
+  private isValidJwtFormat(token: string): boolean {
+    if (!token) return false;
+    
+    // JWT tokens must have exactly two periods
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.error('Auth Service - Invalid token format: expected 3 segments, found', parts.length);
+      return false;
+    }
+    
+    // Check if each segment has content
+    if (!parts[0] || !parts[1] || !parts[2]) {
+      console.error('Auth Service - Invalid token format: empty segment(s)');
+      return false;
+    }
+    
+    return true;
+  }
+  
+  // Helper to handle invalid token (clear and reset state)
+  private handleInvalidToken(): void {
+    console.log('Auth Service - Handling invalid token, clearing state');
+    // Clear only the token, not entire user data
+    if (this.isBrowser && this.currentUserValue) {
+      const user = {...this.currentUserValue};
+      delete user.accessToken;
+      delete user.refreshToken;
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      this.currentUserSubject.next(user);
     }
   }
 

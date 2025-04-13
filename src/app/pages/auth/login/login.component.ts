@@ -169,11 +169,11 @@ export class LoginComponent {
           this.toastr.success('Login successful');
           
           // Navigate based on user role
-          if (response.role === UserRole.ADMIN) {
+          if (response.role === UserRole.ADMIN || response.role === UserRole.POLICE_OFFICER) {
+            console.log('Redirecting to admin dashboard...');
             this.router.navigate(['/admin/dashboard']);
-          } else if (response.role === UserRole.POLICE_OFFICER) {
-            this.router.navigate(['/police/dashboard']);
           } else {
+            console.log('Redirecting to user dashboard...');
             this.router.navigate(['/dashboard']);
           }
         }
@@ -182,11 +182,22 @@ export class LoginComponent {
         this.isLoading = false;
         console.error('Login error:', error);
         
+        // Add detailed logging to help diagnose issues
+        console.log('Error status:', error.status);
+        console.log('Error details:', error.error);
+        
         // Handle different types of errors
         if (error.status === 401) {
           this.toastr.error('Invalid email or password');
         } else if (error.status === 403) {
-          this.toastr.error('Account is locked or requires verification');
+          // More specific handling for 403 errors
+          if (error.error && error.error.message) {
+            this.toastr.error(error.error.message);
+          } else {
+            this.toastr.error('Access forbidden. Your account may be locked or requires verification.');
+          }
+        } else if (error.status === 0) {
+          this.toastr.error('Cannot connect to the server. Please try again later.');
         } else {
           this.toastr.error(error.error?.message || error.message || 'Login failed. Please try again.');
         }

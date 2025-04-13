@@ -43,7 +43,15 @@ export class RoleGuard implements CanActivate {
       timeOut: 3000,
       closeButton: true
     });
-    this.router.navigate(['/dashboard']);
+    
+    // Redirect based on user role
+    const currentUser = this.authService.currentUserValue;
+    if (currentUser && (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.POLICE_OFFICER)) {
+      this.router.navigate(['/admin/dashboard']);
+    } else {
+      this.router.navigate(['/dashboard']);
+    }
+    
     return false;
   }
 } 

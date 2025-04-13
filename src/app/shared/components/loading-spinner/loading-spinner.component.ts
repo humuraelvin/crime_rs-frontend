@@ -6,36 +6,88 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="flex justify-center items-center">
-      <div
-        [ngClass]="getSpinnerClasses()"
-        class="inline-block animate-spin rounded-full border-t-transparent border-solid"
-        role="status"
-      >
-        <span class="sr-only">Loading...</span>
+    <div class="flex justify-center">
+      <div class="spinner" [ngClass]="sizeClasses">
+        <div class="bounce1" [ngStyle]="{ 'background-color': colorClass }"></div>
+        <div class="bounce2" [ngStyle]="{ 'background-color': colorClass }"></div>
+        <div class="bounce3" [ngStyle]="{ 'background-color': colorClass }"></div>
       </div>
     </div>
   `,
-  styles: [],
+  styles: [`
+    .spinner {
+      text-align: center;
+    }
+    
+    .spinner > div {
+      width: 18px;
+      height: 18px;
+      border-radius: 100%;
+      display: inline-block;
+      -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+      animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+      margin: 0 3px;
+    }
+    
+    .spinner.sm > div {
+      width: 10px;
+      height: 10px;
+    }
+    
+    .spinner.md > div {
+      width: 14px;
+      height: 14px;
+    }
+    
+    .spinner.lg > div {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .spinner .bounce1 {
+      -webkit-animation-delay: -0.32s;
+      animation-delay: -0.32s;
+    }
+    
+    .spinner .bounce2 {
+      -webkit-animation-delay: -0.16s;
+      animation-delay: -0.16s;
+    }
+    
+    @-webkit-keyframes sk-bouncedelay {
+      0%, 80%, 100% { -webkit-transform: scale(0) }
+      40% { -webkit-transform: scale(1.0) }
+    }
+    
+    @keyframes sk-bouncedelay {
+      0%, 80%, 100% { 
+        -webkit-transform: scale(0);
+        transform: scale(0);
+      } 40% { 
+        -webkit-transform: scale(1.0);
+        transform: scale(1.0);
+      }
+    }
+  `]
 })
 export class LoadingSpinnerComponent {
-  @Input() size: 'sm' | 'md' | 'lg' | 'xl' = 'md';
+  @Input() size: 'sm' | 'md' | 'lg' = 'md';
   @Input() color: 'primary' | 'secondary' | 'white' = 'primary';
-
-  getSpinnerClasses(): string {
-    const sizeClasses = {
-      sm: 'w-4 h-4 border-2',
-      md: 'w-8 h-8 border-4',
-      lg: 'w-12 h-12 border-4',
-      xl: 'w-16 h-16 border-4',
-    };
-
-    const colorClasses = {
-      primary: 'border-blue-600',
-      secondary: 'border-gray-600',
-      white: 'border-white',
-    };
-
-    return `${sizeClasses[this.size]} ${colorClasses[this.color]}`;
+  
+  get sizeClasses(): string {
+    return this.size;
+  }
+  
+  get colorClass(): string {
+    switch (this.color) {
+      case 'primary':
+        return '#3B82F6'; // blue-500
+      case 'secondary':
+        return '#6B7280'; // gray-500
+      case 'white':
+        return '#FFFFFF';
+      default:
+        return '#3B82F6';
+    }
   }
 } 

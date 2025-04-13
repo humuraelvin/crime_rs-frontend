@@ -3,12 +3,18 @@ import { AdminLayoutComponent } from './layout/admin-layout.component';
 import { DEPARTMENT_ROUTES } from './departments/department.routes';
 import { OFFICER_ROUTES } from './officers/officers.routes';
 import { ADMIN_COMPLAINT_ROUTES } from './complaints/complaints.routes';
+import { AuthGuard } from '../../core/guards/auth.guard';
+import { RoleGuard } from '../../core/guards/role.guard';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     component: AdminLayoutComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { 
+      roles: ['ADMIN', 'POLICE_OFFICER'] 
+    },
     children: [
       {
         path: '',
@@ -33,7 +39,11 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'users',
-        loadComponent: () => import('./users/user-management.component').then(m => m.UserManagementComponent)
+        loadComponent: () => import('./users/user-management.component').then(m => m.UserManagementComponent),
+        data: { 
+          roles: ['ADMIN'] 
+        },
+        canActivate: [RoleGuard]
       },
       {
         path: 'reports',
