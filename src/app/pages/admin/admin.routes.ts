@@ -15,5 +15,21 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'settings',
     component: SystemSettingsComponent
+  },
+  {
+    path: 'departments',
+    loadChildren: () => import('./departments/departments.routes').then(m => m.DEPARTMENT_ROUTES)
+  },
+  {
+    path: 'officers',
+    loadChildren: () => import('./officers/officers.routes').then(m => m.OFFICER_ROUTES)
+  },
+  {
+    path: 'complaints',
+    loadChildren: () => import('./complaints/complaints.routes').then(m => m.ADMIN_COMPLAINT_ROUTES)
+  },
+  {
+    path: 'reports',
+    loadChildren: () => import('./reports/reports.routes').then(m => m.REPORTS_ROUTES)
   }
 ]; 
