@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models/user.model';
+import { environment } from '@environments/environment';
 
 @Component({
   selector: 'app-complaint-details',
@@ -41,9 +42,9 @@ import { UserRole } from '../../../core/models/user.model';
                 </span>
                 
                 <!-- Status Update Dropdown for Admin/Police -->
-                <div *ngIf="canManageComplaints()" class="relative inline-block">
+                <div *ngIf="canManageComplaints()" class="relative inline-block dropdown-container">
                   <button 
-                    (click)="toggleStatusDropdown()" 
+                    (click)="toggleStatusDropdown($event)" 
                     class="px-3 py-1 text-sm font-medium text-blue-600 border border-blue-600 rounded hover:bg-blue-50 focus:outline-none"
                     type="button">
                     Update Status
@@ -98,14 +99,17 @@ import { UserRole } from '../../../core/models/user.model';
           
           <div *ngIf="hasEvidences()" class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Evidence & Attachments</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div *ngFor="let evidence of complaint.evidences" class="border rounded-lg p-2">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div *ngFor="let evidence of complaint.evidences" class="border rounded-lg p-3 bg-gray-50">
                 <div *ngIf="isImageFile(evidence.fileUrl)" class="mb-2">
-                  <img [src]="evidence.fileUrl" alt="Evidence" class="w-full h-auto rounded">
+                  <img [src]="evidence.fileUrl" alt="Evidence" class="w-full h-auto rounded object-contain mb-2" style="max-height: 300px;">
                 </div>
-                <a [href]="evidence.fileUrl" target="_blank" class="text-sm text-blue-600 hover:text-blue-800">
-                  {{ getFileName(evidence.fileUrl) }}
-                </a>
+                <div class="text-center">
+                  <p class="text-sm text-gray-500 mb-1">{{ getFileName(evidence.fileUrl) }}</p>
+                  <a [href]="evidence.fileUrl" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    View Full Size
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -149,6 +153,13 @@ import { UserRole } from '../../../core/models/user.model';
     /* Clickaway listener for dropdown */
     :host {
       display: block;
+    }
+    
+    /* Image styles */
+    img {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
     }
   `]
 })
@@ -252,6 +263,23 @@ export class ComplaintDetailsComponent implements OnInit {
     this.complaintService.getComplaintById(this.complaintId).subscribe({
       next: (data) => {
         this.complaint = data;
+        
+        // Update the evidence URLs to use the direct file endpoint
+        if (this.complaint && this.complaint.evidences) {
+          this.complaint.evidences.forEach(evidence => {
+            if (evidence.fileUrl) {
+              // Extract just the filename from the path
+              const fileName = this.getFileName(evidence.fileUrl);
+              console.log('Original URL:', evidence.fileUrl);
+              console.log('Extracted filename:', fileName);
+              
+              // Create direct URL to the file endpoint
+              evidence.fileUrl = `${environment.apiUrl}/files/${fileName}`;
+              console.log('New URL:', evidence.fileUrl);
+            }
+          });
+        }
+        
         this.loading = false;
       },
       error: (error) => {
@@ -289,11 +317,26 @@ export class ComplaintDetailsComponent implements OnInit {
   
   isImageFile(url: string): boolean {
     if (!url) return false;
-    return /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(url);
+    
+    // Check for common image extensions
+    const lowercaseUrl = url.toLowerCase();
+    return lowercaseUrl.endsWith('.jpg') || 
+           lowercaseUrl.endsWith('.jpeg') || 
+           lowercaseUrl.endsWith('.png') || 
+           lowercaseUrl.endsWith('.gif') || 
+           lowercaseUrl.endsWith('.webp') || 
+           lowercaseUrl.endsWith('.bmp');
   }
   
   getFileName(url: string): string {
     if (!url) return 'Attachment';
+    
+    // Remove any URL parameters
+    url = url.split('?')[0];
+    
+    // Handle path formats:
+    // 1. /uploads/filename.jpg
+    // 2. http://domain.com/path/filename.jpg
     const parts = url.split('/');
     return parts[parts.length - 1];
   }

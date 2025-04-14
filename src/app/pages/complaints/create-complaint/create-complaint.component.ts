@@ -7,6 +7,7 @@ import { ComplaintService, ComplaintCreateRequest } from '../../../core/services
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '@environments/environment';
 import { NgZone } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-create-complaint',
@@ -23,14 +24,18 @@ export class CreateComplaintComponent implements OnInit {
   loading = false;
   submitted = false;
   userId: number | null = null;
+  apiUrl: string;
 
   constructor(
     private formBuilder: FormBuilder,
     private router: Router,
     private complaintService: ComplaintService,
     private toastr: ToastrService,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private http: HttpClient
+  ) {
+    this.apiUrl = environment.apiUrl;
+  }
 
   ngOnInit() {
     this.initForm();
@@ -132,9 +137,12 @@ export class CreateComplaintComponent implements OnInit {
       formData.append('files', complaintData.evidenceFiles[0]);
     }
 
-    // Use a specialized service method for file uploads if available
-    // For now, using the regular method
-    this.complaintService.createComplaint(complaintData)
+    // Use a direct API call with proper authorization header
+    const headers = {
+      'Authorization': `Bearer ${this.authService.getToken()}`
+    };
+
+    this.http.post<any>(`${this.apiUrl}/complaints/with-evidence`, formData, { headers })
       .subscribe({
         next: (response) => {
           this.handleSuccess(response.id);
