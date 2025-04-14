@@ -31,8 +31,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['ADMIN', 'POLICE_OFFICER'] },
+    canActivate: [AuthGuard],
     children: ADMIN_ROUTES
   },
   {

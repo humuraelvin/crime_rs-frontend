@@ -12,6 +12,9 @@ import { LOCALE_ID } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeEn from '@angular/common/locales/en';
 
+// Required for JIT compilation
+import '@angular/compiler';
+
 // Register locale data
 registerLocaleData(localeEn, 'en');
 
@@ -27,7 +30,7 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(
       BrowserAnimationsModule,
       ToastrModule.forRoot({
-        timeOut: 3000,
+        timeOut: 4000,
         positionClass: 'toast-top-right',
         preventDuplicates: true,
         progressBar: true,

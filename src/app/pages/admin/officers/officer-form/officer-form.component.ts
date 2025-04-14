@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 
 interface Department {
   id: number;
@@ -148,9 +148,10 @@ interface PoliceOfficer {
                   id="departmentId"
                   formControlName="departmentId"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  [class.border-red-500]="officerForm.get('departmentId')?.invalid && officerForm.get('departmentId')?.touched"
                 >
-                  <option [ngValue]="null" disabled>Select department</option>
-                  <option *ngFor="let dept of departments" [ngValue]="dept.id">{{ dept.name }}</option>
+                  <option [ngValue]="null" disabled selected>Select department</option>
+                  <option *ngFor="let dept of departments" [ngValue]="dept.id">{{ dept.name }} (ID: {{dept.id}})</option>
                 </select>
                 <div *ngIf="officerForm.get('departmentId')?.invalid && officerForm.get('departmentId')?.touched" class="text-red-600 text-sm mt-1">
                   Department is required
@@ -261,13 +262,15 @@ export class OfficerFormComponent implements OnInit {
   }
 
   initForm(): void {
+    // Initialize with default values
     this.officerForm = this.fb.group({
       firstName: ['', [Validators.required]],
       lastName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: [''],
-      password: this.isEditMode ? null : ['', [Validators.required, Validators.minLength(8)]],
+      password: this.isEditMode ? [''] : ['', [Validators.required, Validators.minLength(8)]],
       badgeNumber: ['', [Validators.required]],
+      // Initialize with null but will be set when departments are loaded
       departmentId: [null, [Validators.required]],
       rank: ['', [Validators.required]],
       specialization: [''],
@@ -281,7 +284,18 @@ export class OfficerFormComponent implements OnInit {
     this.http.get<Department[]>(`${environment.apiUrl}/admin/departments`)
       .subscribe({
         next: (departments) => {
+          console.log('Loaded departments:', departments);
           this.departments = departments;
+          
+          // If there are departments, set the first one as default for new officers
+          if (departments.length > 0 && !this.isEditMode) {
+            // Force department ID to be a number
+            this.officerForm.patchValue({
+              departmentId: departments[0].id
+            });
+            console.log('Default department set to:', departments[0].id, 'Type:', typeof departments[0].id);
+          }
+          
           if (!this.isEditMode) {
             this.loading = false;
           }
@@ -297,6 +311,7 @@ export class OfficerFormComponent implements OnInit {
   }
 
   loadOfficer(id: number): void {
+    this.loading = true;
     this.http.get<PoliceOfficer>(`${environment.apiUrl}/admin/officers/${id}`)
       .subscribe({
         next: (officer) => {
@@ -325,40 +340,92 @@ export class OfficerFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.officerForm.invalid) {
-      this.officerForm.markAllAsTouched();
+      this.markFormGroupTouched(this.officerForm);
+      this.toastr.warning('Please fill all required fields correctly');
+      return;
+    }
+
+    // Check specifically for department ID and make sure it's a valid number
+    const departmentId = this.officerForm.get('departmentId')?.value;
+    console.log('Department ID before conversion:', departmentId, 'Type:', typeof departmentId);
+    
+    if (!departmentId) {
+      this.toastr.error('Department selection is required');
+      this.officerForm.get('departmentId')?.markAsTouched();
+      return;
+    }
+
+    // Ensure that the department ID is a valid number
+    if (isNaN(Number(departmentId))) {
+      this.toastr.error('Invalid department ID format');
+      this.officerForm.get('departmentId')?.markAsTouched();
       return;
     }
 
     this.submitting = true;
-    const officerData = { ...this.officerForm.value };
     
-    // Remove password if it's null or empty (edit mode)
-    if (!officerData.password) {
-      delete officerData.password;
+    // Create a clean officer data object manually with correct format for backend
+    const officerData = {
+      firstName: this.officerForm.get('firstName')?.value,
+      lastName: this.officerForm.get('lastName')?.value,
+      email: this.officerForm.get('email')?.value,
+      phoneNumber: this.officerForm.get('phoneNumber')?.value,
+      badgeNumber: this.officerForm.get('badgeNumber')?.value,
+      // Use the exact ID number for the department
+      departmentId: Number(departmentId),
+      rank: this.officerForm.get('rank')?.value,
+      specialization: this.officerForm.get('specialization')?.value || '',
+      contactInfo: this.officerForm.get('contactInfo')?.value || '',
+      jurisdiction: this.officerForm.get('jurisdiction')?.value || ''
+    };
+    
+    // Add password only for create mode
+    if (!this.isEditMode && this.officerForm.get('password')?.value) {
+      (officerData as any).password = this.officerForm.get('password')?.value;
     }
 
+    console.log('Sending officer data:', JSON.stringify(officerData));
+
+    // For debugging - manually check backend directly
+    console.log(`If you want to test this directly in curl:`);
+    console.log(`curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -d '${JSON.stringify(officerData)}' http://localhost:8080/api/v1/admin/officers`);
+
     const request = this.isEditMode
-      ? this.http.put<PoliceOfficer>(`${environment.apiUrl}/admin/officers/${this.officerId}`, officerData)
-      : this.http.post<PoliceOfficer>(`${environment.apiUrl}/admin/officers`, officerData);
+      ? this.http.put(`${environment.apiUrl}/admin/officers/${this.officerId}`, officerData)
+      : this.http.post(`${environment.apiUrl}/admin/officers`, officerData);
 
     request.subscribe({
-      next: () => {
+      next: (response) => {
+        console.log('Server response:', response);
         this.toastr.success(`Officer ${this.isEditMode ? 'updated' : 'created'} successfully`);
         this.router.navigate(['/admin/officers']);
       },
       error: (error) => {
         console.error(`Error ${this.isEditMode ? 'updating' : 'creating'} officer:`, error);
+        console.error('Error details:', error.error);
+        this.submitting = false;
         
-        // Handle specific error messages from the server
+        // Enhanced error handler with more specific messages
         if (error.error?.message?.includes('Email is already in use')) {
           this.toastr.error('Email address is already in use');
         } else if (error.error?.message?.includes('Badge number is already in use')) {
           this.toastr.error('Badge number is already in use');
+        } else if (error.error?.message?.includes('department')) {
+          // This message is specific to department issues
+          this.toastr.error('Department error: Please ensure you have selected a valid department');
         } else {
-          this.toastr.error(`Failed to ${this.isEditMode ? 'update' : 'create'} officer`);
+          this.toastr.error(error.error?.message || `Failed to ${this.isEditMode ? 'update' : 'create'} officer`);
         }
-        
-        this.submitting = false;
+      }
+    });
+  }
+
+  markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
       }
     });
   }

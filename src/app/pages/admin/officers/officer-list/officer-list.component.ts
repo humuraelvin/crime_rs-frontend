@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 
 interface PoliceOfficer {
   id: number;
@@ -104,8 +104,8 @@ export class OfficerListComponent implements OnInit {
     this.loading = true;
     this.http.get<PoliceOfficer[]>(`${environment.apiUrl}/admin/officers`)
       .subscribe({
-        next: (data) => {
-          this.officers = data;
+        next: (officers) => {
+          this.officers = officers;
           this.loading = false;
         },
         error: (error) => {
@@ -118,11 +118,11 @@ export class OfficerListComponent implements OnInit {
 
   deleteOfficer(officer: PoliceOfficer): void {
     if (officer.activeCasesCount > 0) {
-      this.toastr.error('Cannot delete officer with assigned cases');
+      this.toastr.error(`Cannot delete officer with ${officer.activeCasesCount} active cases`);
       return;
     }
 
-    if (confirm(`Are you sure you want to delete the officer "${officer.firstName} ${officer.lastName}"?`)) {
+    if (confirm(`Are you sure you want to delete ${officer.firstName} ${officer.lastName}?`)) {
       this.http.delete(`${environment.apiUrl}/admin/officers/${officer.id}`)
         .subscribe({
           next: () => {

@@ -5,14 +5,17 @@ import { DepartmentFormComponent } from './department-form/department-form.compo
 export const DEPARTMENT_ROUTES: Routes = [
   {
     path: '',
-    component: DepartmentListComponent
+    component: DepartmentListComponent,
+    title: 'Departments'
   },
   {
-    path: 'create',
-    component: DepartmentFormComponent
+    path: 'new',
+    component: DepartmentFormComponent,
+    title: 'Add Department'
   },
   {
     path: 'edit/:id',
-    component: DepartmentFormComponent
+    component: DepartmentFormComponent,
+    title: 'Edit Department'
   }
 ]; 

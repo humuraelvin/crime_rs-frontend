@@ -168,14 +168,17 @@ export class LoginComponent {
         } else {
           this.toastr.success('Login successful');
           
-          // Navigate based on user role
-          if (response.role === UserRole.ADMIN || response.role === UserRole.POLICE_OFFICER) {
-            console.log('Redirecting to admin dashboard...');
-            this.router.navigate(['/admin/dashboard']);
-          } else {
-            console.log('Redirecting to user dashboard...');
-            this.router.navigate(['/dashboard']);
-          }
+          // Add a slight delay before navigation to ensure the auth state is fully updated
+          setTimeout(() => {
+            // Navigate based on user role
+            if (response.role === UserRole.ADMIN || response.role === UserRole.POLICE_OFFICER) {
+              console.log('Redirecting to admin dashboard...');
+              this.router.navigate(['/admin']);
+            } else {
+              console.log('Redirecting to user dashboard...');
+              this.router.navigate(['/dashboard']);
+            }
+          }, 100);
         }
       },
       error: (error) => {

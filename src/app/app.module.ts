@@ -10,13 +10,11 @@ import { CoreModule } from './core/core.module';
 import { SharedModule } from './shared/shared.module';
 
 /**
- * @deprecated This module is being kept for backward compatibility during migration to standalone components.
+ * This module is being kept for backward compatibility during migration to standalone components.
  * New development should use the standalone component approach with app.config.ts.
  */
 @NgModule({
-  declarations: [
-    // AppComponent is now standalone
-  ],
+  declarations: [],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -24,13 +22,13 @@ import { SharedModule } from './shared/shared.module';
     ToastrModule.forRoot({
       timeOut: 3000,
       positionClass: 'toast-top-right',
-      preventDuplicates: true
+      preventDuplicates: true,
     }),
     CoreModule,
     SharedModule,
     AppRoutingModule
   ],
   providers: [],
-  bootstrap: []  // No longer bootstrapping from here, using bootstrapApplication in main.ts
+  bootstrap: []
 })
 export class AppModule { } 

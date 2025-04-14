@@ -11,32 +11,34 @@ const routes: Routes = [
   },
   {
     path: 'auth',
-    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
+    loadChildren: () => import('./pages/auth/auth.routes').then(m => m.AUTH_ROUTES)
   },
   {
     path: 'dashboard',
-    loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule),
+    loadChildren: () => import('./pages/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES),
     canActivate: [AuthGuard]
   },
-  {
-    path: 'reports',
-    loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'map',
-    loadChildren: () => import('./features/map/map.module').then(m => m.MapModule),
-    canActivate: [AuthGuard]
-  },
+  // Reports module is missing, commenting out temporarily
+  // {
+  //   path: 'reports',
+  //   loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule),
+  //   canActivate: [AuthGuard]
+  // },
+  // Map module is missing, commenting out temporarily
+  // {
+  //   path: 'map',
+  //   loadChildren: () => import('./features/map/map.module').then(m => m.MapModule),
+  //   canActivate: [AuthGuard]
+  // },
   {
     path: 'admin',
-    loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule),
+    loadChildren: () => import('./pages/admin/admin.routes').then(m => m.ADMIN_ROUTES),
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['ROLE_ADMIN'] }
   },
   {
     path: 'profile',
-    loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule),
+    loadChildren: () => import('./pages/profile/profile.routes').then(m => m.PROFILE_ROUTES),
     canActivate: [AuthGuard]
   },
   {

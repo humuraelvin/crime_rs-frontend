@@ -58,7 +58,14 @@ export const errorInterceptor: HttpInterceptorFn = (
       } else {
         // Handle any other errors
         const errorMessage = error.error?.message || 'An unknown error occurred';
-        toastr.error(errorMessage);
+        
+        // Specific handling for department null error
+        if (errorMessage.includes('null value in column "department"')) {
+          toastr.error('Department selection issue. Please select a valid department and try again.');
+          console.error('Department null error details:', error.error);
+        } else {
+          toastr.error(errorMessage);
+        }
       }
       
       return throwError(() => error);

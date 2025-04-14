@@ -3,19 +3,16 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 
 interface Department {
-  id: number;
+  id?: number;
   name: string;
   description: string;
   location: string;
   contactInfo: string;
-  officerCount: number;
-  createdAt: string;
-  updatedAt: string;
 }
 
 @Component({
@@ -39,68 +36,79 @@ interface Department {
 
         <form *ngIf="!loading" [formGroup]="departmentForm" (ngSubmit)="onSubmit()" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="form-group">
-              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Department Name *</label>
-              <input
-                type="text"
-                id="name"
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Department Name <span class="text-red-600">*</span></label>
+              <input 
+                type="text" 
+                id="name" 
                 formControlName="name"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter department name"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
-              <div *ngIf="departmentForm.get('name')?.invalid && departmentForm.get('name')?.touched" class="text-red-600 text-sm mt-1">
-                Department name is required
+              <div *ngIf="submitted && f['name'].errors" class="mt-1 text-sm text-red-600">
+                <div *ngIf="f['name'].errors['required']">Name is required</div>
               </div>
             </div>
-            
-            <div class="form-group">
-              <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input
-                type="text"
-                id="location"
+
+            <div>
+              <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location <span class="text-red-600">*</span></label>
+              <input 
+                type="text" 
+                id="location" 
                 formControlName="location"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter department location"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
+              <div *ngIf="submitted && f['location'].errors" class="mt-1 text-sm text-red-600">
+                <div *ngIf="f['location'].errors['required']">Location is required</div>
+              </div>
             </div>
           </div>
-          
-          <div class="form-group">
-            <label for="contactInfo" class="block text-sm font-medium text-gray-700 mb-1">Contact Information</label>
-            <input
-              type="text"
-              id="contactInfo"
-              formControlName="contactInfo"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter contact information"
-            >
-          </div>
-          
-          <div class="form-group">
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              id="description"
+
+          <div>
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description <span class="text-red-600">*</span></label>
+            <textarea 
+              id="description" 
               formControlName="description"
               rows="4"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter department description"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             ></textarea>
+            <div *ngIf="submitted && f['description'].errors" class="mt-1 text-sm text-red-600">
+              <div *ngIf="f['description'].errors['required']">Description is required</div>
+            </div>
           </div>
-          
-          <div class="flex justify-end">
+
+          <div>
+            <label for="contactInfo" class="block text-sm font-medium text-gray-700 mb-1">Contact Information <span class="text-red-600">*</span></label>
+            <textarea 
+              id="contactInfo" 
+              formControlName="contactInfo"
+              rows="3"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            ></textarea>
+            <div *ngIf="submitted && f['contactInfo'].errors" class="mt-1 text-sm text-red-600">
+              <div *ngIf="f['contactInfo'].errors['required']">Contact information is required</div>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-3">
             <button
               type="button"
               routerLink="/admin/departments"
-              class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 mr-4"
+              class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              [disabled]="departmentForm.invalid || submitting"
+              [disabled]="isSubmitting"
+              class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
             >
-              {{ submitting ? 'Saving...' : 'Save Department' }}
+              <span *ngIf="isSubmitting" class="mr-2">
+                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              {{ isEditMode ? 'Update' : 'Create' }} Department
             </button>
           </div>
         </form>
@@ -112,12 +120,13 @@ interface Department {
 export class DepartmentFormComponent implements OnInit {
   departmentForm!: FormGroup;
   isEditMode = false;
-  departmentId: number | null = null;
   loading = false;
-  submitting = false;
+  submitted = false;
+  isSubmitting = false;
+  departmentId?: number;
 
   constructor(
-    private fb: FormBuilder,
+    private formBuilder: FormBuilder,
     private http: HttpClient,
     private router: Router,
     private route: ActivatedRoute,
@@ -126,21 +135,26 @@ export class DepartmentFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.isEditMode = true;
-      this.departmentId = +id;
-      this.loadDepartment(this.departmentId);
-    }
+
+    // Check if we're in edit mode
+    this.route.params.subscribe(params => {
+      if (params['id']) {
+        this.departmentId = +params['id'];
+        this.isEditMode = true;
+        this.loadDepartment(this.departmentId);
+      }
+    });
   }
 
+  // Getter for easy access to form fields
+  get f() { return this.departmentForm.controls; }
+
   initForm(): void {
-    this.departmentForm = this.fb.group({
+    this.departmentForm = this.formBuilder.group({
       name: ['', [Validators.required]],
-      description: [''],
-      location: [''],
-      contactInfo: ['']
+      description: ['', [Validators.required]],
+      location: ['', [Validators.required]],
+      contactInfo: ['', [Validators.required]]
     });
   }
 
@@ -158,37 +172,54 @@ export class DepartmentFormComponent implements OnInit {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading department:', error);
-          this.toastr.error('Failed to load department');
           this.loading = false;
-          this.router.navigate(['/admin/departments']);
+          this.toastr.error('Failed to load department details');
+          console.error('Error loading department:', error);
         }
       });
   }
 
   onSubmit(): void {
+    this.submitted = true;
+
+    // Stop here if form is invalid
     if (this.departmentForm.invalid) {
-      this.departmentForm.markAllAsTouched();
       return;
     }
 
-    this.submitting = true;
-    const departmentData = this.departmentForm.value;
+    this.isSubmitting = true;
+    const departmentData = this.departmentForm.value as Department;
 
-    const request = this.isEditMode
-      ? this.http.put<Department>(`${environment.apiUrl}/admin/departments/${this.departmentId}`, departmentData)
-      : this.http.post<Department>(`${environment.apiUrl}/admin/departments`, departmentData);
-
-    request.subscribe({
-      next: () => {
-        this.toastr.success(`Department ${this.isEditMode ? 'updated' : 'created'} successfully`);
-        this.router.navigate(['/admin/departments']);
-      },
-      error: (error) => {
-        console.error(`Error ${this.isEditMode ? 'updating' : 'creating'} department:`, error);
-        this.toastr.error(`Failed to ${this.isEditMode ? 'update' : 'create'} department`);
-        this.submitting = false;
-      }
-    });
+    if (this.isEditMode && this.departmentId) {
+      // Update existing department
+      this.http.put<Department>(`${environment.apiUrl}/admin/departments/${this.departmentId}`, departmentData)
+        .subscribe({
+          next: () => {
+            this.isSubmitting = false;
+            this.toastr.success('Department updated successfully');
+            this.router.navigate(['/admin/departments']);
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            this.toastr.error('Failed to update department');
+            console.error('Error updating department:', error);
+          }
+        });
+    } else {
+      // Create new department
+      this.http.post<Department>(`${environment.apiUrl}/admin/departments`, departmentData)
+        .subscribe({
+          next: () => {
+            this.isSubmitting = false;
+            this.toastr.success('Department created successfully');
+            this.router.navigate(['/admin/departments']);
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            this.toastr.error('Failed to create department');
+            console.error('Error creating department:', error);
+          }
+        });
+    }
   }
 } 

@@ -1,6 +1,7 @@
-import express from 'express';
+import * as express from 'express';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Request, Response, NextFunction } from 'express';
 
 const serverDistFolder = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDistFolder, '../browser');
@@ -33,7 +34,7 @@ app.use(
 /**
  * Handle all other requests by rendering the Angular application.
  */
-app.use('/**', (req, res, next) => {
+app.use('/**', (req: Request, res: Response, next: NextFunction) => {
   // Handle the request
   next();
 });
