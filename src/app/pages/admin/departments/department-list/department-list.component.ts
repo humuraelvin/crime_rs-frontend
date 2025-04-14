@@ -43,7 +43,7 @@ interface PagedResponse {
           <ol class="list-decimal pl-5 space-y-2">
             <li>Check your <code>AdminServiceImpl.java</code> file</li>
             <li>Both <code>getAllDepartments()</code> and <code>getAllDepartmentsPaged()</code> methods should use the repository's <code>findAllWithOfficers()</code> method</li>
-            <li>Ensure both methods have the <code>@Transactional</code> annotation</li>
+            <li>Ensure both methods have the <code>&#64;Transactional</code> annotation</li>
             <li>Restart your backend service after making these changes</li>
           </ol>
           <div class="mt-3">

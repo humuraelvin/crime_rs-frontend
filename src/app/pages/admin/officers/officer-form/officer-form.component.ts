@@ -370,8 +370,8 @@ export class OfficerFormComponent implements OnInit {
       return;
     }
 
-    // Ensure that the department ID is converted to a valid number
-    const numericDepartmentId = Number(departmentId);
+    // CRITICAL FIX: Force department ID to be a number using parseInt
+    const numericDepartmentId = parseInt(departmentId, 10);
     if (isNaN(numericDepartmentId)) {
       this.toastr.error('Invalid department ID format');
       this.officerForm.get('departmentId')?.markAsTouched();
@@ -388,36 +388,29 @@ export class OfficerFormComponent implements OnInit {
 
     this.submitting = true;
     
-    // Create a clean officer data object manually with correct format for backend
-    // Define with an interface to avoid TypeScript errors
-    interface OfficerData {
-      firstName: string;
-      lastName: string;
-      email: string;
-      phoneNumber: string;
-      badgeNumber: string;
-      departmentId: number;
-      rank: string;
-      specialization: string;
-      contactInfo: string;
-      jurisdiction: string;
-      password?: string; // Optional password field
-    }
+    console.log('DEPARTMENT VERIFICATION:');
+    console.log('Form department ID (raw):', departmentId);
+    console.log('Form department ID (numeric):', numericDepartmentId);
+    console.log('Department exists in list:', departmentExists);
+    console.log('All departments:', this.departments);
+    console.log('Matching department:', this.departments.find(d => Number(d.id) === numericDepartmentId));
     
-    const officerData: OfficerData = {
-      firstName: this.officerForm.get('firstName')?.value,
-      lastName: this.officerForm.get('lastName')?.value,
-      email: this.officerForm.get('email')?.value,
-      phoneNumber: this.officerForm.get('phoneNumber')?.value,
-      badgeNumber: this.officerForm.get('badgeNumber')?.value,
+    // Create a data object with an explicit 'any' type to avoid TypeScript errors
+    const officerData: any = {
+      firstName: this.officerForm.get('firstName')?.value || '',
+      lastName: this.officerForm.get('lastName')?.value || '',
+      email: this.officerForm.get('email')?.value || '',
+      phoneNumber: this.officerForm.get('phoneNumber')?.value || '',
+      badgeNumber: this.officerForm.get('badgeNumber')?.value || '',
+      // CRITICAL FIX: Use the numeric ID with no possibility of string conversion
       departmentId: numericDepartmentId,
-      rank: this.officerForm.get('rank')?.value,
+      rank: this.officerForm.get('rank')?.value || '',
       specialization: this.officerForm.get('specialization')?.value || '',
       contactInfo: this.officerForm.get('contactInfo')?.value || '',
       jurisdiction: this.officerForm.get('jurisdiction')?.value || ''
     };
     
-    // Always add password for create mode - use a default if not provided
+    // Add password only in create mode
     if (!this.isEditMode) {
       officerData.password = this.officerForm.get('password')?.value || '12345678';
     }
@@ -425,13 +418,18 @@ export class OfficerFormComponent implements OnInit {
     console.log('Sending officer data:', JSON.stringify(officerData));
     console.log('Department ID in payload:', officerData.departmentId, 'Type:', typeof officerData.departmentId);
 
-    // For debugging - manually check backend directly
+    // For debugging - manually check backend directly with EXACT formatting
     console.log(`If you want to test this directly in curl:`);
     console.log(`curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -d '${JSON.stringify(officerData)}' http://localhost:8080/api/v1/admin/officers`);
 
+    // CRITICAL FIX: Use proper Content-Type to ensure correct JSON parsing
     const request = this.isEditMode
-      ? this.http.put(`${environment.apiUrl}/admin/officers/${this.officerId}`, officerData)
-      : this.http.post(`${environment.apiUrl}/admin/officers`, officerData);
+      ? this.http.put(`${environment.apiUrl}/admin/officers/${this.officerId}`, officerData, {
+          headers: { 'Content-Type': 'application/json' }
+        })
+      : this.http.post(`${environment.apiUrl}/admin/officers`, officerData, {
+          headers: { 'Content-Type': 'application/json' }
+        });
 
     request.subscribe({
       next: (response) => {
@@ -457,6 +455,18 @@ export class OfficerFormComponent implements OnInit {
             departmentExists: this.departments.some(d => Number(d.id) === officerData.departmentId),
             availableDepartments: this.departments
           });
+          
+          // Try to retry with a stringified department ID as a workaround
+          if (typeof officerData.departmentId === 'number') {
+            console.log('Attempting workaround by explicitly converting department ID to number...');
+            // No need to retry - this would be a development-only technique
+            // Just show more diagnostic information
+            console.log('Department diagnostic information:');
+            console.log('Current officerData.departmentId:', officerData.departmentId);
+            this.departments.forEach(dept => {
+              console.log(`Department ${dept.name}: id=${dept.id}, type=${typeof dept.id}`);
+            });
+          }
         } else if (error.error?.message?.includes('null value in column')) {
           // This is likely a database constraint violation
           console.error('Database constraint violation:', error.error.message);

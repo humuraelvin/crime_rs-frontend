@@ -3,6 +3,8 @@ import { AdminLayoutComponent } from './layout/admin-layout.component';
 import { DEPARTMENT_ROUTES } from './departments/departments.routes';
 import { OFFICER_ROUTES } from './officers/officers.routes';
 import { ADMIN_COMPLAINT_ROUTES } from './complaints/complaints.routes';
+import { ManageUsersComponent } from './manage-users/manage-users.component';
+import { SystemSettingsComponent } from './system-settings/system-settings.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -29,6 +31,14 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'complaints',
         children: ADMIN_COMPLAINT_ROUTES
+      },
+      {
+        path: 'users',
+        component: ManageUsersComponent
+      },
+      {
+        path: 'settings',
+        component: SystemSettingsComponent
       }
     ]
   }

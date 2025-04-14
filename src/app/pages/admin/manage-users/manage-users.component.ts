@@ -216,12 +216,12 @@ interface UserRole {
   styles: []
 })
 export class ManageUsersComponent implements OnInit {
-  userForm: FormGroup;
+  userForm!: FormGroup;
   users: any[] = [];
   showForm = false;
   isEditMode = false;
   isSubmitting = false;
-  selectedUserId: string | null = null;
+  selectedUserId: number | null = null;
 
   userRoles: UserRole[] = [
     { value: 'ADMIN', label: 'Administrator' },
@@ -263,8 +263,9 @@ export class ManageUsersComponent implements OnInit {
   }
 
   private passwordMatchValidator(g: FormGroup) {
-    return g.get('password')?.value === g.get('confirmPassword')?.value
-      ? null : { passwordMismatch: true };
+    const password = g.get('password')?.value;
+    const confirmPassword = g.get('confirmPassword')?.value;
+    return password === confirmPassword ? null : { passwordMismatch: true };
   }
 
   private loadUsers(): void {
@@ -326,7 +327,7 @@ export class ManageUsersComponent implements OnInit {
       const userData = this.userForm.value;
 
       const request = this.isEditMode ?
-        this.userService.updateUser(this.selectedUserId!, userData) :
+        this.userService.updateUser(Number(this.selectedUserId), userData) :
         this.userService.createUser(userData);
 
       request.subscribe({

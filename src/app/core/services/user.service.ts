@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { map } from 'rxjs/operators';
 
 export interface User {
   id: number;
@@ -94,6 +95,13 @@ export class UserService {
   // Police Officer specific operations
   getPoliceOfficers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/officers`);
+  }
+
+  getAllUsers(): Observable<User[]> {
+    return this.http.get<any>(`${environment.apiUrl}/admin/users?size=100`)
+      .pipe(
+        map(response => response.content)
+      );
   }
 
   getOfficerStatistics(officerId: number): Observable<any> {
