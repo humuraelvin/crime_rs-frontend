@@ -150,11 +150,16 @@ interface PoliceOfficer {
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   [class.border-red-500]="officerForm.get('departmentId')?.invalid && officerForm.get('departmentId')?.touched"
                 >
-                  <option [ngValue]="null" disabled selected>Select department</option>
-                  <option *ngFor="let dept of departments" [ngValue]="dept.id">{{ dept.name }} (ID: {{dept.id}})</option>
+                  <option [ngValue]="null">Select department</option>
+                  <option *ngFor="let dept of departments" [ngValue]="dept.id">
+                    {{ dept.name }} (ID: {{dept.id}})
+                  </option>
                 </select>
                 <div *ngIf="officerForm.get('departmentId')?.invalid && officerForm.get('departmentId')?.touched" class="text-red-600 text-sm mt-1">
                   Department is required
+                </div>
+                <div *ngIf="departments.length === 0" class="text-red-600 text-sm mt-1">
+                  No departments available. Please create a department first.
                 </div>
               </div>
               
@@ -284,16 +289,26 @@ export class OfficerFormComponent implements OnInit {
     this.http.get<Department[]>(`${environment.apiUrl}/admin/departments`)
       .subscribe({
         next: (departments) => {
-          console.log('Loaded departments:', departments);
+          console.log('Loaded departments:', JSON.stringify(departments));
           this.departments = departments;
+          
+          // Verify departments data format
+          if (departments.length > 0) {
+            console.log('Sample department object:', JSON.stringify(departments[0]));
+            console.log('First department ID type:', typeof departments[0].id);
+            console.log('First department ID value:', departments[0].id);
+          }
           
           // If there are departments, set the first one as default for new officers
           if (departments.length > 0 && !this.isEditMode) {
             // Force department ID to be a number
             this.officerForm.patchValue({
-              departmentId: departments[0].id
+              departmentId: Number(departments[0].id)
             });
-            console.log('Default department set to:', departments[0].id, 'Type:', typeof departments[0].id);
+            console.log('Default department set to:', departments[0].id);
+            console.log('Type in form:', typeof this.officerForm.get('departmentId')?.value);
+          } else {
+            console.warn('No departments found or edit mode active - no default department set');
           }
           
           if (!this.isEditMode) {
@@ -349,42 +364,66 @@ export class OfficerFormComponent implements OnInit {
     const departmentId = this.officerForm.get('departmentId')?.value;
     console.log('Department ID before conversion:', departmentId, 'Type:', typeof departmentId);
     
-    if (!departmentId) {
+    if (departmentId === null || departmentId === undefined) {
       this.toastr.error('Department selection is required');
       this.officerForm.get('departmentId')?.markAsTouched();
       return;
     }
 
-    // Ensure that the department ID is a valid number
-    if (isNaN(Number(departmentId))) {
+    // Ensure that the department ID is converted to a valid number
+    const numericDepartmentId = Number(departmentId);
+    if (isNaN(numericDepartmentId)) {
       this.toastr.error('Invalid department ID format');
       this.officerForm.get('departmentId')?.markAsTouched();
+      return;
+    }
+
+    // Verify this department actually exists in our data
+    const departmentExists = this.departments.some(d => Number(d.id) === numericDepartmentId);
+    if (!departmentExists) {
+      this.toastr.error(`Department with ID ${numericDepartmentId} not found in available departments`);
+      console.error('Available departments:', this.departments.map(d => ({id: d.id, name: d.name})));
       return;
     }
 
     this.submitting = true;
     
     // Create a clean officer data object manually with correct format for backend
-    const officerData = {
+    // Define with an interface to avoid TypeScript errors
+    interface OfficerData {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phoneNumber: string;
+      badgeNumber: string;
+      departmentId: number;
+      rank: string;
+      specialization: string;
+      contactInfo: string;
+      jurisdiction: string;
+      password?: string; // Optional password field
+    }
+    
+    const officerData: OfficerData = {
       firstName: this.officerForm.get('firstName')?.value,
       lastName: this.officerForm.get('lastName')?.value,
       email: this.officerForm.get('email')?.value,
       phoneNumber: this.officerForm.get('phoneNumber')?.value,
       badgeNumber: this.officerForm.get('badgeNumber')?.value,
-      // Use the exact ID number for the department
-      departmentId: Number(departmentId),
+      departmentId: numericDepartmentId,
       rank: this.officerForm.get('rank')?.value,
       specialization: this.officerForm.get('specialization')?.value || '',
       contactInfo: this.officerForm.get('contactInfo')?.value || '',
       jurisdiction: this.officerForm.get('jurisdiction')?.value || ''
     };
     
-    // Add password only for create mode
-    if (!this.isEditMode && this.officerForm.get('password')?.value) {
-      (officerData as any).password = this.officerForm.get('password')?.value;
+    // Always add password for create mode - use a default if not provided
+    if (!this.isEditMode) {
+      officerData.password = this.officerForm.get('password')?.value || '12345678';
     }
 
     console.log('Sending officer data:', JSON.stringify(officerData));
+    console.log('Department ID in payload:', officerData.departmentId, 'Type:', typeof officerData.departmentId);
 
     // For debugging - manually check backend directly
     console.log(`If you want to test this directly in curl:`);
@@ -410,9 +449,36 @@ export class OfficerFormComponent implements OnInit {
           this.toastr.error('Email address is already in use');
         } else if (error.error?.message?.includes('Badge number is already in use')) {
           this.toastr.error('Badge number is already in use');
-        } else if (error.error?.message?.includes('department')) {
-          // This message is specific to department issues
-          this.toastr.error('Department error: Please ensure you have selected a valid department');
+        } else if (error.error?.message?.includes('department') || error.error?.message?.includes('Department')) {
+          // Handle department-related errors more specifically
+          this.toastr.error('Department error: Please ensure that you selected a valid department.');
+          console.error('Department error details:', {
+            departmentId: officerData.departmentId,
+            departmentExists: this.departments.some(d => Number(d.id) === officerData.departmentId),
+            availableDepartments: this.departments
+          });
+        } else if (error.error?.message?.includes('null value in column')) {
+          // This is likely a database constraint violation
+          console.error('Database constraint violation:', error.error.message);
+          
+          // Provide more specific error message
+          this.toastr.error('Required field is missing. Please check your form and try again.');
+          
+          // Log full payload for debugging
+          console.error('Full payload sent:', officerData);
+          
+          // Attempts to extract the problematic column name
+          const columnMatch = error.error.message.match(/null value in column "([^"]+)"/);
+          if (columnMatch && columnMatch[1]) {
+            const fieldName = columnMatch[1];
+            this.toastr.error(`Missing required field: ${fieldName}`);
+            // Mark the field as touched and in error if it exists in the form
+            const field = this.officerForm.get(fieldName);
+            if (field) {
+              field.markAsTouched();
+              field.setErrors({ required: true });
+            }
+          }
         } else {
           this.toastr.error(error.error?.message || `Failed to ${this.isEditMode ? 'update' : 'create'} officer`);
         }
