@@ -43,7 +43,23 @@ interface PagedResponse {
         
         <div class="mt-4">
           <h4 class="font-bold">How to fix this issue:</h4>
-          <p>Add {{ '@' }}Transactional to the getAllDepartments() method in AdminServiceImpl.java</p>
+          <div *ngIf="errorMessage.includes('Authentication error')">
+            <p>Your authentication token may have expired. Please try:</p>
+            <ol class="list-decimal ml-6 mt-2">
+              <li>Logging out and logging back in</li>
+              <li>Clearing browser cache and cookies</li>
+              <li>Checking if the backend server is running</li>
+            </ol>
+          </div>
+          
+          <div *ngIf="errorMessage.includes('Hibernate lazy loading error')">
+            <p>The backend needs to be updated to handle lazy loading of collections:</p>
+            <ol class="list-decimal ml-6 mt-2">
+              <li>Add {{ '@' }}Transactional to the getAllDepartments() method in AdminServiceImpl.java</li>
+              <li>Use JOIN FETCH in JPQL queries to load related collections</li>
+              <li>Consider changing collection fetch type from LAZY to EAGER for small collections</li>
+            </ol>
+          </div>
           
           <button 
             (click)="testConnection()" 
@@ -116,7 +132,15 @@ export class DepartmentListComponent implements OnInit {
         error: (error) => {
           this.loading = false;
           this.backendError = true;
-          this.errorMessage = error.message || 'Failed to load departments';
+          
+          if (error.status === 403) {
+            this.errorMessage = 'Authentication error: Your session may have expired. Please log out and log back in.';
+          } else if (error.status === 500 && error.error?.message?.includes('failed to lazily initialize a collection')) {
+            this.errorMessage = 'Hibernate lazy loading error: The Department.officers collection could not be initialized.';
+          } else {
+            this.errorMessage = error.error?.message || error.message || 'Failed to load departments';
+          }
+          
           console.error('Error loading departments:', error);
         }
       });
@@ -134,7 +158,13 @@ export class DepartmentListComponent implements OnInit {
           this.departments = this.departments.filter(dept => dept.id !== id);
         },
         error: (error) => {
-          this.toastr.error(error.error?.message || 'Failed to delete department');
+          if (error.status === 403) {
+            this.toastr.error('Your session may have expired. Please log out and log back in.');
+          } else if (error.status === 409 || (error.error?.message && error.error.message.includes('officers'))) {
+            this.toastr.error('Cannot delete a department with assigned officers. Reassign officers first.');
+          } else {
+            this.toastr.error(error.error?.message || 'Failed to delete department');
+          }
         }
       });
   }
