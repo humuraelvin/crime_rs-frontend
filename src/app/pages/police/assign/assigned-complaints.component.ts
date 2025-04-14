@@ -1,28 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { ComplaintService } from '../../../core/services/complaint.service';
+import { PoliceService, AssignedComplaint } from '../../../core/services/police.service';
 import { FormsModule } from '@angular/forms';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-
-interface AssignedComplaint {
-  id: number;
-  userId: number;
-  userName: string;
-  crimeType: string;
-  description: string;
-  status: string;
-  dateFiled: string;
-  dateLastUpdated: string;
-  location: string;
-  priorityScore: number;
-  evidences?: any[];
-}
 
 @Component({
   selector: 'app-assigned-complaints',
@@ -58,7 +43,7 @@ interface AssignedComplaint {
         </div>
         
         <div *ngIf="!loading">
-          <div *ngIf="complaints.length > 0" class="bg-white shadow-md rounded-lg overflow-hidden">
+          <div *ngIf="filteredComplaints.length > 0" class="bg-white shadow-md rounded-lg overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -72,7 +57,7 @@ interface AssignedComplaint {
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let complaint of complaints">
+                <tr *ngFor="let complaint of filteredComplaints">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">#{{ complaint.id }}</div>
                   </td>
@@ -120,7 +105,7 @@ interface AssignedComplaint {
             </table>
           </div>
           
-          <div *ngIf="complaints.length === 0" class="bg-white shadow-md rounded-lg p-8 text-center">
+          <div *ngIf="filteredComplaints.length === 0" class="bg-white shadow-md rounded-lg p-8 text-center">
             <p class="text-gray-500 mb-4">No complaints have been assigned to you yet.</p>
             <p class="text-gray-500">Check back later or contact your supervisor if you believe this is an error.</p>
           </div>
@@ -191,7 +176,7 @@ export class AssignedComplaintsComponent implements OnInit {
   isUpdating = false;
 
   constructor(
-    private http: HttpClient,
+    private policeService: PoliceService,
     private toastr: ToastrService,
     private complaintService: ComplaintService
   ) {}
@@ -203,61 +188,19 @@ export class AssignedComplaintsComponent implements OnInit {
   fetchAssignedComplaints(): void {
     this.loading = true;
     
-    // Example data for demonstration in case API fails
-    const demoComplaints: AssignedComplaint[] = [
-      {
-        id: 101,
-        userId: 5,
-        userName: 'John Smith',
-        crimeType: 'THEFT',
-        description: 'My bike was stolen from outside my apartment on Main Street.',
-        status: 'ASSIGNED',
-        dateFiled: new Date().toISOString(),
-        dateLastUpdated: new Date().toISOString(),
-        location: '123 Main St, City',
-        priorityScore: 7
-      },
-      {
-        id: 102,
-        userId: 8,
-        userName: 'Emma Johnson',
-        crimeType: 'ASSAULT',
-        description: 'I was attacked while walking in the park yesterday evening.',
-        status: 'INVESTIGATING',
-        dateFiled: new Date().toISOString(),
-        dateLastUpdated: new Date().toISOString(),
-        location: 'City Park',
-        priorityScore: 9
-      },
-      {
-        id: 103,
-        userId: 12,
-        userName: 'Michael Davis',
-        crimeType: 'VANDALISM',
-        description: 'Someone spray painted graffiti on my garage door overnight.',
-        status: 'RESOLVED',
-        dateFiled: new Date().toISOString(),
-        dateLastUpdated: new Date().toISOString(),
-        location: '456 Oak Ave, City',
-        priorityScore: 4
-      }
-    ];
-    
-    this.http.get<AssignedComplaint[]>(`${environment.apiUrl}/police/complaints/assigned`)
+    this.policeService.getAssignedComplaints()
       .pipe(
-        catchError((error: HttpErrorResponse) => {
+        catchError((error) => {
           console.error('Failed to fetch assigned complaints:', error);
-          this.toastr.warning('Using example data - API endpoint is under development', 'Connection Issue');
-          return of(demoComplaints);
+          this.toastr.error('Failed to load assigned complaints', 'Error');
+          this.loading = false;
+          return of([]);
         })
       )
       .subscribe({
         next: (response) => {
           this.complaints = response;
           this.filteredComplaints = [...this.complaints];
-          this.loading = false;
-        },
-        complete: () => {
           this.loading = false;
         }
       });
@@ -333,8 +276,7 @@ export class AssignedComplaintsComponent implements OnInit {
     
     this.isUpdating = true;
     
-    // Replace with actual API call
-    this.complaintService.updateComplaintStatus(this.selectedComplaint.id, this.selectedStatus)
+    this.policeService.updateComplaintStatus(this.selectedComplaint.id, this.selectedStatus, this.updateNotes)
       .subscribe({
         next: (response) => {
           // Update the complaint in the list

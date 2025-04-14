@@ -1,26 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { PoliceService, PoliceStats } from '../../../core/services/police.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-
-interface PoliceStats {
-  assignedComplaints: number;
-  pendingComplaints: number;
-  resolvedComplaints: number;
-  totalCases: number;
-  activeCases: number;
-  closedCases: number;
-  badgeNumber: string;
-  departmentName: string;
-  rank: string;
-  recentComplaints: any[];
-}
 
 @Component({
   selector: 'app-police-dashboard',
@@ -193,7 +179,7 @@ export class PoliceDashboardComponent implements OnInit {
   };
 
   constructor(
-    private http: HttpClient,
+    private policeService: PoliceService,
     private toastr: ToastrService,
     private authService: AuthService
   ) {}
@@ -210,62 +196,20 @@ export class PoliceDashboardComponent implements OnInit {
   fetchPoliceStats(): void {
     this.loading = true;
     
-    // Default example data for fallback
-    const defaultStats: PoliceStats = {
-      assignedComplaints: 8,
-      pendingComplaints: 5,
-      resolvedComplaints: 3,
-      totalCases: 12,
-      activeCases: 7,
-      closedCases: 5,
-      badgeNumber: 'PD12345',
-      departmentName: 'Central Division',
-      rank: 'Detective',
-      recentComplaints: [
-        {
-          id: 101,
-          crimeType: 'THEFT',
-          status: 'ASSIGNED',
-          dateFiled: new Date().toISOString(),
-          description: 'Theft at Main Street'
-        },
-        {
-          id: 102,
-          crimeType: 'ASSAULT',
-          status: 'INVESTIGATING',
-          dateFiled: new Date().toISOString(),
-          description: 'Assault case reported'
-        },
-        {
-          id: 103,
-          crimeType: 'VANDALISM',
-          status: 'RESOLVED',
-          dateFiled: new Date().toISOString(),
-          description: 'Property damage at City Park'
-        }
-      ]
-    };
-    
-    // Try fetching data from API, fallback to default if it fails
-    this.http.get<PoliceStats>(`${environment.apiUrl}/police/stats`)
+    this.policeService.getPoliceStats()
       .pipe(
-        catchError((error: HttpErrorResponse) => {
+        catchError((error) => {
           console.error('Failed to fetch police stats:', error);
-          this.toastr.warning('Using example data - Backend API is under development', 'Connection Issue');
-          return of(defaultStats);
+          this.toastr.error('Failed to load dashboard statistics', 'Error');
+          this.loading = false;
+          return of(this.stats);
         })
       )
       .subscribe({
         next: (response) => {
-          this.stats = response;
-          this.loading = false;
-        },
-        error: () => {
-          // This shouldn't be reached due to catchError, but just in case
-          this.stats = defaultStats;
-          this.loading = false;
-        },
-        complete: () => {
+          if (response) {
+            this.stats = response;
+          }
           this.loading = false;
         }
       });
