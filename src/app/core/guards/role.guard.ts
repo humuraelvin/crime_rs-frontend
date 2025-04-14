@@ -34,6 +34,11 @@ export class RoleGuard implements CanActivate {
       return false;
     }
 
+    // Allow police officers to access police routes
+    if (state.url.startsWith('/police') && user.role === UserRole.POLICE_OFFICER) {
+      return true;
+    }
+
     // If we're already in the admin area and user is admin or police officer
     // allow access without further checks to prevent redirection loops
     if (state.url.startsWith('/admin') && 
@@ -49,6 +54,13 @@ export class RoleGuard implements CanActivate {
       return false;
     }
 
+    // Special case for police officer trying to access admin routes
+    if (state.url.startsWith('/admin') && user.role === UserRole.POLICE_OFFICER) {
+      console.log('Role Guard: Police officer attempting to access admin route, redirecting to police dashboard');
+      this.router.navigate(['/police/dashboard']);
+      return true;
+    }
+
     // If no roles required, allow access
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
@@ -61,9 +73,12 @@ export class RoleGuard implements CanActivate {
       console.log(`Role Guard: User role ${user.role} does not match required roles: ${requiredRoles.join(', ')}`);
       
       // Redirect based on role
-      if (user.role === UserRole.ADMIN || user.role === UserRole.POLICE_OFFICER) {
-        console.log('Role Guard: Redirecting admin/officer to admin dashboard');
+      if (user.role === UserRole.ADMIN) {
+        console.log('Role Guard: Redirecting admin to admin dashboard');
         this.router.navigate(['/admin']);
+      } else if (user.role === UserRole.POLICE_OFFICER) {
+        console.log('Role Guard: Redirecting officer to police dashboard');
+        this.router.navigate(['/police/dashboard']);
       } else {
         console.log('Role Guard: Redirecting citizen to citizen dashboard');
         this.router.navigate(['/dashboard']);

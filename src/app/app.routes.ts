@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
 import { ADMIN_ROUTES } from './pages/admin/admin.routes';
+import { POLICE_ROUTES } from './pages/police/police.routes';
 
 export const routes: Routes = [
   {
@@ -38,6 +39,12 @@ export const routes: Routes = [
     path: 'profile',
     loadChildren: () => import('./pages/profile/profile.routes').then(m => m.PROFILE_ROUTES),
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'police',
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['POLICE_OFFICER'] },
+    children: POLICE_ROUTES
   },
   {
     path: '**',
