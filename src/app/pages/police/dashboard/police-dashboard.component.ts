@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface PoliceStats {
   assignedComplaints: number;
@@ -97,7 +99,7 @@ interface PoliceStats {
           </div>
           
           <!-- Quick Actions -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <a routerLink="/police/assign" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <div class="flex items-center mb-3">
                 <span class="material-icons text-indigo-600 mr-2">list_alt</span>
@@ -112,14 +114,6 @@ interface PoliceStats {
                 <h3 class="text-xl font-semibold text-gray-800">My Cases</h3>
               </div>
               <p class="text-gray-600">Access and update your active investigation cases</p>
-            </a>
-            
-            <a routerLink="/police/reports" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-              <div class="flex items-center mb-3">
-                <span class="material-icons text-blue-600 mr-2">summarize</span>
-                <h3 class="text-xl font-semibold text-gray-800">Reports</h3>
-              </div>
-              <p class="text-gray-600">Generate and view reports on your cases</p>
             </a>
           </div>
           
@@ -216,55 +210,63 @@ export class PoliceDashboardComponent implements OnInit {
   fetchPoliceStats(): void {
     this.loading = true;
     
-    // Replace with actual API endpoint
+    // Default example data for fallback
+    const defaultStats: PoliceStats = {
+      assignedComplaints: 8,
+      pendingComplaints: 5,
+      resolvedComplaints: 3,
+      totalCases: 12,
+      activeCases: 7,
+      closedCases: 5,
+      badgeNumber: 'PD12345',
+      departmentName: 'Central Division',
+      rank: 'Detective',
+      recentComplaints: [
+        {
+          id: 101,
+          crimeType: 'THEFT',
+          status: 'ASSIGNED',
+          dateFiled: new Date().toISOString(),
+          description: 'Theft at Main Street'
+        },
+        {
+          id: 102,
+          crimeType: 'ASSAULT',
+          status: 'INVESTIGATING',
+          dateFiled: new Date().toISOString(),
+          description: 'Assault case reported'
+        },
+        {
+          id: 103,
+          crimeType: 'VANDALISM',
+          status: 'RESOLVED',
+          dateFiled: new Date().toISOString(),
+          description: 'Property damage at City Park'
+        }
+      ]
+    };
+    
+    // Try fetching data from API, fallback to default if it fails
     this.http.get<PoliceStats>(`${environment.apiUrl}/police/stats`)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('Failed to fetch police stats:', error);
+          this.toastr.warning('Using example data - Backend API is under development', 'Connection Issue');
+          return of(defaultStats);
+        })
+      )
       .subscribe({
         next: (response) => {
           this.stats = response;
           this.loading = false;
         },
-        error: (error) => {
-          console.error('Failed to fetch police stats:', error);
-          this.toastr.error('Failed to load dashboard statistics');
-          
-          // Set loading to false and use default values
+        error: () => {
+          // This shouldn't be reached due to catchError, but just in case
+          this.stats = defaultStats;
           this.loading = false;
-          
-          // Initialize with example data for demonstration
-          this.stats = {
-            assignedComplaints: 8,
-            pendingComplaints: 5,
-            resolvedComplaints: 3,
-            totalCases: 12,
-            activeCases: 7,
-            closedCases: 5,
-            badgeNumber: 'PD12345',
-            departmentName: 'Central Division',
-            rank: 'Detective',
-            recentComplaints: [
-              {
-                id: 101,
-                crimeType: 'THEFT',
-                status: 'ASSIGNED',
-                dateFiled: new Date().toISOString(),
-                description: 'Theft at Main Street'
-              },
-              {
-                id: 102,
-                crimeType: 'ASSAULT',
-                status: 'INVESTIGATING',
-                dateFiled: new Date().toISOString(),
-                description: 'Assault case reported'
-              },
-              {
-                id: 103,
-                crimeType: 'VANDALISM',
-                status: 'RESOLVED',
-                dateFiled: new Date().toISOString(),
-                description: 'Property damage at City Park'
-              }
-            ]
-          };
+        },
+        complete: () => {
+          this.loading = false;
         }
       });
   }

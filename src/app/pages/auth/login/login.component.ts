@@ -203,9 +203,13 @@ export class LoginComponent {
           this.toastr.success('Login successful');
           
           // Direct URL navigation based on role
-          const targetRoute = response.role === UserRole.ADMIN || response.role === UserRole.POLICE_OFFICER 
-            ? '/admin' 
-            : '/dashboard';
+          let targetRoute = '/dashboard';
+          
+          if (response.role === UserRole.ADMIN) {
+            targetRoute = '/admin';
+          } else if (response.role === UserRole.POLICE_OFFICER) {
+            targetRoute = '/police/dashboard';
+          }
           
           console.log(`Login successful for role ${response.role}, navigating to ${targetRoute}`);
           
@@ -246,11 +250,15 @@ export class LoginComponent {
         this.toastr.success('Login successful');
         
         // Direct URL navigation based on role
-        const targetRoute = response.role === UserRole.ADMIN || response.role === UserRole.POLICE_OFFICER 
-          ? '/admin' 
-          : '/dashboard';
+        let targetRoute = '/dashboard';
         
-        console.log(`MFA verification successful for role ${response.role}, navigating to ${targetRoute}`);
+        if (response.role === UserRole.ADMIN) {
+          targetRoute = '/admin';
+        } else if (response.role === UserRole.POLICE_OFFICER) {
+          targetRoute = '/police/dashboard';
+        }
+        
+        console.log(`Login successful for role ${response.role}, navigating to ${targetRoute}`);
         
         // Use window.location for direct navigation
         window.location.href = targetRoute;

@@ -39,10 +39,8 @@ export class RoleGuard implements CanActivate {
       return true;
     }
 
-    // If we're already in the admin area and user is admin or police officer
-    // allow access without further checks to prevent redirection loops
-    if (state.url.startsWith('/admin') && 
-        (user.role === UserRole.ADMIN || user.role === UserRole.POLICE_OFFICER)) {
+    // If we're already in the admin area and user is admin, allow access
+    if (state.url.startsWith('/admin') && user.role === UserRole.ADMIN) {
       return true;
     }
 
@@ -57,8 +55,9 @@ export class RoleGuard implements CanActivate {
     // Special case for police officer trying to access admin routes
     if (state.url.startsWith('/admin') && user.role === UserRole.POLICE_OFFICER) {
       console.log('Role Guard: Police officer attempting to access admin route, redirecting to police dashboard');
+      this.toastr.error('You do not have permission to access the admin area. Redirecting to police dashboard.');
       this.router.navigate(['/police/dashboard']);
-      return true;
+      return false;
     }
 
     // If no roles required, allow access

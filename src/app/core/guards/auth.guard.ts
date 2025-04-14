@@ -50,10 +50,22 @@ export class AuthGuard implements CanActivate {
         return false;
       }
       
-      // If user is trying to access admin routes and has the right role, let RoleGuard handle it
-      if (state.url.startsWith('/admin') && 
-          (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.POLICE_OFFICER)) {
+      // If police officer is accessing police routes, allow access
+      if (state.url.startsWith('/police') && currentUser.role === UserRole.POLICE_OFFICER) {
         return true;
+      }
+      
+      // If admin is trying to access admin routes, allow access
+      if (state.url.startsWith('/admin') && currentUser.role === UserRole.ADMIN) {
+        return true;
+      }
+
+      // Police officers should not access admin routes
+      if (state.url.startsWith('/admin') && currentUser.role === UserRole.POLICE_OFFICER) {
+        console.log('Auth Guard: Police officer attempting to access admin route, redirecting to police dashboard');
+        this.toastr.error('You do not have permission to access the admin area');
+        this.router.navigate(['/police/dashboard']);
+        return false;
       }
       
       // For other routes, check the required roles
@@ -61,8 +73,10 @@ export class AuthGuard implements CanActivate {
       if (!requiredRoles.includes(currentUser.role)) {
         console.log('Auth Guard: User does not have required role, redirecting to appropriate dashboard');
         
-        if (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.POLICE_OFFICER) {
+        if (currentUser.role === UserRole.ADMIN) {
           this.router.navigate(['/admin']);
+        } else if (currentUser.role === UserRole.POLICE_OFFICER) {
+          this.router.navigate(['/police/dashboard']);
         } else {
           this.router.navigate(['/dashboard']);
         }

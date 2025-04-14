@@ -24,10 +24,6 @@ export const POLICE_ROUTES: Routes = [
       {
         path: 'my-cases',
         loadComponent: () => import('./cases/my-cases.component').then(c => c.MyCasesComponent)
-      },
-      {
-        path: 'reports',
-        loadComponent: () => import('./reports/police-reports.component').then(c => c.PoliceReportsComponent)
       }
     ]
   }

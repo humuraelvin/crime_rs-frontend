@@ -29,10 +29,6 @@ import { AuthService } from '../../../core/services/auth.service';
             <span class="material-icons mr-3">assignment</span>
             Assigned Complaints
           </a>
-          <a routerLink="/police/reports" routerLinkActive="bg-indigo-700 text-white" class="flex items-center px-4 py-3 text-indigo-100 hover:bg-indigo-700 hover:text-white">
-            <span class="material-icons mr-3">summarize</span>
-            Reports
-          </a>
         </nav>
       </div>
 
@@ -59,10 +55,6 @@ import { AuthService } from '../../../core/services/auth.service';
             <a routerLink="/police/assign" routerLinkActive="bg-indigo-700 text-white" class="flex items-center px-4 py-3 text-indigo-100 hover:bg-indigo-700 hover:text-white">
               <span class="material-icons mr-3">assignment</span>
               Assigned Complaints
-            </a>
-            <a routerLink="/police/reports" routerLinkActive="bg-indigo-700 text-white" class="flex items-center px-4 py-3 text-indigo-100 hover:bg-indigo-700 hover:text-white">
-              <span class="material-icons mr-3">summarize</span>
-              Reports
             </a>
           </nav>
         </div>

@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { ComplaintService } from '../../../core/services/complaint.service';
 import { FormsModule } from '@angular/forms';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface AssignedComplaint {
   id: number;
@@ -201,62 +203,62 @@ export class AssignedComplaintsComponent implements OnInit {
   fetchAssignedComplaints(): void {
     this.loading = true;
     
-    // Replace with actual API endpoint
+    // Example data for demonstration in case API fails
+    const demoComplaints: AssignedComplaint[] = [
+      {
+        id: 101,
+        userId: 5,
+        userName: 'John Smith',
+        crimeType: 'THEFT',
+        description: 'My bike was stolen from outside my apartment on Main Street.',
+        status: 'ASSIGNED',
+        dateFiled: new Date().toISOString(),
+        dateLastUpdated: new Date().toISOString(),
+        location: '123 Main St, City',
+        priorityScore: 7
+      },
+      {
+        id: 102,
+        userId: 8,
+        userName: 'Emma Johnson',
+        crimeType: 'ASSAULT',
+        description: 'I was attacked while walking in the park yesterday evening.',
+        status: 'INVESTIGATING',
+        dateFiled: new Date().toISOString(),
+        dateLastUpdated: new Date().toISOString(),
+        location: 'City Park',
+        priorityScore: 9
+      },
+      {
+        id: 103,
+        userId: 12,
+        userName: 'Michael Davis',
+        crimeType: 'VANDALISM',
+        description: 'Someone spray painted graffiti on my garage door overnight.',
+        status: 'RESOLVED',
+        dateFiled: new Date().toISOString(),
+        dateLastUpdated: new Date().toISOString(),
+        location: '456 Oak Ave, City',
+        priorityScore: 4
+      }
+    ];
+    
     this.http.get<AssignedComplaint[]>(`${environment.apiUrl}/police/complaints/assigned`)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('Failed to fetch assigned complaints:', error);
+          this.toastr.warning('Using example data - API endpoint is under development', 'Connection Issue');
+          return of(demoComplaints);
+        })
+      )
       .subscribe({
         next: (response) => {
           this.complaints = response;
           this.filteredComplaints = [...this.complaints];
           this.loading = false;
         },
-        error: (error) => {
-          console.error('Failed to fetch assigned complaints:', error);
-          this.toastr.error('Failed to load assigned complaints');
-          
-          // Set loading to false and use example data
+        complete: () => {
           this.loading = false;
-          
-          // Example data for demonstration
-          this.complaints = [
-            {
-              id: 101,
-              userId: 5,
-              userName: 'John Smith',
-              crimeType: 'THEFT',
-              description: 'My bike was stolen from outside my apartment on Main Street.',
-              status: 'ASSIGNED',
-              dateFiled: new Date().toISOString(),
-              dateLastUpdated: new Date().toISOString(),
-              location: '123 Main St, City',
-              priorityScore: 7
-            },
-            {
-              id: 102,
-              userId: 8,
-              userName: 'Emma Johnson',
-              crimeType: 'ASSAULT',
-              description: 'I was attacked while walking in the park yesterday evening.',
-              status: 'INVESTIGATING',
-              dateFiled: new Date().toISOString(),
-              dateLastUpdated: new Date().toISOString(),
-              location: 'City Park',
-              priorityScore: 9
-            },
-            {
-              id: 103,
-              userId: 12,
-              userName: 'Michael Davis',
-              crimeType: 'VANDALISM',
-              description: 'Someone spray painted graffiti on my garage door overnight.',
-              status: 'RESOLVED',
-              dateFiled: new Date().toISOString(),
-              dateLastUpdated: new Date().toISOString(),
-              location: '456 Oak Ave, City',
-              priorityScore: 4
-            }
-          ];
-          
-          this.filteredComplaints = [...this.complaints];
         }
       });
   }
