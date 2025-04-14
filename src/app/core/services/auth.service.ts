@@ -450,11 +450,16 @@ export class AuthService {
       );
   }
 
-  hasRole(role: UserRole): boolean {
+  hasRole(role: UserRole | UserRole[]): boolean {
     const user = this.currentUserValue;
     if (!user) {
       return false;
     }
+    
+    if (Array.isArray(role)) {
+      return role.includes(user.role);
+    }
+    
     return user.role === role;
   }
 
@@ -570,5 +575,11 @@ export class AuthService {
       currentPassword,
       newPassword
     });
+  }
+
+  // Method to get the JWT token
+  getToken(): string {
+    const user = this.currentUserValue;
+    return user?.accessToken || '';
   }
 } 

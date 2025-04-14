@@ -3,6 +3,7 @@ import { HttpClient, HttpParams, HttpEventType, HttpHeaders } from '@angular/com
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
+import { AuthService } from './auth.service';
 
 export interface Complaint {
   id: number;
@@ -76,25 +77,55 @@ export interface ComplaintResponse {
   }>;
 }
 
+export interface EvidenceResponse {
+  id: number;
+  complaintId: number;
+  fileName: string;
+  fileType: string;
+  fileUrl: string;
+  uploadDate: string;
+  description?: string;
+}
+
+export interface ComplaintCreateRequest {
+  userId: number;
+  crimeType: string;
+  description: string;
+  location: string;
+  priority?: string;
+  evidenceFiles?: File[];
+}
+
+export interface ComplaintUpdateRequest {
+  id: number;
+  status?: string;
+  assignedOfficerId?: number;
+  notes?: string;
+}
+
+export interface EvidenceUploadRequest {
+  complaintId: number;
+  file: File;
+  description?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ComplaintService {
   private apiUrl = `${environment.apiUrl}/complaints`;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
-  // Helper method to get authorization headers
   private getAuthHeaders(): HttpHeaders {
-    const user = localStorage.getItem('currentUser') 
-      ? JSON.parse(localStorage.getItem('currentUser') || '{}')
-      : null;
-      
-    let headers = new HttpHeaders();
-    if (user?.accessToken) {
-      headers = headers.set('Authorization', `Bearer ${user.accessToken}`);
-    }
-    return headers;
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
   }
 
   getComplaints(filters?: ComplaintFilter): Observable<ComplaintResponse[]> {
@@ -118,7 +149,7 @@ export class ComplaintService {
       }
     }
 
-    return this.http.get<ComplaintResponse[]>(`${environment.apiUrl}/complaints`, { 
+    return this.http.get<ComplaintResponse[]>(`${this.apiUrl}`, { 
       params,
       headers: this.getAuthHeaders()
     }).pipe(
@@ -129,8 +160,28 @@ export class ComplaintService {
     );
   }
 
+  // Get complaints for the current user
+  getMyComplaints(): Observable<ComplaintResponse[]> {
+    return this.http.get<ComplaintResponse[]>(`${this.apiUrl}/my-complaints`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching my complaints:', error);
+        
+        let errorMessage = 'Failed to fetch your complaints';
+        if (error.error && error.error.message) {
+          // Use the error message from the server if available
+          errorMessage = error.error.message;
+          console.error('Server error details:', error.error);
+        }
+        
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
   getComplaintById(id: number): Observable<ComplaintResponse> {
-    return this.http.get<ComplaintResponse>(`${environment.apiUrl}/complaints/${id}`, {
+    return this.http.get<ComplaintResponse>(`${this.apiUrl}/${id}`, {
       headers: this.getAuthHeaders()
     }).pipe(
       catchError(error => {
@@ -140,137 +191,38 @@ export class ComplaintService {
     );
   }
 
-  createComplaint(complaint: ComplaintRequest): Observable<ComplaintResponse> {
-    // If no files are provided, use the standard JSON endpoint
-    if (!complaint.evidenceFiles || complaint.evidenceFiles.length === 0) {
-      console.log('Creating complaint with data:', complaint);
-      console.log('API URL:', `${environment.apiUrl}/complaints`);
-      
-      return this.http.post<ComplaintResponse>(
-        `${environment.apiUrl}/complaints`, 
-        complaint,
-        { headers: this.getAuthHeaders() }
-      ).pipe(
-        catchError(error => {
-          console.error('Error creating complaint:', error);
-          // More detailed error handling
-          let errorMessage = 'Failed to create complaint';
-          
-          if (error.error) {
-            if (typeof error.error === 'string') {
-              errorMessage = error.error;
-            } else if (error.error.message) {
-              errorMessage = error.error.message;
-            } else if (error.status === 403) {
-              errorMessage = 'You are not authorized to create a complaint. Please log in again.';
-            } else if (error.status === 400) {
-              errorMessage = 'Invalid complaint data. Please check your form and try again.';
-            } else if (error.status === 0) {
-              errorMessage = 'Could not connect to the server. Please check your internet connection.';
-            }
-          }
-          
-          return throwError(() => new Error(errorMessage));
-        })
-      );
-    }
-    
-    // Try a completely different approach for debugging purposes
-    // We'll bypass the FormData and submit as a basic request
-    return this.createComplaintWithoutFormData(complaint);
-  }
-  
-  // Better method for handling form data with evidence
-  private createComplaintWithoutFormData(complaint: ComplaintRequest): Observable<ComplaintResponse> {
-    console.log('Creating complaint with evidence', complaint);
-    
-    const formData = new FormData();
-    
-    // Add all essential fields
-    formData.append('type', complaint.type);
-    formData.append('description', complaint.description);
-    formData.append('location', complaint.location);
-    
-    if (complaint.priority) {
-      formData.append('priority', complaint.priority);
-    }
-    
-    // Add reporter information
-    formData.append('fullName', complaint.fullName || '');
-    formData.append('contact', complaint.contact || '');
-    formData.append('email', complaint.email || '');
-    formData.append('incidentDate', complaint.incidentDate || new Date().toISOString());
-    
-    // Add files with correct key
-    if (complaint.evidenceFiles && complaint.evidenceFiles.length > 0) {
-      complaint.evidenceFiles.forEach((file, index) => {
-        // Try with just 'files' as the key (most Spring Boot implementations expect this)
-        formData.append('files', file);
-      });
-    }
-    
-    // Log what we're sending
-    console.log('Submitting complaint with FormData:');
-    formData.forEach((value, key) => {
-      if (value instanceof File) {
-        console.log(`- ${key}: File: ${value.name}, Size: ${value.size}, Type: ${value.type}`);
-      } else {
-        console.log(`- ${key}: ${value}`);
-      }
-    });
-    
-    // Get auth headers
-    let headers = this.getAuthHeaders();
-    // For FormData, we only set Accept and let the browser handle Content-Type
-    headers = headers.set('Accept', 'application/json');
-    
-    // Use specific headers that are compatible with multipart/form-data
-    return this.http.post<ComplaintResponse>(
-      `${environment.apiUrl}/complaints/with-evidence`, 
-      formData,
-      { headers }
-    ).pipe(
+  createComplaint(complaint: ComplaintCreateRequest): Observable<ComplaintResponse> {
+    return this.http.post<ComplaintResponse>(`${this.apiUrl}`, complaint, {
+      headers: this.getAuthHeaders()
+    }).pipe(
       catchError(error => {
-        console.error('Error creating complaint with evidence:', error);
-        
-        let errorMessage = 'Failed to create complaint';
-        
-        if (error.error) {
-          if (typeof error.error === 'string') {
-            errorMessage = error.error;
-          } else if (error.error.message) {
-            errorMessage = error.error.message;
-          } else if (error.status === 403) {
-            errorMessage = 'You are not authorized to create a complaint. Please log in again.';
-          } else if (error.status === 400) {
-            errorMessage = 'Invalid complaint data. Please check your form and try again.';
-          } else if (error.status === 413) {
-            errorMessage = 'File size exceeds the maximum limit allowed by the server.';
-          } else if (error.status === 415) {
-            errorMessage = 'File type not supported.';
-          } else if (error.status === 0) {
-            errorMessage = 'Could not connect to the server. Please check your internet connection.';
-          }
-        }
-        
-        return throwError(() => new Error(errorMessage));
+        console.error('Error creating complaint:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to create complaint'));
       })
     );
   }
 
-  updateComplaint(id: number, complaint: Partial<Complaint>): Observable<Complaint> {
-    return this.http.put<Complaint>(
-      `${this.apiUrl}/${id}`, 
-      complaint,
-      { headers: this.getAuthHeaders() }
+  updateComplaint(complaint: ComplaintUpdateRequest): Observable<ComplaintResponse> {
+    return this.http.put<ComplaintResponse>(`${this.apiUrl}/${complaint.id}`, complaint, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Error updating complaint:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to update complaint'));
+      })
     );
   }
 
-  updateComplaintStatus(id: number, status: string): Observable<Complaint> {
-    return this.http.patch<Complaint>(
-      `${this.apiUrl}/${id}/status`, 
-      { status },
+  updateComplaintStatus(id: number, status: string): Observable<ComplaintResponse> {
+    return this.http.put<ComplaintResponse>(
+      `${this.apiUrl}/${id}/status?status=${status}`,
+      {},
       { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(error => {
+        console.error('Error updating complaint status:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to update complaint status'));
+      })
     );
   }
 
@@ -290,52 +242,27 @@ export class ComplaintService {
     );
   }
 
-  uploadEvidence(files: File[]): Observable<string[]> {
+  uploadEvidence(evidence: EvidenceUploadRequest): Observable<EvidenceResponse> {
     const formData = new FormData();
-    files.forEach((file) => {
-      formData.append('files', file);
+    formData.append('file', evidence.file);
+    if (evidence.description) {
+      formData.append('description', evidence.description);
+    }
+
+    // Don't use the JSON content type for multipart form data
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
     });
 
-    // Get auth headers
-    let headers = this.getAuthHeaders();
-    // For FormData, we only set Accept and let the browser handle Content-Type
-    headers = headers.set('Accept', 'application/json');
-
-    return this.http.post<string[]>(
-      `${environment.apiUrl}/complaints/upload-evidence`, 
-      formData, 
-      {
-        reportProgress: true,
-        observe: 'events',
-        headers
-      }
+    return this.http.post<EvidenceResponse>(
+      `${this.apiUrl}/${evidence.complaintId}/evidences`,
+      formData,
+      { headers }
     ).pipe(
-      map(event => {
-        if (event.type === HttpEventType.Response) {
-          return event.body as string[];
-        }
-        // Return empty array for progress events
-        return [];
-      }),
       catchError(error => {
         console.error('Error uploading evidence:', error);
-        let errorMessage = 'Failed to upload evidence';
-        
-        if (error.error) {
-          if (typeof error.error === 'string') {
-            errorMessage = error.error;
-          } else if (error.error.message) {
-            errorMessage = error.error.message;
-          } else if (error.status === 403) {
-            errorMessage = 'You are not authorized to upload evidence. Please log in again.';
-          } else if (error.status === 413) {
-            errorMessage = 'File size exceeds the maximum limit allowed by the server.';
-          } else if (error.status === 415) {
-            errorMessage = 'File type not supported.';
-          }
-        }
-        
-        return throwError(() => new Error(errorMessage));
+        return throwError(() => new Error(error.error?.message || 'Failed to upload evidence'));
       })
     );
   }

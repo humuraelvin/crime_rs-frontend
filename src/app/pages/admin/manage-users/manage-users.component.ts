@@ -199,8 +199,6 @@ interface UserRole {
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button (click)="editUser(user)"
-                              class="text-blue-600 hover:text-blue-900">Edit</button>
                       <button (click)="confirmDeleteUser(user)"
                               class="text-red-600 hover:text-red-900">Delete</button>
                     </td>

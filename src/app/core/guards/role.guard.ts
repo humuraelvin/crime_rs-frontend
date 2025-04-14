@@ -16,58 +16,60 @@ export class RoleGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     console.log('RoleGuard - Checking access to route:', state.url);
-    console.log('RoleGuard - Required roles:', route.data['roles']);
     
-    // First check if the user is authenticated
-    if (!this.authService.isLoggedIn || !this.authService.isAuthenticated()) {
-      console.log('RoleGuard - User not authenticated, redirecting to login');
-      this.router.navigate(['/auth/login'], { 
-        queryParams: { returnUrl: state.url }
-      });
+    if (!this.authService.isAuthenticated()) {
+      console.log('Role Guard: User not authenticated, redirecting to login');
+      this.router.navigate(['/auth/login']);
       return false;
     }
 
-    // Always allow admin dashboard access for admin/police without role checks
+    // Get current user and required roles
+    const user = this.authService.currentUserValue;
+    const requiredRoles = route.data['roles'] as string[];
+    
+    // Make sure user is not null
+    if (!user) {
+      console.log('Role Guard: User is null even though authenticated, redirecting to login');
+      this.router.navigate(['/auth/login']);
+      return false;
+    }
+
+    // If we're already in the admin area and user is admin or police officer
+    // allow access without further checks to prevent redirection loops
     if (state.url.startsWith('/admin') && 
-        (this.authService.currentUserValue?.role === UserRole.ADMIN || 
-         this.authService.currentUserValue?.role === UserRole.POLICE_OFFICER)) {
-      console.log('RoleGuard - Admin/Police accessing admin routes, allowing access');
+        (user.role === UserRole.ADMIN || user.role === UserRole.POLICE_OFFICER)) {
       return true;
     }
 
-    // Check if route has required roles data
-    const requiredRoles = route.data['roles'] as Array<string>;
-    console.log('RoleGuard - User role:', this.authService.currentUserValue?.role);
-    
-    if (!requiredRoles || requiredRoles.length === 0) {
-      console.log('RoleGuard - No specific roles required, allowing access');
-      return true; // No specific roles required
-    }
-
-    // Convert string roles to UserRole enum values
-    const userRoles = requiredRoles.map(role => UserRole[role as keyof typeof UserRole]);
-
-    // Check if the user has any of the required roles
-    if (this.authService.hasAnyRole(userRoles)) {
-      console.log('RoleGuard - User has required role, allowing access');
-      return true;
-    }
-
-    // User doesn't have the required role
-    console.log('RoleGuard - Access denied, user lacks required role');
-    this.toastr.error('You do not have permission to access this page', '', {
-      timeOut: 3000,
-      closeButton: true
-    });
-    
-    // Redirect based on user role
-    const currentUser = this.authService.currentUserValue;
-    if (currentUser && (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.POLICE_OFFICER)) {
-      this.router.navigate(['/admin']);
-    } else {
+    // Special case for citizen trying to access admin routes
+    if (state.url.startsWith('/admin') && user.role === UserRole.CITIZEN) {
+      console.log('Role Guard: Citizen attempting to access admin route, redirecting to dashboard');
+      this.toastr.error('You do not have permission to access this area');
       this.router.navigate(['/dashboard']);
+      return false;
     }
-    
-    return false;
+
+    // If no roles required, allow access
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return true;
+    }
+
+    // Check if user has any of the required roles
+    if (requiredRoles.includes(user.role)) {
+      return true;
+    } else {
+      console.log(`Role Guard: User role ${user.role} does not match required roles: ${requiredRoles.join(', ')}`);
+      
+      // Redirect based on role
+      if (user.role === UserRole.ADMIN || user.role === UserRole.POLICE_OFFICER) {
+        console.log('Role Guard: Redirecting admin/officer to admin dashboard');
+        this.router.navigate(['/admin']);
+      } else {
+        console.log('Role Guard: Redirecting citizen to citizen dashboard');
+        this.router.navigate(['/dashboard']);
+      }
+      this.toastr.error('You do not have permission to access this area');
+      return false;
+    }
   }
 } 

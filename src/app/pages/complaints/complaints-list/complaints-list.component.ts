@@ -103,6 +103,8 @@ export class ComplaintsListComponent implements OnInit {
   complaints: ComplaintResponse[] = [];
   loading = true;
   isCitizen = false;
+  isAdmin = false;
+  isPoliceOfficer = false;
 
   constructor(
     private complaintService: ComplaintService,
@@ -110,6 +112,8 @@ export class ComplaintsListComponent implements OnInit {
     private toastr: ToastrService
   ) {
     this.isCitizen = this.authService.hasRole(UserRole.CITIZEN);
+    this.isAdmin = this.authService.hasRole(UserRole.ADMIN);
+    this.isPoliceOfficer = this.authService.hasRole(UserRole.POLICE_OFFICER);
   }
 
   ngOnInit(): void {
@@ -118,11 +122,21 @@ export class ComplaintsListComponent implements OnInit {
 
   loadComplaints(): void {
     this.loading = true;
-    const loadFunction = this.isCitizen ? 
-      () => this.complaintService.getComplaints() :
-      () => this.complaintService.getComplaints();
+    
+    // Use different endpoints based on user role
+    let observable = this.complaintService.getComplaints();
+    
+    if (this.isCitizen) {
+      // For citizens, only show their own complaints
+      console.log('Loading complaints for citizen');
+      observable = this.complaintService.getMyComplaints();
+    } else if (this.isAdmin || this.isPoliceOfficer) {
+      // For admin/police, show all complaints
+      console.log('Loading all complaints for admin/police');
+      observable = this.complaintService.getComplaints();
+    }
 
-    loadFunction().subscribe({
+    observable.subscribe({
       next: (data: any) => {
         // Check if the response is paginated
         if (data && data.content && Array.isArray(data.content)) {

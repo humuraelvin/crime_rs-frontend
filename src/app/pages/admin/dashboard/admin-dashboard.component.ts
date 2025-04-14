@@ -77,13 +77,9 @@ interface AdminStats {
               <h3 class="text-xl font-semibold text-gray-800 mb-2">Complaint Management</h3>
               <p class="text-gray-600">Assign and track citizen complaints</p>
             </a>
-            <a routerLink="/admin/user-management" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <a routerLink="/admin/users" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <h3 class="text-xl font-semibold text-gray-800 mb-2">User Management</h3>
               <p class="text-gray-600">Manage user accounts and permissions</p>
-            </a>
-            <a routerLink="/admin/reports" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-              <h3 class="text-xl font-semibold text-gray-800 mb-2">Reports</h3>
-              <p class="text-gray-600">View detailed system reports and statistics</p>
             </a>
             <a routerLink="/admin/settings" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <h3 class="text-xl font-semibold text-gray-800 mb-2">System Settings</h3>

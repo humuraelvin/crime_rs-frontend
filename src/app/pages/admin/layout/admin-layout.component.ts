@@ -1,12 +1,14 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthMessageHandlerComponent } from '../../../shared/components/auth-message-handler/auth-message-handler.component';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AuthMessageHandlerComponent],
   template: `
+    <app-auth-message-handler></app-auth-message-handler>
     <div class="flex h-screen bg-gray-100">
       <!-- Sidebar -->
       <div class="sidebar bg-white w-64 min-h-screen shadow-md hidden md:block">

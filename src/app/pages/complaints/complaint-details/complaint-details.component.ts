@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { ComplaintService, ComplaintResponse, Comment } from '../../../core/services/complaint.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +16,7 @@ import { UserRole } from '../../../core/models/user.model';
     <div class="min-h-screen bg-gray-100">
       <div class="container mx-auto px-4 py-8">
         <div class="mb-8">
-          <a routerLink="/complaints" class="text-blue-600 hover:text-blue-800">← Back to Complaints</a>
+          <a [routerLink]="getBackLink()" class="text-blue-600 hover:text-blue-800">← Back to Complaints</a>
         </div>
         
         <app-loading-spinner *ngIf="loading"></app-loading-spinner>
@@ -161,15 +161,20 @@ export class ComplaintDetailsComponent implements OnInit {
   newComment = '';
   showStatusDropdown = false;
   availableStatuses = ['PENDING', 'UNDER_INVESTIGATION', 'RESOLVED', 'REJECTED'];
+  isAdminRoute = false;
   
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private complaintService: ComplaintService,
     private authService: AuthService,
     private toastr: ToastrService
   ) {}
   
   ngOnInit(): void {
+    // Check if we're on an admin route
+    this.isAdminRoute = this.router.url.includes('/admin/');
+    
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       if (idParam) {
@@ -311,5 +316,9 @@ export class ComplaintDetailsComponent implements OnInit {
         this.updating = false;
       }
     });
+  }
+  
+  getBackLink(): string {
+    return this.isAdminRoute ? '/admin/complaints' : '/complaints';
   }
 } 

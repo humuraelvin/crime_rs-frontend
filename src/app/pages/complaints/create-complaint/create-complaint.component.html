@@ -1,0 +1,127 @@
+<!-- Create Complaint Form -->
+<div class="min-h-screen bg-gray-100">
+  <div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+      <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Report a Crime</h1>
+        <button 
+          routerLink="/complaints" 
+          class="text-gray-600 hover:text-gray-900 flex items-center"
+        >
+          <span class="material-icons mr-1">arrow_back</span>
+          Back to Complaints
+        </button>
+      </div>
+      
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <form [formGroup]="complaintForm" (ngSubmit)="onSubmit()">
+          <div class="mb-6">
+            <label for="crimeType" class="block text-sm font-medium text-gray-700 mb-1">Crime Type</label>
+            <select 
+              id="crimeType" 
+              formControlName="crimeType"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="">Select Crime Type</option>
+              <option value="THEFT">Theft</option>
+              <option value="ASSAULT">Assault</option>
+              <option value="BURGLARY">Burglary</option>
+              <option value="FRAUD">Fraud</option>
+              <option value="VANDALISM">Vandalism</option>
+              <option value="HARASSMENT">Harassment</option>
+              <option value="DRUG_RELATED">Drug Related</option>
+              <option value="OTHER">Other</option>
+            </select>
+            <div *ngIf="submitted && complaintForm.get('crimeType')?.errors" class="text-red-500 text-xs mt-1">
+              <div *ngIf="complaintForm.get('crimeType')?.errors?.['required']">Crime type is required</div>
+            </div>
+          </div>
+          
+          <div class="mb-6">
+            <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <input 
+              type="text" 
+              id="location" 
+              formControlName="location"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              placeholder="Where did the incident take place?"
+            >
+            <div *ngIf="submitted && complaintForm.get('location')?.errors" class="text-red-500 text-xs mt-1">
+              <div *ngIf="complaintForm.get('location')?.errors?.['required']">Location is required</div>
+            </div>
+          </div>
+          
+          <div class="mb-6">
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea 
+              id="description" 
+              formControlName="description"
+              rows="5"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              placeholder="Please describe what happened in detail"
+            ></textarea>
+            <div *ngIf="submitted && complaintForm.get('description')?.errors" class="text-red-500 text-xs mt-1">
+              <div *ngIf="complaintForm.get('description')?.errors?.['required']">Description is required</div>
+              <div *ngIf="complaintForm.get('description')?.errors?.['minlength']">Description must be at least 20 characters</div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Evidence (Optional)</label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+              <div class="space-y-1 text-center">
+                <svg *ngIf="!selectedFile" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                
+                <div *ngIf="selectedFile" class="flex flex-col items-center">
+                  <div class="flex items-center space-x-2">
+                    <svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-sm text-gray-700">{{ selectedFile.name }}</span>
+                  </div>
+                  <button type="button" (click)="removeSelectedFile()" class="text-red-500 text-xs mt-2">Remove</button>
+                </div>
+                
+                <div class="flex text-sm text-gray-600">
+                  <label for="file-upload"
+                         class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                    <span>{{ selectedFile ? 'Change file' : 'Upload a file' }}</span>
+                    <input id="file-upload" name="file-upload" type="file" class="sr-only" (change)="onFileSelected($event)">
+                  </label>
+                  <p class="pl-1" *ngIf="!selectedFile">or drag and drop</p>
+                </div>
+                <p class="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-4">
+            <button 
+              type="button"
+              routerLink="/complaints"
+              class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
+              [disabled]="isSubmitting"
+            >
+              <span *ngIf="isSubmitting" class="mr-2">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              Submit Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div> 

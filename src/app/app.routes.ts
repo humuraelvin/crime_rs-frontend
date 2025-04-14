@@ -15,8 +15,7 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadChildren: () => import('./pages/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['CITIZEN'] }
+    canActivate: [AuthGuard]
   },
   {
     path: 'complaints',
@@ -31,8 +30,9 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    canActivate: [AuthGuard],
-    children: ADMIN_ROUTES
+    loadChildren: () => import('./pages/admin/admin.routes').then(m => m.ADMIN_ROUTES),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['ADMIN', 'POLICE_OFFICER'] }
   },
   {
     path: 'profile',

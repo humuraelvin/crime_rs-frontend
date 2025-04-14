@@ -30,15 +30,21 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(
       BrowserAnimationsModule,
       ToastrModule.forRoot({
-        timeOut: 4000,
+        timeOut: 2000,
         positionClass: 'toast-top-right',
         preventDuplicates: true,
         progressBar: true,
         closeButton: true,
-        enableHtml: true,
-        maxOpened: 1,  // Only allow one toast at a time
-        autoDismiss: true, // Auto-dismiss the duplicate toasts
-        resetTimeoutOnDuplicate: true, // Reset the timeout if a duplicate toast is shown
+        enableHtml: false,
+        maxOpened: 1,
+        autoDismiss: true,
+        resetTimeoutOnDuplicate: false,
+        tapToDismiss: true,
+        newestOnTop: true,
+        disableTimeOut: false,
+        extendedTimeOut: 500,
+        easing: 'linear',
+        easeTime: 200
       }),
       // Import the CoreModule and SharedModule to ensure their services are available
       CoreModule,
