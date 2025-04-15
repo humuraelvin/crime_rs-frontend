@@ -295,4 +295,76 @@ export class ComplaintService {
       })
     );
   }
+
+  // Direct method to get evidence file with proper headers and response type
+  getEvidenceFile(fileUrl: string): Observable<Blob> {
+    // Handle relative vs absolute paths
+    let url = fileUrl;
+    if (!url.startsWith('http')) {
+      // Make sure uploads is included in the path
+      if (!url.includes('/uploads/') && !url.startsWith('/uploads/')) {
+        url = `/uploads/${url}`;
+      }
+      
+      // Make sure we don't have double slashes
+      if (url.startsWith('/')) {
+        url = `${environment.apiUrl}${url}`;
+      } else {
+        url = `${environment.apiUrl}/${url}`;
+      }
+    }
+    
+    console.log('Fetching file from:', url);
+    
+    // For binary data, we need to set the correct headers
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'image/jpeg,image/png,image/gif,application/pdf,*/*'
+    });
+
+    return this.http.get(url, {
+      headers: headers,
+      responseType: 'blob',
+      withCredentials: true
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching evidence file:', error);
+        return throwError(() => new Error('Failed to load evidence file'));
+      })
+    );
+  }
+
+  // Method to get direct URL to file with auth token
+  getFileUrl(fileUrl: string): string {
+    if (!fileUrl) return '';
+    
+    // Clean the URL
+    let cleanUrl = fileUrl;
+    if (cleanUrl.includes('\\')) {
+      cleanUrl = cleanUrl.replace(/\\/g, '/');
+    }
+    
+    // Make sure the URL includes /uploads/ 
+    if (!cleanUrl.includes('/uploads/') && !cleanUrl.startsWith('/uploads/')) {
+      cleanUrl = `/uploads/${cleanUrl}`;
+    }
+    
+    // Add API URL
+    let fullUrl = '';
+    if (cleanUrl.startsWith('/')) {
+      fullUrl = `${environment.apiUrl}${cleanUrl}`;
+    } else {
+      fullUrl = `${environment.apiUrl}/${cleanUrl}`;
+    }
+    
+    // Add auth token
+    const token = this.authService.getToken();
+    if (token) {
+      fullUrl += `?token=${encodeURIComponent(token)}`;
+    }
+    
+    console.log('Generated file URL:', fullUrl);
+    return fullUrl;
+  }
 } 

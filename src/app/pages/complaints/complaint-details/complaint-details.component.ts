@@ -102,15 +102,16 @@ import { environment } from '@environments/environment';
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div *ngFor="let evidence of complaint.evidences" class="border rounded-lg overflow-hidden bg-gray-50">
                 <div *ngIf="isImageFile(evidence.fileUrl)" class="relative p-2">
-                  <!-- Debug info -->
-                  <p class="text-xs text-gray-400 mb-1">URL: {{evidence.fileUrl}}</p>
-                  
-                  <img 
-                    [src]="getFullImageUrl(evidence.fileUrl)" 
-                    [alt]="getFileName(evidence.fileUrl)"
-                    class="w-full h-64 object-contain border rounded"
-                    (click)="openImageInNewTab(evidence.fileUrl)"
-                  >
+                  <div class="w-full h-64 flex items-center justify-center">
+                    <img 
+                      [src]="complaintService.getFileUrl(evidence.fileUrl)" 
+                      [alt]="getFileName(evidence.fileUrl)"
+                      class="max-w-full max-h-full object-contain border rounded"
+                      (click)="openImageInNewTab(evidence.fileUrl)"
+                      style="cursor: pointer;"
+                      (error)="handleImageError($event)"
+                    >
+                  </div>
                 </div>
                 <div *ngIf="!isImageFile(evidence.fileUrl)" class="p-4 flex items-center justify-center">
                   <div class="text-center">
@@ -127,10 +128,10 @@ import { environment } from '@environments/environment';
                       <p class="text-xs">{{evidence.uploadedAt ? (evidence.uploadedAt | date:'medium') : 'N/A'}}</p>
                     </div>
                     <a 
-                      [href]="getFullImageUrl(evidence.fileUrl)" 
+                      [href]="complaintService.getFileUrl(evidence.fileUrl)" 
                       target="_blank" 
                       class="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                      download
+                      [download]="getFileName(evidence.fileUrl)"
                     >
                       Download
                     </a>
@@ -203,7 +204,7 @@ export class ComplaintDetailsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private complaintService: ComplaintService,
+    public complaintService: ComplaintService,
     private authService: AuthService,
     private toastr: ToastrService
   ) {}
@@ -296,8 +297,32 @@ export class ComplaintDetailsComponent implements OnInit {
     this.errorMessage = '';
     
     this.complaintService.getComplaintById(this.complaintId).subscribe({
-      next: (data) => {
+      next: (data: any) => {
         console.log('Raw complaint data:', data);
+        
+        // Handle evidences specifically
+        if (data.evidences === null) {
+          data.evidences = [];
+        }
+        
+        if (data.evidenceFileNames && Array.isArray(data.evidenceFileNames) && data.evidenceFileNames.length > 0) {
+          // If we have file names but no evidences array, create one
+          if (!data.evidences) {
+            data.evidences = [];
+          }
+          
+          // Add any missing evidence files
+          data.evidenceFileNames.forEach((fileName: string) => {
+            if (!data.evidences.find((e: any) => e.fileUrl === fileName)) {
+              data.evidences.push({
+                fileUrl: fileName,
+                fileType: this.getFileType(fileName),
+                uploadedAt: data.updatedAt || data.createdAt
+              });
+            }
+          });
+        }
+        
         this.complaint = this.mapComplaintData(data);
         console.log('Processed complaint:', this.complaint);
         this.loading = false;
@@ -436,26 +461,7 @@ export class ComplaintDetailsComponent implements OnInit {
   }
   
   getFullImageUrl(url: string): string {
-    // Handle null or empty URLs
-    if (!url) return '';
-    
-    console.log('Processing image URL:', url);
-    
-    // If the URL is already absolute (starts with http:// or https://)
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      console.log('URL is already absolute:', url);
-      return url;
-    }
-    
-    // If URL starts with /uploads or similar - prepend the API URL
-    if (url.startsWith('/')) {
-      console.log('Adding API URL to path:', `${environment.apiUrl}${url}`);
-      return `${environment.apiUrl}${url}`;
-    }
-    
-    // If URL may be relative without starting slash
-    console.log('Adding API URL with slash:', `${environment.apiUrl}/${url}`);
-    return `${environment.apiUrl}/${url}`;
+    return this.complaintService.getFileUrl(url);
   }
   
   getFileName(url: string): string {
@@ -494,7 +500,62 @@ export class ComplaintDetailsComponent implements OnInit {
   }
   
   openImageInNewTab(url: string): void {
-    window.open(this.getFullImageUrl(url), '_blank');
+    // Clean the URL
+    if (!url) return;
+    
+    console.log('Opening image in new tab:', url);
+    
+    // Use the blob approach to securely open image in new tab
+    this.complaintService.getEvidenceFile(url).subscribe({
+      next: (blob: Blob) => {
+        // Create a blob URL
+        const objectUrl = URL.createObjectURL(blob);
+        
+        // Open in new tab
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(`
+            <html>
+              <head>
+                <title>${this.getFileName(url)}</title>
+                <style>
+                  body { 
+                    margin: 0; 
+                    padding: 0; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                    min-height: 100vh; 
+                    background-color: #1a1a1a;
+                  }
+                  img { 
+                    max-width: 100%; 
+                    max-height: 90vh; 
+                    object-fit: contain;
+                  }
+                </style>
+              </head>
+              <body>
+                <img src="${objectUrl}" alt="${this.getFileName(url)}">
+              </body>
+            </html>
+          `);
+          newWindow.document.close();
+        } else {
+          // Fallback if window.open is blocked
+          window.location.href = objectUrl;
+        }
+      },
+      error: (error) => {
+        console.error('Failed to fetch image directly:', error);
+        
+        // Fallback to direct URL approach
+        const directUrl = this.complaintService.getFileUrl(url);
+        window.open(directUrl, '_blank');
+        
+        this.toastr.warning('Opening image directly in browser. You may need to log in again if prompted.');
+      }
+    });
   }
   
   isImageFile(url: string): boolean {
@@ -564,5 +625,14 @@ export class ComplaintDetailsComponent implements OnInit {
   
   isStatusRejected(status: string): boolean {
     return status === 'REJECTED';
+  }
+  
+  // Add a method to handle image loading errors
+  handleImageError(event: any): void {
+    console.error('Image failed to load:', event.target.src);
+    // Set a fallback image or error message
+    event.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAADk0lEQVR4nO3cW4hNURzH8d+aGTKXQSNFHpTkUiZKKQ9K5JaUt1GeUPKgPCgPGikvlGukPEzuRSk8oEQeuFVELnMrGsYYY2aYy/Jgn2lP55w5Z87e6+y91vp+ajrTWfvf3/+33n322muvDYiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiEpCnoAsYwG8BKAAsA1AFoBFAPoAnAYwCPALwOqL6cMQXAadgBmDH+rgM4BaAxhdqyTg2ASwC+I36nD/X3F4DLAKYnWXA2mQfgDZLr+MHbvQUwN6nik+S8MRV5gfQ7fbDfACxLpBcS4rQxFXmD/+/4wd4CUIp/VQ0A7sNvx7T5BGA/gMp4uyQ+TQC+Il0bANwDUBZjv8SmDsAzJNMZAwOwE8ACAHUAKgFMBTANwAYAxxGeDvkMYGVMfROLEgB7EXxntAAogV03lsHugP1jtL+VzG7KbiH4DolqBTJfH95E9EHyLNh5jRG3EVxHRLUVmSveMKwZpKZnSP/c5HkK7cdqOuxE7PswQfCnR2j7FMCMQdpeAPDLcz1fPbfnzEoAJ5G58cVg9iFcnTHgEILtmPMRarG1eazHejRu2oBQdsoJj7XMilBPEzzVkrOmw87QgjyPGO4x7MMa7HqrJHnsdPUCdkI10iCb0Eb7UfYxPABwBkCrwzoGcwR2kt7joa2cVQv/h6uvAK7CHtT1eWzXhy0e2sp57fA7wU2rpqS4qilp2eCTYKbVkGFVjitYiOAuvJ1LsL7YNSPzHRLlVkQ6jcnUPIZ/d2GfVQyLMSYn2yEzMnDUVvGP2RhXwW4a6LlDXiFzT+TMQ3AdcgTAZwTXIfnM+MMm/O2UDgTXGfnO+EMpgDtItmPuQpeuYhVkxwzVCa4GnBtQ/Lrv12DMQbQBab+nNkeBHaB2J9SGGHLRmJ6ifSZf53I3pjKsgZ80B7PvYB/TVnSNqUSwj0Ik+SpGjMkJtrYRPVP09gzTfl2Etg976KO8MA12JbCrDukC0AK7ttB177YC2GHsQNs/D32UF/bB7b3IVtgDVoHdYNTuqX/y1maExwy1EtAP2Bcv5JUJsOcVYxtc94zRVpWH/slrV+Cm4x0N0skq4OI8I+6pbyW8P1kDYArsm1aN+G9puwV2GboNbrbVEBERERERERERERERERERERERERERERERERHJCn8BN+RqF/zD1uwAAAAASUVORK5CYII=';
+    event.target.alt = 'Image not available';
+    this.toastr.warning('Image failed to load. It may be inaccessible or missing.', 'Warning');
   }
 } 
