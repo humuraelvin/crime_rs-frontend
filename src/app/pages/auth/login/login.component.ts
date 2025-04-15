@@ -71,7 +71,7 @@ import { UserRole } from '../../../core/models/user.model';
               </div>
               
               <div class="text-sm">
-                <a href="#" class="font-medium text-blue-600 hover:text-blue-500">
+                <a routerLink="/auth/forgot-password" class="font-medium text-blue-600 hover:text-blue-500">
                   Forgot your password?
                 </a>
               </div>
