@@ -95,20 +95,9 @@ import { AuthMessageHandlerComponent } from '../../../shared/components/auth-mes
               <h1 class="text-xl font-semibold text-gray-800">Crime Reporting Admin</h1>
             </div>
             <div class="flex items-center space-x-4">
-              <button class="text-gray-500 hover:text-gray-700">
-                <span class="material-icons">notifications</span>
-              </button>
+              
               <div class="relative">
-                <button class="flex items-center space-x-2 text-gray-700" (click)="toggleUserMenu()">
-                  <span class="material-icons bg-gray-200 rounded-full p-1">person</span>
-                  <span>Admin</span>
-                  <span class="material-icons" [class.transform]="isUserMenuOpen" [class.rotate-180]="isUserMenuOpen">arrow_drop_down</span>
-                </button>
-                <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10" [class.hidden]="!isUserMenuOpen">
-                  <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
-                  <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                  <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
-                </div>
+                
               </div>
             </div>
           </div>

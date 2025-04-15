@@ -33,8 +33,8 @@ import { AuthService } from '../../../core/services/auth.service';
       </div>
 
       <!-- Mobile sidebar -->
-      <div class="md:hidden fixed inset-0 z-50 bg-gray-900 bg-opacity-50 transition-opacity duration-300" 
-           [class.hidden]="!isMobileSidebarOpen" 
+      <div class="md:hidden fixed inset-0 z-50 bg-gray-900 bg-opacity-50 transition-opacity duration-300"
+           [class.hidden]="!isMobileSidebarOpen"
            (click)="toggleMobileSidebar()">
         <div class="bg-indigo-800 w-64 min-h-screen shadow-md" (click)="$event.stopPropagation()">
           <div class="p-4 border-b border-indigo-700 flex justify-between items-center">
@@ -72,21 +72,8 @@ import { AuthService } from '../../../core/services/auth.service';
               <h1 class="text-xl font-semibold text-gray-800">Police Officer Portal</h1>
             </div>
             <div class="flex items-center space-x-4">
-              <button class="text-gray-500 hover:text-gray-700">
-                <span class="material-icons">notifications</span>
-              </button>
-              <div class="relative">
-                <button class="flex items-center space-x-2 text-gray-700" (click)="toggleUserMenu()">
-                  <span class="material-icons bg-gray-200 rounded-full p-1">person</span>
-                  <span>{{ officerName }}</span>
-                  <span class="material-icons" [class.transform]="isUserMenuOpen" [class.rotate-180]="isUserMenuOpen">arrow_drop_down</span>
-                </button>
-                <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10" [class.hidden]="!isUserMenuOpen">
-                  <a routerLink="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
-                  <a routerLink="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                  <a routerLink="/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
-                </div>
-              </div>
+
+             
             </div>
           </div>
         </header>
@@ -110,7 +97,7 @@ export class PoliceLayoutComponent implements OnInit {
   officerName = 'Officer';
 
   constructor(private authService: AuthService) {}
-  
+
   ngOnInit(): void {
     const user = this.authService.currentUserValue;
     if (user) {
@@ -125,4 +112,4 @@ export class PoliceLayoutComponent implements OnInit {
   toggleUserMenu() {
     this.isUserMenuOpen = !this.isUserMenuOpen;
   }
-} 
+}
