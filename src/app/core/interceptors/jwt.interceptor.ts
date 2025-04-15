@@ -20,7 +20,8 @@ export const jwtInterceptor: HttpInterceptorFn = (
   // Skip authentication for auth endpoints
   if (request.url.includes('/auth/login') || 
       request.url.includes('/auth/register') || 
-      request.url.includes('/auth/refresh-token')) {
+      request.url.includes('/auth/refresh-token') ||
+      request.url.includes('/password/')) {
     return next(request);
   }
 
