@@ -4,13 +4,13 @@
     <div class="max-w-2xl mx-auto">
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Report a Crime</h1>
-        <button 
-          routerLink="/complaints" 
-          class="text-gray-600 hover:text-gray-900 flex items-center"
+        <a 
+          [routerLink]="['/complaints']" 
+          class="text-gray-600 hover:text-gray-900 flex items-center cursor-pointer"
         >
           <span class="material-icons mr-1">arrow_back</span>
           Back to Complaints
-        </button>
+        </a>
       </div>
       
       <div class="bg-white shadow-md rounded-lg p-6">
@@ -99,13 +99,12 @@
           </div>
 
           <div class="flex justify-end space-x-4">
-            <button 
-              type="button"
-              routerLink="/complaints"
-              class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            <a
+              [routerLink]="['/complaints']"
+              class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 flex items-center justify-center"
             >
               Cancel
-            </button>
+            </a>
             <button 
               type="submit"
               class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"

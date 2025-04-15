@@ -33,10 +33,10 @@ import { environment } from '@environments/environment';
               <div class="flex items-center space-x-4">
                 <span class="px-3 py-1 text-sm font-semibold rounded-full" 
                   [ngClass]="{
-                    'bg-yellow-100 text-yellow-800': complaint.status === 'PENDING',
-                    'bg-blue-100 text-blue-800': complaint.status === 'UNDER_INVESTIGATION',
-                    'bg-green-100 text-green-800': complaint.status === 'RESOLVED',
-                    'bg-red-100 text-red-800': complaint.status === 'REJECTED'
+                    'bg-yellow-100 text-yellow-800': isStatusPending(complaint.status),
+                    'bg-blue-100 text-blue-800': isStatusInvestigating(complaint.status),
+                    'bg-green-100 text-green-800': isStatusResolved(complaint.status),
+                    'bg-red-100 text-red-800': isStatusRejected(complaint.status)
                   }">
                   {{ formatStatus(complaint.status) }}
                 </span>
@@ -79,21 +79,21 @@ import { environment } from '@environments/environment';
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <h3 class="text-lg font-semibold text-gray-700 mb-2">Complainant Details</h3>
-              <p class="text-gray-600">Name: {{ complaint.userName }}</p>
-              <p class="text-gray-600">User ID: {{ complaint.userId }}</p>
+              <p class="text-gray-600"><span class="font-medium">Name:</span> {{ complaint.userName }}</p>
+              <p class="text-gray-600"><span class="font-medium">User ID:</span> {{ complaint.userId }}</p>
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-700 mb-2">Incident Details</h3>
-              <p class="text-gray-600">Location: {{ complaint.location }}</p>
-              <p class="text-gray-600">Type: {{ complaint.crimeType }}</p>
-              <p class="text-gray-600">Priority: {{ getPriorityLabel(complaint.priorityScore) }}</p>
+              <p class="text-gray-600"><span class="font-medium">Location:</span> {{ complaint.location || 'N/A' }}</p>
+              <p class="text-gray-600"><span class="font-medium">Type:</span> {{ complaint.crimeType || 'N/A' }}</p>
+              <p class="text-gray-600"><span class="font-medium">Priority:</span> {{ getPriorityLabel(complaint.priorityScore) }}</p>
             </div>
           </div>
           
           <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Description</h3>
             <p class="text-gray-600 whitespace-pre-line">
-              {{ complaint.description }}
+              {{ complaint.description || 'No description provided.' }}
             </p>
           </div>
           
@@ -186,6 +186,15 @@ export class ComplaintDetailsComponent implements OnInit {
     // Check if we're on an admin route
     this.isAdminRoute = this.router.url.includes('/admin/');
     
+    // Check if navigation state has fromPolice parameter
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation && navigation.extras && navigation.extras.state) {
+      const state = navigation.extras.state as {fromPolice?: boolean};
+      if (state && state.fromPolice) {
+        localStorage.setItem('fromPoliceRoute', 'true');
+      }
+    }
+    
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       if (idParam) {
@@ -263,23 +272,7 @@ export class ComplaintDetailsComponent implements OnInit {
     this.complaintService.getComplaintById(this.complaintId).subscribe({
       next: (data) => {
         this.complaint = data;
-        
-        // Update the evidence URLs to use the direct file endpoint
-        if (this.complaint && this.complaint.evidences) {
-          this.complaint.evidences.forEach(evidence => {
-            if (evidence.fileUrl) {
-              // Extract just the filename from the path
-              const fileName = this.getFileName(evidence.fileUrl);
-              console.log('Original URL:', evidence.fileUrl);
-              console.log('Extracted filename:', fileName);
-              
-              // Create direct URL to the file endpoint
-              evidence.fileUrl = `${environment.apiUrl}/files/${fileName}`;
-              console.log('New URL:', evidence.fileUrl);
-            }
-          });
-        }
-        
+        // Do not modify the evidence URLs - use them as provided by the backend
         this.loading = false;
       },
       error: (error) => {
@@ -362,6 +355,46 @@ export class ComplaintDetailsComponent implements OnInit {
   }
   
   getBackLink(): string {
-    return this.isAdminRoute ? '/admin/complaints' : '/complaints';
+    // For regular citizens, always return to complaints list
+    if (this.authService.hasRole(UserRole.CITIZEN)) {
+      return '/complaints';
+    }
+    
+    // For police officers
+    if (this.authService.hasRole(UserRole.POLICE_OFFICER)) {
+      // Check if we came from assign page
+      const fromPolice = localStorage.getItem('fromPoliceRoute') === 'true';
+      if (fromPolice) {
+        // Clear the flag after using it
+        localStorage.removeItem('fromPoliceRoute');
+        return '/police/assign';
+      }
+      // Default police route
+      return '/police/dashboard';
+    }
+    
+    // For admin users
+    if (this.authService.hasRole(UserRole.ADMIN)) {
+      return '/admin/complaints';
+    }
+    
+    // Default fallback
+    return '/complaints';
+  }
+  
+  isStatusPending(status: string): boolean {
+    return status === 'PENDING' || status === 'ASSIGNED' || status === 'PENDING_EVIDENCE';
+  }
+  
+  isStatusInvestigating(status: string): boolean {
+    return status === 'UNDER_INVESTIGATION' || status === 'INVESTIGATING' || status === 'UNDER_REVIEW';
+  }
+  
+  isStatusResolved(status: string): boolean {
+    return status === 'RESOLVED' || status === 'CLOSED';
+  }
+  
+  isStatusRejected(status: string): boolean {
+    return status === 'REJECTED';
   }
 } 

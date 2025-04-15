@@ -56,10 +56,13 @@ export interface ComplaintResponse {
   userId: number;
   userName: string;
   crimeType: string;
+  category?: string;
   description: string;
   status: string;
   dateFiled: string;
   dateLastUpdated: string;
+  createdAt?: string;
+  updatedAt?: string;
   location: string;
   priorityScore: number;
   evidences?: Array<{

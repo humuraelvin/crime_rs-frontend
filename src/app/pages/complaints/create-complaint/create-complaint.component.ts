@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ComplaintService, ComplaintCreateRequest } from '../../../core/services/complaint.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,7 +12,7 @@ import { HttpClient } from '@angular/common/http';
 @Component({
   selector: 'app-create-complaint',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './create-complaint.component.html',
   styles: []
 })
@@ -154,12 +154,14 @@ export class CreateComplaintComponent implements OnInit {
   }
 
   private handleSuccess(complaintId: number): void {
+    this.loading = false;
     this.isSubmitting = false;
     this.toastr.success('Complaint submitted successfully!');
     this.router.navigate(['/complaints', complaintId]);
   }
 
   private handleError(error: any): void {
+    this.loading = false;
     this.isSubmitting = false;
     console.error('Error submitting complaint:', error);
     this.toastr.error(error.message || 'Failed to submit complaint. Please try again.');

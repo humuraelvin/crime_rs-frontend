@@ -115,7 +115,6 @@ import { of } from 'rxjs';
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -124,7 +123,7 @@ import { of } from 'rxjs';
                       <div class="text-sm font-medium text-gray-900">#{{ complaint.id }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm text-gray-900">{{ complaint.crimeType }}</div>
+                      <div class="text-sm text-gray-900">{{ complaint.category || complaint.crimeType || 'N/A' }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
@@ -138,10 +137,7 @@ import { of } from 'rxjs';
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ complaint.dateFiled | date:'short' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a [routerLink]="['/police/assign', complaint.id]" class="text-indigo-600 hover:text-indigo-900">View</a>
+                      {{ complaint.dateFiled || complaint.createdAt | date:'MMM d, yyyy, h:mm a' }}
                     </td>
                   </tr>
                 </tbody>

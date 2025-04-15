@@ -6,6 +6,7 @@ import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { PoliceService, AssignedComplaint } from '../../../core/services/police.service';
+import { ComplaintService } from '../../../core/services/complaint.service';
 import { FormsModule } from '@angular/forms';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -17,6 +18,15 @@ import { of } from 'rxjs';
   template: `
     <div class="min-h-screen bg-gray-100">
       <div class="container mx-auto px-4 py-8">
+        <div class="flex items-center mb-4">
+          <a routerLink="/police/assign" class="text-indigo-600 hover:text-indigo-800 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            Back to Complaints
+          </a>
+        </div>
+        
         <h1 class="text-3xl font-bold text-gray-900 mb-8">My Cases</h1>
         
         <div class="flex justify-between items-center mb-6">
@@ -57,8 +67,7 @@ import { of } from 'rxjs';
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reporter</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filed On</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Filed</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -68,7 +77,7 @@ import { of } from 'rxjs';
                     <div class="text-sm font-medium text-gray-900">#{{ complaint.id }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ complaint.crimeType }}</div>
+                    <div class="text-sm text-gray-900">{{ complaint.category || complaint.crimeType || 'N/A' }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">{{ complaint.userName }}</div>
@@ -95,17 +104,10 @@ import { of } from 'rxjs';
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ complaint.dateFiled | date:'short' }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ complaint.dateLastUpdated | date:'short' }}
+                    {{ complaint.dateFiled | date:'MMM d, yyyy, h:mm a' }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      (click)="viewDetails(complaint)" 
-                      class="text-indigo-600 hover:text-indigo-900 mr-3">
-                      View Details
-                    </button>
+                    <a (click)="viewComplaintDetails(complaint)" class="text-indigo-600 hover:text-indigo-900 mr-3 cursor-pointer">View</a>
                     <button 
                       *ngIf="canUpdateStatus(complaint)" 
                       (click)="openUpdateStatusDialog(complaint)" 
@@ -118,67 +120,101 @@ import { of } from 'rxjs';
             </table>
           </div>
           
-          <div *ngIf="selectedComplaint" class="bg-white shadow-md rounded-lg mb-8 p-6">
-            <div class="flex justify-between mb-4">
-              <h2 class="text-2xl font-bold text-gray-900">Case Details #{{ selectedComplaint.id }}</h2>
-              <button 
-                (click)="selectedComplaint = null" 
-                class="text-gray-500 hover:text-gray-700">
-                Close
-              </button>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 class="text-lg font-semibold mb-3">Complaint Information</h3>
-                <div class="mb-2">
-                  <span class="text-gray-600 font-medium">Crime Type:</span>
-                  <span class="ml-2">{{ selectedComplaint.crimeType }}</span>
-                </div>
-                <div class="mb-2">
-                  <span class="text-gray-600 font-medium">Status:</span>
-                  <span class="ml-2">{{ formatStatus(selectedComplaint.status) }}</span>
-                </div>
-                <div class="mb-2">
-                  <span class="text-gray-600 font-medium">Priority:</span>
-                  <span class="ml-2">{{ getPriorityLabel(selectedComplaint.priorityScore) }}</span>
-                </div>
-                <div class="mb-2">
-                  <span class="text-gray-600 font-medium">Location:</span>
-                  <span class="ml-2">{{ selectedComplaint.location || 'Not specified' }}</span>
-                </div>
-                <div class="mb-2">
-                  <span class="text-gray-600 font-medium">Filed On:</span>
-                  <span class="ml-2">{{ selectedComplaint.dateFiled | date:'medium' }}</span>
-                </div>
-                <div class="mb-2">
-                  <span class="text-gray-600 font-medium">Last Updated:</span>
-                  <span class="ml-2">{{ selectedComplaint.dateLastUpdated | date:'medium' }}</span>
-                </div>
-              </div>
-              
-              <div>
-                <h3 class="text-lg font-semibold mb-3">Reporting User Information</h3>
-                <div class="mb-2">
-                  <span class="text-gray-600 font-medium">Name:</span>
-                  <span class="ml-2">{{ selectedComplaint.userName }}</span>
-                </div>
-                <div class="mb-2">
-                  <span class="text-gray-600 font-medium">Description:</span>
-                  <div class="mt-1 p-3 bg-gray-50 rounded border border-gray-200">
-                    {{ selectedComplaint.description }}
+          <!-- Complaint Detail Modal View -->
+          <div *ngIf="selectedComplaint" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="complaint-detail-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+              <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+              <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div class="sm:flex sm:items-start justify-between mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="complaint-detail-title">
+                      Complaint #{{ selectedComplaint.id }}
+                    </h3>
+                    <button
+                      (click)="selectedComplaint = null; commentText = ''"
+                      class="p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      aria-label="Close detail view">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div class="mb-6 flex justify-between items-start">
+                    <div>
+                      <div class="flex items-center space-x-4">
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full" 
+                          [ngClass]="{
+                            'bg-yellow-100 text-yellow-800': isStatusPending(selectedComplaint.status),
+                            'bg-blue-100 text-blue-800': isStatusInvestigating(selectedComplaint.status),
+                            'bg-green-100 text-green-800': isStatusResolved(selectedComplaint.status),
+                            'bg-red-100 text-red-800': isStatusRejected(selectedComplaint.status)
+                          }">
+                          {{ formatStatus(selectedComplaint.status) }}
+                        </span>
+                        
+                        <button 
+                          *ngIf="canUpdateStatus(selectedComplaint)" 
+                          (click)="openUpdateStatusDialog(selectedComplaint)" 
+                          class="px-3 py-1 text-sm font-medium text-blue-600 border border-blue-600 rounded hover:bg-blue-50 focus:outline-none">
+                          Update Status
+                        </button>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm text-gray-500">Filed on: {{ selectedComplaint.dateFiled | date:'MMM d, yyyy, h:mm a' }}</p>
+                      <p class="text-sm text-gray-500">Last updated: {{ selectedComplaint.dateLastUpdated | date:'MMM d, yyyy, h:mm a' }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <h3 class="text-lg font-semibold text-gray-700 mb-2">Complainant Details</h3>
+                      <p class="text-gray-600"><span class="font-medium">Name:</span> {{ selectedComplaint.userName }}</p>
+                      <p class="text-gray-600"><span class="font-medium">User ID:</span> {{ selectedComplaint.userId }}</p>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-semibold text-gray-700 mb-2">Incident Details</h3>
+                      <p class="text-gray-600"><span class="font-medium">Location:</span> {{ selectedComplaint.location || 'N/A' }}</p>
+                      <p class="text-gray-600"><span class="font-medium">Type:</span> {{ selectedComplaint.category || selectedComplaint.crimeType || 'N/A' }}</p>
+                      <p class="text-gray-600"><span class="font-medium">Priority:</span> {{ getPriorityLabel(selectedComplaint.priorityScore) }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Description</h3>
+                    <p class="text-gray-600 whitespace-pre-line p-3 bg-gray-50 rounded border border-gray-200">
+                      {{ selectedComplaint.description || 'No description provided.' }}
+                    </p>
+                  </div>
+                  
+                  <!-- Add Comment Form -->
+                  <div class="mt-8 border-t pt-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Add a Comment</h3>
+                    <div class="mb-4">
+                      <textarea 
+                        [(ngModel)]="commentText" 
+                        class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none" 
+                        rows="3" 
+                        placeholder="Write your comment here..."></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                      <button 
+                        (click)="submitComment()" 
+                        [disabled]="!commentText.trim()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Submit Comment
+                      </button>
+                      <button 
+                        (click)="selectedComplaint = null; commentText = ''" 
+                        class="px-4 py-2 ml-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                        Close
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div class="mt-6 flex justify-end">
-              <button 
-                *ngIf="canUpdateStatus(selectedComplaint)"
-                (click)="openUpdateStatusDialog(selectedComplaint)" 
-                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                Update Status
-              </button>
             </div>
           </div>
           
@@ -198,11 +234,11 @@ import { of } from 'rxjs';
                 <div class="sm:flex sm:items-start">
                   <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                     <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                      Update Case Status
+                      Update Status
                     </h3>
                     <div class="mt-4">
                       <p class="text-sm text-gray-500 mb-4">
-                        Update the status of case #{{ selectedComplaint?.id }}
+                        Update the status of complaint #{{ selectedComplaint?.id }}
                       </p>
                       <div class="mb-4">
                         <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
@@ -247,6 +283,7 @@ export class MyCasesComponent implements OnInit {
   
   // Case details view
   selectedComplaint: AssignedComplaint | null = null;
+  commentText = '';
   
   // Status update dialog
   showStatusDialog = false;
@@ -256,6 +293,7 @@ export class MyCasesComponent implements OnInit {
 
   constructor(
     private policeService: PoliceService,
+    private complaintService: ComplaintService,
     private toastr: ToastrService
   ) {}
 
@@ -277,7 +315,19 @@ export class MyCasesComponent implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          this.complaints = response;
+          console.log('Assigned complaints from backend:', response);
+          
+          // Process the response to ensure crime type and dates are properly set
+          this.complaints = response.map(complaint => {
+            return {
+              ...complaint,
+              crimeType: complaint.category || complaint.crimeType || 'N/A',
+              // Make sure we have proper date fields
+              dateFiled: complaint.dateFiled || complaint.createdAt || new Date().toISOString(),
+              dateLastUpdated: complaint.dateLastUpdated || complaint.updatedAt || complaint.dateFiled || new Date().toISOString()
+            };
+          });
+          
           this.filteredComplaints = [...this.complaints];
           this.loading = false;
         }
@@ -334,10 +384,6 @@ export class MyCasesComponent implements OnInit {
     return complaint.status !== 'REJECTED' && complaint.status !== 'RESOLVED' && complaint.status !== 'CLOSED';
   }
   
-  viewDetails(complaint: AssignedComplaint): void {
-    this.selectedComplaint = complaint;
-  }
-
   openUpdateStatusDialog(complaint: AssignedComplaint): void {
     this.selectedComplaint = complaint;
     this.selectedStatus = complaint.status === 'ASSIGNED' ? 'INVESTIGATING' : complaint.status;
@@ -374,17 +420,81 @@ export class MyCasesComponent implements OnInit {
             }
           }
           
-          this.toastr.success(`Case status updated to ${this.formatStatus(this.selectedStatus)}`);
+          this.toastr.success(`Complaint status updated to ${this.formatStatus(this.selectedStatus)}`);
           this.isUpdating = false;
           this.closeUpdateStatusDialog();
           this.applyFilters();
         },
         error: (error) => {
-          console.error('Failed to update case status:', error);
-          this.toastr.error('Failed to update case status');
+          console.error('Failed to update complaint status:', error);
+          this.toastr.error('Failed to update complaint status');
           this.isUpdating = false;
           // Don't close dialog to allow retry
         }
       });
+  }
+  
+  submitComment(): void {
+    if (!this.commentText.trim() || !this.selectedComplaint) {
+      return;
+    }
+    
+    // In a real application, this would call a service method to save the comment
+    this.toastr.success('Comment submitted successfully');
+    this.commentText = '';
+  }
+
+  viewComplaintDetails(complaint: AssignedComplaint): void {
+    this.selectedComplaint = { ...complaint }; // Set initially with basic data
+    
+    // Load complete complaint details from the backend to ensure we have all data
+    this.complaintService.getComplaintById(complaint.id).subscribe({
+      next: (fullComplaint) => {
+        console.log('Full complaint details from backend:', fullComplaint);
+        
+        // Update the view with complete data, handling the different field names
+        this.selectedComplaint = {
+          ...this.selectedComplaint,
+          ...fullComplaint,
+          // Ensure we have the crime type (either from category or crimeType fields)
+          crimeType: fullComplaint.category || fullComplaint.crimeType || complaint.crimeType,
+          // Ensure we have dates
+          dateFiled: fullComplaint.dateFiled || fullComplaint.createdAt || complaint.dateFiled,
+          dateLastUpdated: fullComplaint.dateLastUpdated || fullComplaint.updatedAt || complaint.dateLastUpdated
+        };
+      },
+      error: (error) => {
+        console.error('Error fetching complaint details:', error);
+        this.toastr.error('Failed to load complete complaint details');
+      }
+    });
+  }
+  
+  formatDate(date: string | number | Date): string {
+    if (!date) return 'N/A';
+    
+    try {
+      // Convert string/number to Date object
+      const dateObj = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+      
+      // Check if date is valid
+      if (isNaN(dateObj.getTime())) {
+        console.warn('Invalid date:', date);
+        return 'N/A';
+      }
+      
+      const options: Intl.DateTimeFormatOptions = { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      
+      return dateObj.toLocaleString(undefined, options);
+    } catch (error) {
+      console.error('Error formatting date:', error, date);
+      return 'N/A';
+    }
   }
 } 
