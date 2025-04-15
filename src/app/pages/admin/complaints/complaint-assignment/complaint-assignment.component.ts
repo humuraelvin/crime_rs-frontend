@@ -127,7 +127,7 @@ interface Complaint {
               <tr *ngFor="let complaint of filteredComplaints" class="hover:bg-gray-50">
                 <td class="py-3 px-4 whitespace-nowrap">{{complaint.id}}</td>
                 <td class="py-3 px-4">{{complaint.description | slice:0:30}}{{complaint.description.length > 30 ? '...' : ''}}</td>
-                <td class="py-3 px-4">{{complaint.crimeType}}</td>
+                <td class="py-3 px-4">{{complaint.category}}</td>
                 <td class="py-3 px-4">{{complaint.location}}</td>
                 <td class="py-3 px-4">{{complaint.dateFiled | date:'shortDate'}}</td>
                 <td class="py-3 px-4">
@@ -186,7 +186,7 @@ interface Complaint {
             <h3 class="font-medium">Complaint Details:</h3>
             <p><span class="font-medium">ID:</span> {{selectedComplaint?.id}}</p>
             <p><span class="font-medium">Description:</span> {{selectedComplaint?.description}}</p>
-            <p><span class="font-medium">Category:</span> {{selectedComplaint?.crimeType}}</p>
+            <p><span class="font-medium">Category:</span> {{selectedComplaint?.category}}</p>
             <p><span class="font-medium">Status:</span> {{selectedComplaint?.status}}</p>
             <p *ngIf="selectedComplaint?.assignedOfficerName">
               <span class="font-medium">Currently Assigned To:</span> {{selectedComplaint?.assignedOfficerName}}
@@ -303,6 +303,7 @@ export class ComplaintAssignmentComponent implements OnInit {
               dateLastUpdated: complaint.dateLastUpdated,
               status: complaint.status,
               crimeType: complaint.crimeType,
+              category: complaint.category || complaint.crimeType || 'Uncategorized',
               userId: complaint.userId,
               userName: complaint.userName,
               priorityScore: complaint.priorityScore,
@@ -325,7 +326,7 @@ export class ComplaintAssignmentComponent implements OnInit {
   applyFilters(): void {
     this.filteredComplaints = this.complaints.filter(complaint => {
       const matchesStatus = !this.statusFilter || complaint.status === this.statusFilter;
-      const matchesCategory = !this.categoryFilter || complaint.crimeType === this.categoryFilter;
+      const matchesCategory = !this.categoryFilter || complaint.category === this.categoryFilter;
       const matchesSearch = !this.searchQuery || 
         (complaint.description && complaint.description.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
         (complaint.location && complaint.location.toLowerCase().includes(this.searchQuery.toLowerCase())) ||

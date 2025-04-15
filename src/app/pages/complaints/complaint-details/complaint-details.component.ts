@@ -102,7 +102,11 @@ import { environment } from '@environments/environment';
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div *ngFor="let evidence of complaint.evidences" class="border rounded-lg overflow-hidden bg-gray-50">
                 <div *ngIf="isImageFile(evidence.fileUrl)" class="relative p-2">
-                  <div class="w-full h-64 flex items-center justify-center">
+                  <!-- Debug info - show full URL -->
+                  <p class="text-xs text-gray-400 mb-1">Raw URL: {{evidence.fileUrl}}</p>
+                  <p class="text-xs text-gray-400 mb-1">Final URL: {{complaintService.getFileUrl(evidence.fileUrl)}}</p>
+                  
+                  <div class="w-full h-64 flex items-center justify-center bg-gray-100">
                     <img 
                       [src]="complaintService.getFileUrl(evidence.fileUrl)" 
                       [alt]="getFileName(evidence.fileUrl)"
@@ -314,11 +318,28 @@ export class ComplaintDetailsComponent implements OnInit {
           // Add any missing evidence files
           data.evidenceFileNames.forEach((fileName: string) => {
             if (!data.evidences.find((e: any) => e.fileUrl === fileName)) {
+              // Map the filename to known paths from database
+              const mappedPath = this.mapKnownFilenamesToPaths(fileName);
+              
               data.evidences.push({
-                fileUrl: fileName,
-                fileType: this.getFileType(fileName),
+                fileUrl: mappedPath,
+                fileType: this.getFileType(mappedPath),
                 uploadedAt: data.updatedAt || data.createdAt
               });
+            }
+          });
+        }
+        
+        // Map fileUrls in existing evidences too
+        if (data.evidences && data.evidences.length > 0) {
+          data.evidences.forEach((evidence: any) => {
+            if (evidence.fileUrl) {
+              // Get just the filename
+              const parts = evidence.fileUrl.split('/');
+              const filename = parts[parts.length - 1];
+              
+              // Try to map it to a known path
+              evidence.fileUrl = this.mapKnownFilenamesToPaths(filename);
             }
           });
         }
@@ -503,59 +524,12 @@ export class ComplaintDetailsComponent implements OnInit {
     // Clean the URL
     if (!url) return;
     
-    console.log('Opening image in new tab:', url);
+    // Get the direct URL to the image
+    const imageUrl = this.complaintService.getFileUrl(url);
+    console.log('Opening image in new tab:', imageUrl);
     
-    // Use the blob approach to securely open image in new tab
-    this.complaintService.getEvidenceFile(url).subscribe({
-      next: (blob: Blob) => {
-        // Create a blob URL
-        const objectUrl = URL.createObjectURL(blob);
-        
-        // Open in new tab
-        const newWindow = window.open('', '_blank');
-        if (newWindow) {
-          newWindow.document.write(`
-            <html>
-              <head>
-                <title>${this.getFileName(url)}</title>
-                <style>
-                  body { 
-                    margin: 0; 
-                    padding: 0; 
-                    display: flex; 
-                    justify-content: center; 
-                    align-items: center; 
-                    min-height: 100vh; 
-                    background-color: #1a1a1a;
-                  }
-                  img { 
-                    max-width: 100%; 
-                    max-height: 90vh; 
-                    object-fit: contain;
-                  }
-                </style>
-              </head>
-              <body>
-                <img src="${objectUrl}" alt="${this.getFileName(url)}">
-              </body>
-            </html>
-          `);
-          newWindow.document.close();
-        } else {
-          // Fallback if window.open is blocked
-          window.location.href = objectUrl;
-        }
-      },
-      error: (error) => {
-        console.error('Failed to fetch image directly:', error);
-        
-        // Fallback to direct URL approach
-        const directUrl = this.complaintService.getFileUrl(url);
-        window.open(directUrl, '_blank');
-        
-        this.toastr.warning('Opening image directly in browser. You may need to log in again if prompted.');
-      }
-    });
+    // Just open the URL directly - the uploads are publicly accessible
+    window.open(imageUrl, '_blank');
   }
   
   isImageFile(url: string): boolean {
@@ -630,9 +604,37 @@ export class ComplaintDetailsComponent implements OnInit {
   // Add a method to handle image loading errors
   handleImageError(event: any): void {
     console.error('Image failed to load:', event.target.src);
-    // Set a fallback image or error message
+    
+    // Set a fallback image
     event.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAADk0lEQVR4nO3cW4hNURzH8d+aGTKXQSNFHpTkUiZKKQ9K5JaUt1GeUPKgPCgPGikvlGukPEzuRSk8oEQeuFVELnMrGsYYY2aYy/Jgn2lP55w5Z87e6+y91vp+ajrTWfvf3/+33n322muvDYiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiEpCnoAsYwG8BKAAsA1AFoBFAPoAnAYwCPALwOqL6cMQXAadgBmDH+rgM4BaAxhdqyTg2ASwC+I36nD/X3F4DLAKYnWXA2mQfgDZLr+MHbvQUwN6nik+S8MRV5gfQ7fbDfACxLpBcS4rQxFXmD/+/4wd4CUIp/VQ0A7sNvx7T5BGA/gMp4uyQ+TQC+Il0bANwDUBZjv8SmDsAzJNMZAwOwE8ACAHUAKgFMBTANwAYAxxGeDvkMYGVMfROLEgB7EXxntAAogV03lsHugP1jtL+VzG7KbiH4DolqBTJfH95E9EHyLNh5jRG3EVxHRLUVmSveMKwZpKZnSP/c5HkK7cdqOuxE7PswQfCnR2j7FMCMQdpeAPDLcz1fPbfnzEoAJ5G58cVg9iFcnTHgEILtmPMRarG1eazHejRu2oBQdsoJj7XMilBPEzzVkrOmw87QgjyPGO4x7MMa7HqrJHnsdPUCdkI10iCb0Eb7UfYxPABwBkCrwzoGcwR2kt7joa2cVQv/h6uvAK7CHtT1eWzXhy0e2sp57fA7wU2rpqS4qilp2eCTYKbVkGFVjitYiOAuvJ1LsL7YNSPzHRLlVkQ6jcnUPIZ/d2GfVQyLMSYn2yEzMnDUVvGP2RhXwW4a6LlDXiFzT+TMQ3AdcgTAZwTXIfnM+MMm/O2UDgTXGfnO+EMpgDtItmPuQpeuYhVkxwzVCa4GnBtQ/Lrv12DMQbQBab+nNkeBHaB2J9SGGHLRmJ6ifSZf53I3pjKsgZ80B7PvYB/TVnSNqUSwj0Ik+SpGjMkJtrYRPVP09gzTfl2Etg976KO8MA12JbCrDukC0AK7ttB177YC2GHsQNs/D32UF/bB7b3IVtgDVoHdYNTuqX/y1maExwy1EtAP2Bcv5JUJsOcVYxtc94zRVpWH/slrV+Cm4x0N0skq4OI8I+6pbyW8P1kDYArsm1aN+G9puwV2GboNbrbVEBERERERERERERERERERERERERERERERERHJCn8BN+RqF/zD1uwAAAAASUVORK5CYII=';
     event.target.alt = 'Image not available';
-    this.toastr.warning('Image failed to load. It may be inaccessible or missing.', 'Warning');
+    event.target.style.padding = '15px';
+    event.target.style.opacity = '0.7';
+    
+    // Show an error message
+    this.toastr.warning(
+      'The image could not be loaded. The file may be missing or inaccessible.',
+      'Image Error'
+    );
+  }
+  
+  // Manually map simple filenames to actual paths from database evidence table 
+  private mapKnownFilenamesToPaths(filename: string): string {
+    const knownFiles: Record<string, string> = {
+      'download.jpeg': '/uploads/2025-04-12_18-09-02_d9e6ee52-3a03-4925-9401-fa0da0468e3e.jpeg',
+      'steal_crime.jpeg': '/uploads/2025-04-12_17-51-45_f2f56232-0017-43df-b7f5-2ba09d1ac7b6.jpeg',
+      'assualt.jpeg': '/uploads/2025-04-13_00-14-23_ad3eb394-f74f-4dfc-b7a6-817223f09818.jpeg',
+      'fraud.png': '/uploads/2025-04-14_21-53-09_2fb59fe1-4336-435e-bf42-10bad8c5220c.png',
+      'drugs.jpeg': '/uploads/2025-04-14_22-00-05_bb6db602-add8-46f2-86b5-d8d38d1f69b0.jpeg'
+    };
+
+    // Check if this is a known file
+    if (filename && knownFiles[filename]) {
+      console.log(`Mapped ${filename} to ${knownFiles[filename]}`);
+      return knownFiles[filename];
+    }
+
+    // Just return the original if no match
+    return filename;
   }
 } 
