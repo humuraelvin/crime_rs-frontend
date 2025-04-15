@@ -295,15 +295,6 @@ export class ComplaintAssignmentComponent implements OnInit {
         next: (complaints) => {
           // Map backend response to our frontend model
           this.complaints = complaints.map(complaint => {
-            // Extract case file data for assigned officer info
-            let assignedOfficerId: number | undefined;
-            let assignedOfficerName: string | undefined;
-            
-            if (complaint.caseFile && complaint.caseFile.assignedOfficer) {
-              assignedOfficerId = complaint.caseFile.assignedOfficer.id;
-              assignedOfficerName = `${complaint.caseFile.assignedOfficer.firstName} ${complaint.caseFile.assignedOfficer.lastName}`;
-            }
-            
             return {
               id: complaint.id,
               description: complaint.description || 'No description',
@@ -315,8 +306,8 @@ export class ComplaintAssignmentComponent implements OnInit {
               userId: complaint.userId,
               userName: complaint.userName,
               priorityScore: complaint.priorityScore,
-              assignedOfficerId: assignedOfficerId,
-              assignedOfficerName: assignedOfficerName
+              assignedOfficerId: complaint.assignedOfficerId,
+              assignedOfficerName: complaint.assignedOfficerName
             };
           });
           

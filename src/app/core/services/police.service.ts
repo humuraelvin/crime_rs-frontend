@@ -18,6 +18,20 @@ export interface PoliceStats {
   recentComplaints: any[];
 }
 
+export interface PoliceOfficer {
+  id: number;
+  badgeNumber: string;
+  contactInfo?: string;
+  department: string;
+  jurisdiction?: string;
+  rank: string;
+  specialization?: string;
+  userId: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  departmentId: number;
+}
+
 export interface AssignedComplaint {
   id: number;
   userId: number;
