@@ -85,7 +85,7 @@ import { environment } from '@environments/environment';
             <div>
               <h3 class="text-lg font-semibold text-gray-700 mb-2">Incident Details</h3>
               <p class="text-gray-600"><span class="font-medium">Location:</span> {{ complaint.location || 'N/A' }}</p>
-              <p class="text-gray-600"><span class="font-medium">Type:</span> {{ complaint.crimeType || 'N/A' }}</p>
+              <p class="text-gray-600"><span class="font-medium">Description:</span> {{ complaint.crimeType || 'N/A' }}</p>
               <p class="text-gray-600"><span class="font-medium">Priority:</span> {{ getPriorityLabel(complaint.priorityScore) }}</p>
             </div>
           </div>
@@ -99,16 +99,42 @@ import { environment } from '@environments/environment';
           
           <div *ngIf="hasEvidences()" class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Evidence & Attachments</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div *ngFor="let evidence of complaint.evidences" class="border rounded-lg p-3 bg-gray-50">
-                <div *ngIf="isImageFile(evidence.fileUrl)" class="mb-2">
-                  <img [src]="evidence.fileUrl" alt="Evidence" class="w-full h-auto rounded object-contain mb-2" style="max-height: 300px;">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div *ngFor="let evidence of complaint.evidences" class="border rounded-lg overflow-hidden bg-gray-50">
+                <div *ngIf="isImageFile(evidence.fileUrl)" class="relative p-2">
+                  <!-- Debug info -->
+                  <p class="text-xs text-gray-400 mb-1">URL: {{evidence.fileUrl}}</p>
+                  
+                  <img 
+                    [src]="getFullImageUrl(evidence.fileUrl)" 
+                    [alt]="getFileName(evidence.fileUrl)"
+                    class="w-full h-64 object-contain border rounded"
+                    (click)="openImageInNewTab(evidence.fileUrl)"
+                  >
                 </div>
-                <div class="text-center">
-                  <p class="text-sm text-gray-500 mb-1">{{ getFileName(evidence.fileUrl) }}</p>
-                  <a [href]="evidence.fileUrl" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                    View Full Size
-                  </a>
+                <div *ngIf="!isImageFile(evidence.fileUrl)" class="p-4 flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <p class="mt-1 text-sm text-gray-500">{{getFileName(evidence.fileUrl)}}</p>
+                  </div>
+                </div>
+                <div class="p-3 border-t bg-white">
+                  <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                      <p class="font-medium">{{getFileType(evidence.fileUrl)}}</p>
+                      <p class="text-xs">{{evidence.uploadedAt ? (evidence.uploadedAt | date:'medium') : 'N/A'}}</p>
+                    </div>
+                    <a 
+                      [href]="getFullImageUrl(evidence.fileUrl)" 
+                      target="_blank" 
+                      class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      download
+                    >
+                      Download
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -271,8 +297,9 @@ export class ComplaintDetailsComponent implements OnInit {
     
     this.complaintService.getComplaintById(this.complaintId).subscribe({
       next: (data) => {
-        this.complaint = data;
-        // Do not modify the evidence URLs - use them as provided by the backend
+        console.log('Raw complaint data:', data);
+        this.complaint = this.mapComplaintData(data);
+        console.log('Processed complaint:', this.complaint);
         this.loading = false;
       },
       error: (error) => {
@@ -281,6 +308,106 @@ export class ComplaintDetailsComponent implements OnInit {
         this.toastr.error('Failed to load complaint details', 'Error');
       }
     });
+  }
+  
+  // Helper method to map complaint data and handle all possible field names
+  private mapComplaintData(rawData: any): ComplaintResponse {
+    if (!rawData) return {} as ComplaintResponse;
+    
+    // Extract TYPE from all possible field names
+    const typeValue = this.extractTypeField(rawData);
+    console.log('Extracted TYPE value:', typeValue);
+    
+    return {
+      ...rawData,
+      // Ensure these fields are properly mapped
+      crimeType: typeValue,
+      dateFiled: rawData.dateFiled || rawData.createdAt || rawData.createTime || rawData.created_at || new Date().toISOString(),
+      dateLastUpdated: rawData.dateLastUpdated || rawData.updatedAt || rawData.updateTime || rawData.updated_at || new Date().toISOString(),
+      // Ensure other required fields have defaults
+      location: rawData.location || 'N/A',
+      category: rawData.category || 'N/A',
+      status: rawData.status || 'PENDING',
+      description: rawData.description || 'No description provided.',
+      evidences: rawData.evidences || [],
+      comments: rawData.comments || []
+    };
+  }
+  
+  // Helper to extract type value from all possible field names
+  private extractTypeField(data: any): string {
+    // Log the FULL object in raw JSON format
+    console.log('Raw complaint JSON:', JSON.stringify(data, null, 2));
+    
+    // Look for exact key with "type" in it
+    console.log('Object keys:', Object.keys(data));
+    
+    // Convert to regular object to access dynamically
+    const obj = { ...data };
+    
+    // Based on the console logs, title or category field should be used for TYPE
+    if (obj.title) {
+      console.log('Using title for type:', obj.title);
+      return obj.title;
+    }
+    
+    if (obj.category) {
+      console.log('Using category for type:', obj.category);
+      return obj.category;
+    }
+    
+    // Special handling for backend fields structure
+    // Direct extraction of type if we find a known structure
+    if (obj.crime && obj.crime.type) {
+      console.log('Found crime.type:', obj.crime.type);
+      return obj.crime.type;
+    }
+    
+    if (obj.complaint && obj.complaint.type) {
+      console.log('Found complaint.type:', obj.complaint.type);
+      return obj.complaint.type;
+    }
+    
+    // First priority - extract from direct types
+    if (obj.crimeType) return obj.crimeType;
+    if (obj.type) return obj.type;
+    
+    // Check for any field that contains 'type' case-insensitive
+    for (const key in obj) {
+      if (typeof obj[key] === 'string' && key.toLowerCase().includes('type')) {
+        console.log(`Found type-like field: ${key} = ${obj[key]}`);
+        if (obj[key]) return obj[key];
+      }
+    }
+    
+    // Try all possible field names for type
+    const possibleFields = [
+      'crimeType', 'type', 'crime_type', 'complaintType', 
+      'complaint_type', 'crimetype', 'CRIME_TYPE'
+    ];
+    
+    // Check specific known field names
+    for (const field of possibleFields) {
+      if (obj[field]) {
+        console.log(`Found in known fields: ${field} = ${obj[field]}`);
+        return obj[field];
+      }
+    }
+    
+    // Last resort - examine nested objects
+    for (const key in obj) {
+      if (obj[key] && typeof obj[key] === 'object') {
+        console.log(`Checking nested object: ${key}`);
+        for (const nestedKey in obj[key]) {
+          if (nestedKey.toLowerCase().includes('type')) {
+            console.log(`Found nested type field: ${key}.${nestedKey} = ${obj[key][nestedKey]}`);
+            if (obj[key][nestedKey]) return obj[key][nestedKey];
+          }
+        }
+      }
+    }
+    
+    return 'N/A';
   }
   
   formatDate(dateString: string): string {
@@ -308,17 +435,27 @@ export class ComplaintDetailsComponent implements OnInit {
     return 'Low';
   }
   
-  isImageFile(url: string): boolean {
-    if (!url) return false;
+  getFullImageUrl(url: string): string {
+    // Handle null or empty URLs
+    if (!url) return '';
     
-    // Check for common image extensions
-    const lowercaseUrl = url.toLowerCase();
-    return lowercaseUrl.endsWith('.jpg') || 
-           lowercaseUrl.endsWith('.jpeg') || 
-           lowercaseUrl.endsWith('.png') || 
-           lowercaseUrl.endsWith('.gif') || 
-           lowercaseUrl.endsWith('.webp') || 
-           lowercaseUrl.endsWith('.bmp');
+    console.log('Processing image URL:', url);
+    
+    // If the URL is already absolute (starts with http:// or https://)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      console.log('URL is already absolute:', url);
+      return url;
+    }
+    
+    // If URL starts with /uploads or similar - prepend the API URL
+    if (url.startsWith('/')) {
+      console.log('Adding API URL to path:', `${environment.apiUrl}${url}`);
+      return `${environment.apiUrl}${url}`;
+    }
+    
+    // If URL may be relative without starting slash
+    console.log('Adding API URL with slash:', `${environment.apiUrl}/${url}`);
+    return `${environment.apiUrl}/${url}`;
   }
   
   getFileName(url: string): string {
@@ -327,11 +464,42 @@ export class ComplaintDetailsComponent implements OnInit {
     // Remove any URL parameters
     url = url.split('?')[0];
     
-    // Handle path formats:
+    // Handle both path formats:
     // 1. /uploads/filename.jpg
     // 2. http://domain.com/path/filename.jpg
     const parts = url.split('/');
     return parts[parts.length - 1];
+  }
+  
+  getFileType(url: string): string {
+    const extension = this.getFileExtension(url).toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'JPEG Image';
+      case 'png':
+        return 'PNG Image';
+      case 'pdf':
+        return 'PDF Document';
+      case 'doc':
+      case 'docx':
+        return 'Word Document';
+      default:
+        return extension.toUpperCase() + ' File';
+    }
+  }
+  
+  getFileExtension(url: string): string {
+    return url.split('.').pop() || '';
+  }
+  
+  openImageInNewTab(url: string): void {
+    window.open(this.getFullImageUrl(url), '_blank');
+  }
+  
+  isImageFile(url: string): boolean {
+    const extension = this.getFileExtension(url).toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
   }
   
   addComment(): void {
