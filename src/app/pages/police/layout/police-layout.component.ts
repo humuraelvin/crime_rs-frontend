@@ -73,7 +73,7 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
             <div class="flex items-center space-x-4">
 
-             
+
             </div>
           </div>
         </header>
