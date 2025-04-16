@@ -112,6 +112,29 @@ export interface EvidenceUploadRequest {
   description?: string;
 }
 
+// New interfaces for statistics
+export interface StatusCountDTO {
+  status: string;
+  count: number;
+}
+
+export interface CrimeTypeCountDTO {
+  crimeType: string;
+  count: number;
+}
+
+export interface ComplaintStatistics {
+  totalComplaints: number;
+  pendingComplaints: number;
+  underInvestigationComplaints: number;
+  resolvedComplaints: number;
+  rejectedComplaints: number;
+  closedComplaints: number;
+  complaintsByCategory: { [key: string]: number };
+  highPriorityComplaints: number;
+  totalEvidenceUploads: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -133,7 +156,7 @@ export class ComplaintService {
 
   getComplaints(filters?: ComplaintFilter): Observable<ComplaintResponse[]> {
     let params = new HttpParams();
-    
+
     if (filters) {
       if (filters.status) {
         params = params.set('status', filters.status);
@@ -152,7 +175,7 @@ export class ComplaintService {
       }
     }
 
-    return this.http.get<ComplaintResponse[]>(`${this.apiUrl}`, { 
+    return this.http.get<ComplaintResponse[]>(`${this.apiUrl}`, {
       params,
       headers: this.getAuthHeaders()
     }).pipe(
@@ -163,21 +186,42 @@ export class ComplaintService {
     );
   }
 
-  // Get complaints for the current user
   getMyComplaints(): Observable<ComplaintResponse[]> {
-    return this.http.get<ComplaintResponse[]>(`${this.apiUrl}/my-complaints`, {
+    return this.http.get<any>(`${this.apiUrl}/my-complaints`, {
       headers: this.getAuthHeaders()
     }).pipe(
+      map(response => {
+        // Handle paginated response
+        const complaints = response.content || response;
+        return complaints.map((dto: any) => ({
+          id: dto.id,
+          userId: dto.userId,
+          userName: dto.userName,
+          crimeType: dto.category || 'N/A',
+          category: dto.category,
+          description: dto.description,
+          status: dto.status,
+          dateFiled: dto.createdAt || dto.incidentDate,
+          dateLastUpdated: dto.updatedAt,
+          createdAt: dto.createdAt,
+          updatedAt: dto.updatedAt,
+          location: dto.location,
+          priorityScore: dto.priorityScore || 0,
+          evidences: dto.evidenceFileNames?.map((fileName: string) => ({
+            fileUrl: `/uploads/${fileName}`,
+            fileType: null,
+            uploadedAt: null
+          })) || [],
+          comments: dto.comments || []
+        }));
+      }),
       catchError(error => {
         console.error('Error fetching my complaints:', error);
-        
         let errorMessage = 'Failed to fetch your complaints';
         if (error.error && error.error.message) {
-          // Use the error message from the server if available
           errorMessage = error.error.message;
           console.error('Server error details:', error.error);
         }
-        
         return throwError(() => new Error(errorMessage));
       })
     );
@@ -231,7 +275,7 @@ export class ComplaintService {
 
   assignOfficer(id: number, officerId: number): Observable<Complaint> {
     return this.http.patch<Complaint>(
-      `${this.apiUrl}/${id}/assign`, 
+      `${this.apiUrl}/${id}/assign`,
       { officerId },
       { headers: this.getAuthHeaders() }
     );
@@ -239,7 +283,7 @@ export class ComplaintService {
 
   addComment(id: number, content: string): Observable<Comment> {
     return this.http.post<Comment>(
-      `${this.apiUrl}/${id}/comments`, 
+      `${this.apiUrl}/${id}/comments`,
       { content },
       { headers: this.getAuthHeaders() }
     );
@@ -252,7 +296,6 @@ export class ComplaintService {
       formData.append('description', evidence.description);
     }
 
-    // Don't use the JSON content type for multipart form data
     const token = this.authService.getToken();
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
@@ -284,67 +327,97 @@ export class ComplaintService {
     );
   }
 
-  getComplaintStatistics(): Observable<any> {
-    return this.http.get<any>(
-      `${this.apiUrl}/statistics`, 
-      { headers: this.getAuthHeaders() }
-    ).pipe(
+  getComplaintStatistics(): Observable<ComplaintStatistics> {
+    return this.http.get<any>(`${this.apiUrl}/statistics`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        const byStatus: StatusCountDTO[] = response.byStatus || [];
+        const byCrimeType: CrimeTypeCountDTO[] = response.byCrimeType || [];
+        return {
+          totalComplaints: byStatus.reduce((sum: number, s: StatusCountDTO) => sum + s.count, 0),
+          pendingComplaints: byStatus.find((s: StatusCountDTO) => s.status === 'SUBMITTED')?.count || 0,
+          underInvestigationComplaints: byStatus
+            .filter((s: StatusCountDTO) => ['UNDER_REVIEW', 'ASSIGNED', 'INVESTIGATING', 'PENDING_EVIDENCE'].includes(s.status))
+            .reduce((sum: number, s: StatusCountDTO) => sum + s.count, 0),
+          resolvedComplaints: byStatus.find((s: StatusCountDTO) => s.status === 'RESOLVED')?.count || 0,
+          rejectedComplaints: byStatus.find((s: StatusCountDTO) => s.status === 'REJECTED')?.count || 0,
+          closedComplaints: byStatus.find((s: StatusCountDTO) => s.status === 'CLOSED')?.count || 0,
+          complaintsByCategory: byCrimeType.reduce((acc: { [key: string]: number }, c: CrimeTypeCountDTO) => {
+            acc[c.crimeType] = c.count;
+            return acc;
+          }, {}),
+          highPriorityComplaints: 0, // Not available in /statistics
+          totalEvidenceUploads: 0 // Not available in /statistics
+        };
+      }),
       catchError(error => {
         console.error('Error fetching statistics:', error);
-        return throwError(() => error);
+        return throwError(() => new Error(error.error?.message || 'Failed to fetch statistics'));
       })
     );
   }
 
-  // Method to get direct URL to file
+  getUserComplaintStatistics(): Observable<ComplaintStatistics> {
+    return this.getMyComplaints().pipe(
+      map(complaints => ({
+        totalComplaints: complaints.length,
+        pendingComplaints: complaints.filter(c => c.status === 'SUBMITTED').length,
+        underInvestigationComplaints: complaints.filter(c =>
+          ['UNDER_REVIEW', 'ASSIGNED', 'INVESTIGATING', 'PENDING_EVIDENCE'].includes(c.status)
+        ).length,
+        resolvedComplaints: complaints.filter(c => c.status === 'RESOLVED').length,
+        rejectedComplaints: complaints.filter(c => c.status === 'REJECTED').length,
+        closedComplaints: complaints.filter(c => c.status === 'CLOSED').length,
+        complaintsByCategory: complaints.reduce((acc: { [key: string]: number }, c) => {
+          const category = c.crimeType || 'Unknown';
+          acc[category] = (acc[category] || 0) + 1;
+          return acc;
+        }, {}),
+        highPriorityComplaints: complaints.filter(c => c.priorityScore > 50).length,
+        totalEvidenceUploads: complaints.reduce((sum: number, c) => sum + (c.evidences?.length || 0), 0)
+      }))
+    );
+  }
+
   getFileUrl(fileUrl: string): string {
     if (!fileUrl) return '';
-    
-    // Clean the URL
+
     let cleanUrl = fileUrl.trim();
-    
-    // Remove any backslashes
+
     if (cleanUrl.includes('\\')) {
       cleanUrl = cleanUrl.replace(/\\/g, '/');
     }
-    
-    // If it's just a filename, assume it's in uploads
+
     if (!cleanUrl.includes('/')) {
       cleanUrl = `/uploads/${cleanUrl}`;
     }
-    
-    // If it doesn't start with /uploads/ but contains a filename, make sure it has /uploads/
+
     if (!cleanUrl.startsWith('/uploads/') && cleanUrl.includes('.')) {
-      // Extract filename
       const parts = cleanUrl.split('/');
       const filename = parts[parts.length - 1];
       cleanUrl = `/uploads/${filename}`;
     }
-    
-    // Now construct the full URL but without /api/v1
+
     const apiBaseUrl = environment.apiUrl;
     let baseUrl = apiBaseUrl;
 
-    // Remove /api/v1 if present
     if (baseUrl.includes('/api/v1')) {
       baseUrl = baseUrl.replace('/api/v1', '');
     }
-    
-    // Remove trailing slash if any
+
     const baseWithoutTrailingSlash = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    
-    // Complete URL
+
     const fullUrl = `${baseWithoutTrailingSlash}${cleanUrl}`;
     console.log('Final image URL:', fullUrl);
-    
+
     return fullUrl;
   }
 
-  // Direct method to get evidence file - returns a blob for binary data
   getEvidenceFile(fileUrl: string): Observable<Blob> {
     const url = this.getFileUrl(fileUrl);
     console.log('Fetching file as blob from:', url);
-    
+
     return this.http.get(url, {
       responseType: 'blob'
     }).pipe(
@@ -354,4 +427,4 @@ export class ComplaintService {
       })
     );
   }
-} 
+}
