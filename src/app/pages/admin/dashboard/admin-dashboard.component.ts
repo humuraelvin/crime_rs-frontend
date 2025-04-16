@@ -29,11 +29,11 @@ interface AdminStats {
     <div class="min-h-screen bg-gray-100">
       <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
-        
+
         <div *ngIf="loading" class="flex justify-center">
           <app-loading-spinner [size]="'lg'" [color]="'primary'"></app-loading-spinner>
         </div>
-        
+
         <div *ngIf="!loading">
           <!-- Quick Stats -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -52,7 +52,7 @@ interface AdminStats {
               <p class="text-sm text-gray-500 mt-2">From {{ stats.totalComplaints }} total complaints</p>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md">
-              <h3 class="text-lg font-semibold text-gray-800 mb-2">New Complaints</h3>
+              <h3 class="text-lg font-semibold text-gray-800 mb-2">Total Complaints from Citizens</h3>
               <p class="text-3xl font-bold text-yellow-600">{{ stats.activeComplaints }}</p>
               <p class="text-sm text-gray-500 mt-2">{{ stats.resolvedComplaints }} complaints resolved</p>
             </div>
@@ -62,7 +62,7 @@ interface AdminStats {
               <p class="text-sm text-gray-500 mt-2">Managing {{ stats.policeOfficerCount }} officers</p>
             </div>
           </div>
-          
+
           <!-- Quick Actions -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <a routerLink="/admin/departments" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
@@ -86,7 +86,7 @@ interface AdminStats {
               <p class="text-gray-600">Configure system parameters and settings</p>
             </a>
           </div>
-          
+
           <!-- Recent Activity -->
           <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">Complaint Statistics</h2>
@@ -197,7 +197,7 @@ export class AdminDashboardComponent implements OnInit {
   getRecentMonthsList(): string[] {
     return Object.keys(this.stats.complaintsByMonth)
       .sort((a, b) => {
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+        const months = ['January', 'February', 'March', 'April', 'May', 'June',
                        'July', 'August', 'September', 'October', 'November', 'December'];
         return months.indexOf(a) - months.indexOf(b);
       });
@@ -206,4 +206,4 @@ export class AdminDashboardComponent implements OnInit {
   formatStatusLabel(status: string): string {
     return status.charAt(0) + status.slice(1).toLowerCase().replace('_', ' ');
   }
-} 
+}
