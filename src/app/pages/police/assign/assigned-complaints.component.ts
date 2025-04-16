@@ -18,7 +18,7 @@ import { of } from 'rxjs';
       <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-3xl font-bold text-gray-900">Assigned Complaints To Me</h1>
-          
+
           <div class="flex gap-2">
             <select [(ngModel)]="statusFilter" (change)="applyFilters()" class="p-2 rounded border">
               <option value="">All Statuses</option>
@@ -28,7 +28,7 @@ import { of } from 'rxjs';
               <option value="RESOLVED">Resolved</option>
               <option value="REJECTED">Rejected</option>
             </select>
-            
+
             <select [(ngModel)]="priorityFilter" (change)="applyFilters()" class="p-2 rounded border">
               <option value="">All Priorities</option>
               <option value="high">High</option>
@@ -37,11 +37,11 @@ import { of } from 'rxjs';
             </select>
           </div>
         </div>
-        
+
         <div *ngIf="loading" class="flex justify-center my-12">
           <app-loading-spinner [size]="'lg'" [color]="'primary'"></app-loading-spinner>
         </div>
-        
+
         <div *ngIf="!loading">
           <div *ngIf="filteredComplaints.length > 0" class="bg-white shadow-md rounded-lg overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200">
@@ -94,9 +94,9 @@ import { of } from 'rxjs';
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <a (click)="viewComplaintDetails(complaint)" class="text-indigo-600 hover:text-indigo-900 mr-3 cursor-pointer">View</a>
-                    <button 
-                      *ngIf="canUpdateStatus(complaint)" 
-                      (click)="openUpdateStatusDialog(complaint)" 
+                    <button
+                      *ngIf="canUpdateStatus(complaint)"
+                      (click)="openUpdateStatusDialog(complaint)"
                       class="text-blue-600 hover:text-blue-900">
                       Update Status
                     </button>
@@ -105,13 +105,13 @@ import { of } from 'rxjs';
               </tbody>
             </table>
           </div>
-          
+
           <div *ngIf="filteredComplaints.length === 0" class="bg-white shadow-md rounded-lg p-8 text-center">
             <p class="text-gray-500 mb-4">No complaints have been assigned to you yet.</p>
             <p class="text-gray-500">Check back later or contact your supervisor if you believe this is an error.</p>
           </div>
         </div>
-        
+
         <!-- Complaint Detail View (when a complaint is selected) -->
         <div *ngIf="selectedComplaintForView" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="complaint-detail-title" role="dialog" aria-modal="true">
           <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -132,11 +132,11 @@ import { of } from 'rxjs';
                     </svg>
                   </button>
                 </div>
-                
+
                 <div class="mb-6 flex justify-between items-start">
                   <div>
                     <div class="flex items-center space-x-4">
-                      <span class="px-3 py-1 text-sm font-semibold rounded-full" 
+                      <span class="px-3 py-1 text-sm font-semibold rounded-full"
                         [ngClass]="{
                           'bg-yellow-100 text-yellow-800': isStatusPending(selectedComplaintForView.status),
                           'bg-blue-100 text-blue-800': isStatusInvestigating(selectedComplaintForView.status),
@@ -145,10 +145,10 @@ import { of } from 'rxjs';
                         }">
                         {{ formatStatus(selectedComplaintForView.status) }}
                       </span>
-                      
-                      <button 
-                        *ngIf="canUpdateStatus(selectedComplaintForView)" 
-                        (click)="openUpdateStatusDialog(selectedComplaintForView)" 
+
+                      <button
+                        *ngIf="canUpdateStatus(selectedComplaintForView)"
+                        (click)="openUpdateStatusDialog(selectedComplaintForView)"
                         class="px-3 py-1 text-sm font-medium text-blue-600 border border-blue-600 rounded hover:bg-blue-50 focus:outline-none">
                         Update Status
                       </button>
@@ -159,7 +159,7 @@ import { of } from 'rxjs';
                     <p class="text-sm text-gray-500">Last updated: {{ formatDate(selectedComplaintForView.dateLastUpdated) }}</p>
                   </div>
                 </div>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
                     <h3 class="text-lg font-semibold text-gray-700 mb-2">Complainant Details</h3>
@@ -173,23 +173,23 @@ import { of } from 'rxjs';
                     <p class="text-gray-600"><span class="font-medium">Priority:</span> {{ getPriorityLabel(selectedComplaintForView.priorityScore) }}</p>
                   </div>
                 </div>
-                
+
                 <div class="mb-6">
                   <h3 class="text-lg font-semibold text-gray-700 mb-2">Description</h3>
                   <p class="text-gray-600 whitespace-pre-line">
                     {{ selectedComplaintForView.description || 'No description provided.' }}
                   </p>
                 </div>
-                
+
                 <div *ngIf="hasEvidences(selectedComplaintForView)" class="mb-6">
                   <h3 class="text-lg font-semibold text-gray-700 mb-2">Evidence & Attachments</h3>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div *ngFor="let evidence of selectedComplaintForView.evidences" class="border rounded-lg p-3 bg-gray-50">
                       <div *ngIf="isImageFile(evidence.fileUrl)" class="mb-2">
-                        <img 
-                          [src]="complaintService.getFileUrl(evidence.fileUrl)" 
+                        <img
+                          [src]="complaintService.getFileUrl(evidence.fileUrl)"
                           [alt]="getFileName(evidence.fileUrl)"
-                          class="w-full h-auto rounded object-contain mb-2" 
+                          class="w-full h-auto rounded object-contain mb-2"
                           style="max-height: 200px;"
                           (error)="handleImageError($event)"
                         >
@@ -203,27 +203,27 @@ import { of } from 'rxjs';
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- Add Comment Form -->
                 <div class="mt-8 border-t pt-6">
                   <h3 class="text-lg font-semibold text-gray-700 mb-4">Add a Comment</h3>
                   <div class="mb-4">
-                    <textarea 
-                      [(ngModel)]="newComment" 
-                      class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none" 
-                      rows="3" 
+                    <textarea
+                      [(ngModel)]="newComment"
+                      class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+                      rows="3"
                       placeholder="Write your comment here..."></textarea>
                   </div>
                   <div class="flex justify-end">
-                    <button 
-                      (click)="addComment()" 
-                      [disabled]="!newComment.trim() || updating" 
+                    <button
+                      (click)="addComment()"
+                      [disabled]="!newComment.trim() || updating"
                       class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
                       <span *ngIf="!updating">Submit Comment</span>
                       <span *ngIf="updating">Submitting...</span>
                     </button>
-                    <button 
-                      (click)="closeDetailView()" 
+                    <button
+                      (click)="closeDetailView()"
                       class="px-4 py-2 ml-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
                       Close
                     </button>
@@ -233,7 +233,7 @@ import { of } from 'rxjs';
             </div>
           </div>
         </div>
-        
+
         <!-- Status Update Dialog -->
         <div *ngIf="showStatusDialog" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
           <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -297,14 +297,14 @@ export class AssignedComplaintsComponent implements OnInit {
   filteredComplaints: AssignedComplaint[] = [];
   statusFilter = '';
   priorityFilter = '';
-  
+
   // Status update dialog
   showStatusDialog = false;
   selectedComplaint: AssignedComplaint | null = null;
   selectedStatus = '';
   updateNotes = '';
   isUpdating = false;
-  
+
   // Detail view
   selectedComplaintForView: AssignedComplaint | null = null;
   newComment = '';
@@ -313,7 +313,7 @@ export class AssignedComplaintsComponent implements OnInit {
   constructor(
     private policeService: PoliceService,
     private toastr: ToastrService,
-    private complaintService: ComplaintService
+    public complaintService: ComplaintService
   ) {}
 
   ngOnInit(): void {
@@ -322,7 +322,7 @@ export class AssignedComplaintsComponent implements OnInit {
 
   fetchAssignedComplaints(): void {
     this.loading = true;
-    
+
     this.policeService.getAssignedComplaints()
       .pipe(
         catchError((error) => {
@@ -335,7 +335,7 @@ export class AssignedComplaintsComponent implements OnInit {
       .subscribe({
         next: (response) => {
           console.log('Assigned complaints from backend:', response);
-          
+
           // Process the response to ensure crime type is properly set
           this.complaints = response.map(complaint => {
             // Debug date fields
@@ -344,7 +344,7 @@ export class AssignedComplaintsComponent implements OnInit {
               createdAt: complaint.createdAt,
               dateLastUpdated: complaint.dateLastUpdated
             });
-            
+
             return {
               ...complaint,
               crimeType: complaint.category || complaint.crimeType || 'N/A',
@@ -353,7 +353,7 @@ export class AssignedComplaintsComponent implements OnInit {
               dateLastUpdated: complaint.dateLastUpdated || complaint.updatedAt || complaint.dateFiled || new Date().toISOString()
             };
           });
-          
+
           this.filteredComplaints = [...this.complaints];
           this.loading = false;
         }
@@ -363,13 +363,13 @@ export class AssignedComplaintsComponent implements OnInit {
   applyFilters(): void {
     this.filteredComplaints = this.complaints.filter(complaint => {
       let includeByStatus = !this.statusFilter || complaint.status === this.statusFilter;
-      
+
       let includeByPriority = true;
       if (this.priorityFilter) {
         const priority = this.getPriorityLabel(complaint.priorityScore).toLowerCase();
         includeByPriority = priority === this.priorityFilter.toLowerCase();
       }
-      
+
       return includeByStatus && includeByPriority;
     });
   }
@@ -382,7 +382,7 @@ export class AssignedComplaintsComponent implements OnInit {
 
   formatStatus(status: string): string {
     if (!status) return 'Unknown';
-    
+
     return status.split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
@@ -427,11 +427,11 @@ export class AssignedComplaintsComponent implements OnInit {
     if (!this.selectedComplaint || !this.selectedStatus) {
       return;
     }
-    
+
     this.isUpdating = true;
-    
+
     this.policeService.updateComplaintStatus(
-      this.selectedComplaint.id, 
+      this.selectedComplaint.id,
       this.selectedStatus,
       this.updateNotes
     ).subscribe({
@@ -439,12 +439,12 @@ export class AssignedComplaintsComponent implements OnInit {
         this.toastr.success('Complaint status updated successfully');
         // Update the complaint in our local data
         this.updateComplaintInList(this.selectedComplaint!.id, this.selectedStatus);
-        
+
         // If we're in detail view, update that as well
         if (this.selectedComplaintForView && this.selectedComplaintForView.id === this.selectedComplaint!.id) {
           this.selectedComplaintForView.status = this.selectedStatus;
         }
-        
+
         this.closeUpdateStatusDialog();
         this.isUpdating = false;
       },
@@ -455,7 +455,7 @@ export class AssignedComplaintsComponent implements OnInit {
       }
     });
   }
-  
+
   updateComplaintInList(id: number, status: string): void {
     // Update the complaint in both arrays
     const updateComplaint = (list: AssignedComplaint[]) => {
@@ -464,24 +464,24 @@ export class AssignedComplaintsComponent implements OnInit {
         list[index] = { ...list[index], status };
       }
     };
-    
+
     updateComplaint(this.complaints);
     updateComplaint(this.filteredComplaints);
   }
-  
+
   // Detail view methods
   viewComplaintDetails(complaint: AssignedComplaint): void {
     this.selectedComplaintForView = { ...complaint }; // Set initially with basic data
     this.loading = true;
-    
+
     // Load complete complaint details from the backend
     this.complaintService.getComplaintById(complaint.id).subscribe({
       next: (fullComplaint) => {
         console.log('Full complaint details from backend:', fullComplaint);
-        
+
         // Handle evidences specially
         this.processEvidences(fullComplaint);
-        
+
         // Update the view with complete data, handling the different field names
         this.selectedComplaintForView = {
           ...this.selectedComplaintForView,
@@ -492,7 +492,7 @@ export class AssignedComplaintsComponent implements OnInit {
           dateFiled: fullComplaint.dateFiled || fullComplaint.createdAt || complaint.dateFiled,
           dateLastUpdated: fullComplaint.dateLastUpdated || fullComplaint.updatedAt || complaint.dateLastUpdated
         };
-        
+
         console.log('Processed complaint details for view:', this.selectedComplaintForView);
         this.loading = false;
       },
@@ -503,58 +503,58 @@ export class AssignedComplaintsComponent implements OnInit {
       }
     });
   }
-  
+
   closeDetailView(): void {
     this.selectedComplaintForView = null;
     this.newComment = '';
   }
-  
+
   hasEvidences(complaint: AssignedComplaint): boolean {
     return !!complaint?.evidences && complaint.evidences.length > 0;
   }
-  
+
   isImageFile(url: string): boolean {
     if (!url) return false;
     const extension = this.getFileExtension(url).toLowerCase();
     return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
   }
-  
+
   getFileExtension(url: string): string {
     if (!url) return '';
     const parts = url.split('.');
     return parts.length > 1 ? parts[parts.length - 1] : '';
   }
-  
+
   getFileName(url: string): string {
     if (!url) return 'Unknown file';
     // Remove any URL parameters
     url = url.split('?')[0];
-    
+
     // Handle both path formats:
     // 1. /uploads/filename.jpg
     // 2. http://domain.com/path/filename.jpg
     const parts = url.split('/');
     return parts[parts.length - 1];
   }
-  
+
   // Add a method to handle image loading errors
   handleImageError(event: any): void {
     console.error('Image failed to load:', event.target.src);
-    
+
     // Set a fallback image
     event.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAADk0lEQVR4nO3cW4hNURzH8d+aGTKXQSNFHpTkUiZKKQ9K5JaUt1GeUPKgPCgPGikvlGukPEzuRSk8oEQeuFVELnMrGsYYY2aYy/Jgn2lP55w5Z87e6+y91vp+ajrTWfvf3/+33n322muvDYiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiEpCnoAsYwG8BKAAsA1AFoBFAPoAnAYwCPALwOqL6cMQXAadgBmDH+rgM4BaAxhdqyTg2ASwC+I36nD/X3F4DLAKYnWXA2mQfgDZLr+MHbvQUwN6nik+S8MRV5gfQ7fbDfACxLpBcS4rQxFXmD/+/4wd4CUIp/VQ0A7sNvx7T5BGA/gMp4uyQ+TQC+Il0bANwDUBZjv8SmDsAzJNMZAwOwE8ACAHUAKgFMBTANwAYAxxGeDvkMYGVMfROLEgB7EXxntAAogV03lsHugP1jtL+VzG7KbiH4DolqBTJfH95E9EHyLNh5jRG3EVxHRLUVmSveMKwZpKZnSP/c5HkK7cdqOuxE7PswQfCnR2j7FMCMQdpeAPDLcz1fPbfnzEoAJ5G58cVg9iFcnTHgEILtmPMRarG1eazHejRu2oBQdsoJj7XMilBPEzzVkrOmw87QgjyPGO4x7MMa7HqrJHnsdPUCdkI10iCb0Eb7UfYxPABwBkCrwzoGcwR2kt7joa2cVQv/h6uvAK7CHtT1eWzXhy0e2sp57fA7wU2rpqS4qilp2eCTYKbVkGFVjitYiOAuvJ1LsL7YNSPzHRLlVkQ6jcnUPIZ/d2GfVQyLMSYn2yEzMnDUVvGP2RhXwW4a6LlDXiFzT+TMQ3AdcgTAZwTXIfnM+MMm/O2UDgTXGfnO+EMpgDtItmPuQpeuYhVkxwzVCa4GnBtQ/Lrv12DMQbQBab+nNkeBHaB2J9SGGHLRmJ6ifSZf53I3pjKsgZ80B7PvYB/TVnSNqUSwj0Ik+SpGjMkJtrYRPVP09gzTfl2Etg976KO8MA12JbCrDukC0AK7ttB177YC2GHsQNs/D32UF/bB7b3IVtgDVoHdYNTuqX/y1maExwy1EtAP2Bcv5JUJsOcVYxtc94zRVpWH/slrV+Cm4x0N0skq4OI8I+6pbyW8P1kDYArsm1aN+G9puwV2GboNbrbVEBERERERERERERERERERERERERERERERERHJCn8BN+RqF/zD1uwAAAAASUVORK5CYII=';
     event.target.alt = 'Image not available';
     event.target.style.padding = '15px';
     event.target.style.opacity = '0.7';
   }
-  
+
   addComment(): void {
     if (!this.selectedComplaintForView || !this.newComment.trim()) {
       return;
     }
-    
+
     this.updating = true;
-    
+
     this.complaintService.addComment(this.selectedComplaintForView.id, this.newComment.trim())
       .subscribe({
         next: (response) => {
@@ -562,7 +562,7 @@ export class AssignedComplaintsComponent implements OnInit {
           // Reset the form
           this.newComment = '';
           this.updating = false;
-          
+
           // Refresh complaint details
           this.complaintService.getComplaintById(this.selectedComplaintForView!.id)
             .subscribe(updatedComplaint => {
@@ -583,25 +583,25 @@ export class AssignedComplaintsComponent implements OnInit {
 
   formatDate(date: string | number | Date): string {
     if (!date) return 'N/A';
-    
+
     try {
       // Convert string/number to Date object
       const dateObj = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
-      
+
       // Check if date is valid
       if (isNaN(dateObj.getTime())) {
         console.warn('Invalid date:', date);
         return 'N/A';
       }
-      
-      const options: Intl.DateTimeFormatOptions = { 
-        year: 'numeric', 
-        month: 'short', 
+
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       };
-      
+
       return dateObj.toLocaleString(undefined, options);
     } catch (error) {
       console.error('Error formatting date:', error, date);
@@ -615,12 +615,12 @@ export class AssignedComplaintsComponent implements OnInit {
     if (!complaint.evidences) {
       complaint.evidences = [];
     }
-    
+
     // Check if we should add the drugs.jpeg for complaint #8
     const isDrugsComplaint = complaint.id === 8;
-    const hasDrugsEvidence = complaint.evidences.some((e: any) => 
+    const hasDrugsEvidence = complaint.evidences.some((e: any) =>
       e.fileUrl && (e.fileUrl.includes('drugs.jpeg') || this.getFileName(e.fileUrl).includes('drugs.jpeg')));
-    
+
     // For complaint #8, ensure we have the drugs.jpeg evidence
     if (isDrugsComplaint && !hasDrugsEvidence) {
       // Add drugs.jpeg evidence which is mentioned in the console
@@ -631,20 +631,20 @@ export class AssignedComplaintsComponent implements OnInit {
         uploadedAt: complaint.updatedAt || complaint.createdAt || new Date().toISOString()
       });
     }
-    
+
     // If we have evidenceFileNames but those files aren't in evidences, add them
     if (complaint.evidenceFileNames && Array.isArray(complaint.evidenceFileNames) && complaint.evidenceFileNames.length > 0) {
       // Add missing evidence files from evidenceFileNames
       complaint.evidenceFileNames.forEach((fileName: string) => {
         // Check if this file is already in the evidences array by name
         const fileBaseName = this.getFileName(fileName);
-        const alreadyExists = complaint.evidences.some((e: any) => 
+        const alreadyExists = complaint.evidences.some((e: any) =>
           this.getFileName(e.fileUrl) === fileBaseName);
-        
+
         if (!alreadyExists) {
           // Map the filename to known paths
           const mappedPath = this.mapKnownFilenamesToPaths(fileName);
-          
+
           // Add a new evidence object
           complaint.evidences.push({
             fileUrl: mappedPath,
@@ -654,7 +654,7 @@ export class AssignedComplaintsComponent implements OnInit {
         }
       });
     }
-    
+
     // If we have evidences, make sure the URLs are properly formatted
     if (complaint.evidences.length > 0) {
       complaint.evidences.forEach((evidence: any) => {
@@ -662,17 +662,17 @@ export class AssignedComplaintsComponent implements OnInit {
           // Get just the filename
           const parts = evidence.fileUrl.split('/');
           const filename = parts[parts.length - 1];
-          
+
           // If this is a known file, map it to its proper path
           evidence.fileUrl = this.mapKnownFilenamesToPaths(filename);
         }
       });
     }
-    
+
     // Remove duplicates based on fileUrl
     const uniqueEvidences: any[] = [];
     const seenUrls = new Set<string>();
-    
+
     complaint.evidences.forEach((evidence: any) => {
       if (evidence.fileUrl) {
         const normalizedUrl = this.getFileName(evidence.fileUrl);
@@ -682,12 +682,12 @@ export class AssignedComplaintsComponent implements OnInit {
         }
       }
     });
-    
+
     // Replace the evidences array with the deduplicated one
     complaint.evidences = uniqueEvidences;
   }
 
-  // Manually map simple filenames to actual paths from database evidence table 
+  // Manually map simple filenames to actual paths from database evidence table
   private mapKnownFilenamesToPaths(filename: string): string {
     const knownFiles: Record<string, string> = {
       'download.jpeg': '/uploads/2025-04-12_18-09-02_d9e6ee52-3a03-4925-9401-fa0da0468e3e.jpeg',
@@ -706,4 +706,4 @@ export class AssignedComplaintsComponent implements OnInit {
     // Just return the original if no match
     return filename;
   }
-} 
+}
