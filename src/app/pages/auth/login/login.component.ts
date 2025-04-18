@@ -16,7 +16,7 @@ import { UserRole } from '../../../core/models/user.model';
       <div class="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-center text-gray-900 mb-6">Welcome Back</h2>
         <p class="text-center text-gray-600 mb-8">Sign in to your account</p>
-        
+
         <!-- Main login form - visible when not in MFA mode -->
         <div *ngIf="!showMfaField">
           <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="space-y-6">
@@ -37,25 +37,40 @@ import { UserRole } from '../../../core/models/user.model';
                 <div *ngIf="email.errors?.['required']">Email is required</div>
               </div>
             </div>
-            
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1" for="password">
                 Password
               </label>
-              <input
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                id="password"
-                type="password"
-                name="password"
-                [(ngModel)]="loginData.password"
-                required
-                #password="ngModel"
-              >
+              <div class="relative">
+                <input
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  id="password"
+                  [type]="showPassword ? 'text' : 'password'"
+                  name="password"
+                  [(ngModel)]="loginData.password"
+                  required
+                  #password="ngModel"
+                >
+                <button
+                  type="button"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                  (click)="togglePasswordVisibility()"
+                >
+                  <svg *ngIf="!showPassword" class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  <svg *ngIf="showPassword" class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.79m0 0L21 21"></path>
+                  </svg>
+                </button>
+              </div>
               <div *ngIf="password.invalid && (password.dirty || password.touched)" class="text-xs text-red-500 mt-1">
                 <div *ngIf="password.errors?.['required']">Password is required</div>
               </div>
             </div>
-            
+
             <div class="flex items-center justify-between">
               <div class="flex items-center">
                 <input
@@ -69,14 +84,14 @@ import { UserRole } from '../../../core/models/user.model';
                   Remember me
                 </label>
               </div>
-              
+
               <div class="text-sm">
                 <a routerLink="/auth/forgot-password" class="font-medium text-blue-600 hover:text-blue-500">
                   Forgot your password?
                 </a>
               </div>
             </div>
-            
+
             <div>
               <button
                 class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -94,31 +109,31 @@ import { UserRole } from '../../../core/models/user.model';
             </div>
           </form>
         </div>
-        
+
         <!-- MFA form - visible when MFA code is needed -->
         <div *ngIf="showMfaField" class="space-y-6">
-          <div>
+        <div>
             <label class="block text-sm font-medium text-gray-700 mb-1" for="mfaCode">
               Two-Factor Authentication Code
             </label>
             <input
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               id="mfaCode"
-              type="text" 
+              type="text"
               name="mfaCode"
               [(ngModel)]="loginData.mfaCode"
               required
             >
           </div>
-          
+
           <div class="flex justify-between">
-            <button 
+            <button
               (click)="showMfaField = false"
               class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               Back
             </button>
-            
+
             <button
               (click)="submitMfaCode()"
               class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -134,13 +149,13 @@ import { UserRole } from '../../../core/models/user.model';
             </button>
           </div>
         </div>
-        
+
         <!-- Hidden form for direct navigation post-login -->
         <!-- This technique prevents router freezes by using standard browser form submission -->
         <form #directNavForm id="directNavForm" method="GET" style="display:none;">
           <input type="hidden" name="dummy" value="1">
         </form>
-        
+
         <div class="mt-6">
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
@@ -152,7 +167,7 @@ import { UserRole } from '../../../core/models/user.model';
               </span>
             </div>
           </div>
-          
+
           <div class="mt-6">
             <a
               routerLink="/auth/register"
@@ -173,10 +188,11 @@ export class LoginComponent {
     password: '',
     mfaCode: ''
   };
-  
+
   rememberMe = false;
   showMfaField = false;
   isLoading = false;
+  showPassword = false; // New property to track password visibility
 
   constructor(
     private authService: AuthService,
@@ -186,14 +202,14 @@ export class LoginComponent {
 
   onSubmit() {
     if (this.isLoading) return;
-    
+
     this.isLoading = true;
     console.log('Starting login process');
-    
+
     this.authService.login(this.loginData).subscribe({
       next: (response) => {
         console.log('Login response:', response);
-        
+
         if (response.mfaRequired) {
           this.isLoading = false;
           this.showMfaField = true;
@@ -201,18 +217,18 @@ export class LoginComponent {
         } else {
           // Show success message
           this.toastr.success('Login successful');
-          
+
           // Direct URL navigation based on role
           let targetRoute = '/dashboard';
-          
+
           if (response.role === UserRole.ADMIN) {
             targetRoute = '/admin';
           } else if (response.role === UserRole.POLICE_OFFICER) {
             targetRoute = '/police/dashboard';
           }
-          
+
           console.log(`Login successful for role ${response.role}, navigating to ${targetRoute}`);
-          
+
           // Use window.location for direct navigation
           window.location.href = targetRoute;
         }
@@ -220,7 +236,7 @@ export class LoginComponent {
       error: (error) => {
         this.isLoading = false;
         console.error('Login error:', error);
-        
+
         if (error.status === 401) {
           this.toastr.error('Invalid email or password');
         } else if (error.status === 403) {
@@ -233,33 +249,33 @@ export class LoginComponent {
       }
     });
   }
-  
+
   submitMfaCode() {
     if (this.isLoading || !this.loginData.mfaCode) return;
-    
+
     this.isLoading = true;
-    
+
     const mfaRequest = {
       email: this.loginData.email,
       mfaCode: this.loginData.mfaCode
     };
-    
+
     this.authService.verifyTwoFactorAuth(mfaRequest).subscribe({
       next: (response) => {
         // Show success message
         this.toastr.success('Login successful');
-        
+
         // Direct URL navigation based on role
         let targetRoute = '/dashboard';
-        
+
         if (response.role === UserRole.ADMIN) {
           targetRoute = '/admin';
         } else if (response.role === UserRole.POLICE_OFFICER) {
           targetRoute = '/police/dashboard';
         }
-        
+
         console.log(`Login successful for role ${response.role}, navigating to ${targetRoute}`);
-        
+
         // Use window.location for direct navigation
         window.location.href = targetRoute;
       },
@@ -270,4 +286,8 @@ export class LoginComponent {
       }
     });
   }
-} 
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+}
