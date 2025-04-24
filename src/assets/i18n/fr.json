@@ -252,7 +252,7 @@
   "home.support.title": "Besoin d'Aide?",
   "home.support.description": "Contactez notre équipe par e-mail à",
   "home.support.email": "support@crimereporting.com",
-  "home.footer.copyright": "© {{year}} Système de Signalement des Crimes. Tous droits réservés.",
+  "home.footer.copyright": "© {{year}} Système de Signalement des Crimes. Tous droits réservés. ",
   "home.footer.developedBy": "Développé avec ❤️ par",
   "home.footer.developerName": "Elvin Humura",
 
