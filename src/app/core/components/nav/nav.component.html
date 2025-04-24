@@ -6,7 +6,7 @@
         <div class="flex-shrink-0">
           <a routerLink="/" class="flex items-center">
             <span class="material-icons text-blue-500 mr-2">security</span>
-            <span class="text-white font-medium text-lg">Crime Reporting System</span>
+            <span class="text-white font-medium text-lg">{{ 'app.title' | translate }}</span>
           </a>
         </div>
         <!-- Desktop Menu -->
@@ -20,7 +20,7 @@
                   [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
                   class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center">
                   <span class="material-icons mr-1 text-sm">{{ item.icon }}</span>
-                  {{ item.label }}
+                  {{ item.label | translate }}
                 </a>
               </ng-container>
             </ng-container>
@@ -31,15 +31,18 @@
       <!-- Right side menu (user) -->
       <div class="hidden md:block">
         <div class="ml-4 flex items-center md:ml-6">
+          <!-- Language Selector -->
+          <app-language-selector class="mr-4"></app-language-selector>
+          
           <!-- User menu -->
           <div class="ml-3 relative">
             <!-- Not logged in -->
             <div *ngIf="!isAuthenticated()" class="flex space-x-2">
               <a routerLink="/auth/login" class="bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-600">
-                Login
+                {{ 'nav.login' | translate }}
               </a>
               <a routerLink="/auth/register" class="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-500">
-                Register
+                {{ 'nav.register' | translate }}
               </a>
             </div>
 
@@ -56,11 +59,11 @@
               <div *ngIf="isUserMenuOpen" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
                 <a routerLink="/profile" (click)="closeMenus()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   <span class="material-icons mr-2 text-gray-500 align-middle text-sm">person</span>
-                  Profile
+                  {{ 'nav.profile' | translate }}
                 </a>
                 <button (click)="logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   <span class="material-icons mr-2 text-gray-500 align-middle text-sm">logout</span>
-                  Sign out
+                  {{ 'nav.logout' | translate }}
                 </button>
               </div>
             </div>
@@ -91,10 +94,15 @@
             (click)="closeMenus()"
             class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
             <span class="material-icons mr-2 align-middle">{{ item.icon }}</span>
-            {{ item.label }}
+            {{ item.label | translate }}
           </a>
         </ng-container>
       </ng-container>
+    </div>
+
+    <!-- Language Selector for mobile -->
+    <div class="px-5 py-2 border-t border-gray-700">
+      <app-language-selector></app-language-selector>
     </div>
 
     <!-- Profile dropdown for mobile -->
@@ -110,13 +118,10 @@
       </div>
       <div class="mt-3 px-2 space-y-1">
         <a routerLink="/profile" (click)="closeMenus()" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
-          <span class="material-icons mr-2 align-middle">person</span> Profile
-        </a>
-        <a routerLink="/settings" (click)="closeMenus()" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
-          <span class="material-icons mr-2 align-middle">settings</span> Settings
+          <span class="material-icons mr-2 align-middle">person</span> {{ 'nav.profile' | translate }}
         </a>
         <button (click)="logout()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
-          <span class="material-icons mr-2 align-middle">logout</span> Sign out
+          <span class="material-icons mr-2 align-middle">logout</span> {{ 'nav.logout' | translate }}
         </button>
       </div>
     </div>
@@ -124,10 +129,10 @@
     <!-- Login/Register for mobile -->
     <div *ngIf="!isAuthenticated()" class="px-5 py-4 border-t border-gray-700 flex flex-col space-y-3">
       <a routerLink="/auth/login" (click)="closeMenus()" class="bg-gray-700 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-gray-600 text-center">
-        Login
+        {{ 'nav.login' | translate }}
       </a>
       <a routerLink="/auth/register" (click)="closeMenus()" class="bg-blue-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-blue-500 text-center">
-        Register
+        {{ 'nav.register' | translate }}
       </a>
     </div>
   </div>

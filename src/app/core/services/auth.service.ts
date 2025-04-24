@@ -560,13 +560,28 @@ export class AuthService {
   // Helper to handle invalid token (clear and reset state)
   private handleInvalidToken(): void {
     console.log('Auth Service - Handling invalid token, clearing state');
-    // Clear only the token, not entire user data
+    
+    // Just stop the refresh timer and clear token details but keep user info
+    this.stopRefreshTokenTimer();
+    
     if (this.isBrowser && this.currentUserValue) {
-      const user = {...this.currentUserValue};
-      delete user.accessToken;
-      delete user.refreshToken;
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      this.currentUserSubject.next(user);
+      try {
+        // Retain basic user info but remove tokens
+        const user = {...this.currentUserValue};
+        delete user.accessToken;
+        delete user.refreshToken;
+        
+        // Update in storage
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        this.currentUserSubject.next(user);
+        
+        // Silently fail if any issues
+      } catch (error) {
+        console.error('Error handling invalid token:', error);
+        // In case of any error, clear everything to be safe
+        localStorage.removeItem('currentUser');
+        this.currentUserSubject.next(null);
+      }
     }
   }
 

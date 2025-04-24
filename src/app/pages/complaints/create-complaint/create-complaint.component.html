@@ -3,71 +3,78 @@
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-2xl mx-auto">
       <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Report a Crime</h1>
+        <h1 class="text-3xl font-bold text-gray-900">{{ isEditMode ? ('complaint.edit' | translate) : ('complaint.report' | translate) }}</h1>
         <a 
           [routerLink]="['/complaints']" 
           class="text-gray-600 hover:text-gray-900 flex items-center cursor-pointer"
         >
           <span class="material-icons mr-1">arrow_back</span>
-          Back to Complaints
+          {{ 'complaint.back' | translate }}
         </a>
       </div>
       
       <div class="bg-white shadow-md rounded-lg p-6">
-        <form [formGroup]="complaintForm" (ngSubmit)="onSubmit()">
+        <div *ngIf="loading" class="flex justify-center py-8">
+          <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+
+        <form *ngIf="!loading" [formGroup]="complaintForm" (ngSubmit)="onSubmit()">
           <div class="mb-6">
-            <label for="crimeType" class="block text-sm font-medium text-gray-700 mb-1">Crime Type</label>
+            <label for="crimeType" class="block text-sm font-medium text-gray-700 mb-1">{{ 'complaint.crimeType' | translate }}</label>
             <select 
               id="crimeType" 
               formControlName="crimeType"
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
-              <option value="">Select Crime Type</option>
-              <option value="THEFT">Theft</option>
-              <option value="ASSAULT">Assault</option>
-              <option value="BURGLARY">Burglary</option>
-              <option value="FRAUD">Fraud</option>
-              <option value="VANDALISM">Vandalism</option>
-              <option value="HARASSMENT">Harassment</option>
-              <option value="DRUG_RELATED">Drug Related</option>
-              <option value="OTHER">Other</option>
+              <option value="">{{ 'complaint.selectCrimeType' | translate }}</option>
+              <option value="THEFT">{{ 'crimeTypes.theft' | translate }}</option>
+              <option value="ASSAULT">{{ 'crimeTypes.assault' | translate }}</option>
+              <option value="BURGLARY">{{ 'crimeTypes.burglary' | translate }}</option>
+              <option value="FRAUD">{{ 'crimeTypes.fraud' | translate }}</option>
+              <option value="VANDALISM">{{ 'crimeTypes.vandalism' | translate }}</option>
+              <option value="HARASSMENT">{{ 'crimeTypes.harassment' | translate }}</option>
+              <option value="DRUG_RELATED">{{ 'crimeTypes.drugRelated' | translate }}</option>
+              <option value="OTHER">{{ 'crimeTypes.other' | translate }}</option>
             </select>
             <div *ngIf="submitted && complaintForm.get('crimeType')?.errors" class="text-red-500 text-xs mt-1">
-              <div *ngIf="complaintForm.get('crimeType')?.errors?.['required']">Crime type is required</div>
+              <div *ngIf="complaintForm.get('crimeType')?.errors?.['required']">{{ 'validation.crimeTypeRequired' | translate }}</div>
             </div>
           </div>
           
           <div class="mb-6">
-            <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <label for="location" class="block text-sm font-medium text-gray-700 mb-1">{{ 'complaint.location' | translate }}</label>
             <input 
               type="text" 
               id="location" 
               formControlName="location"
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Where did the incident take place?"
+              placeholder="{{ 'complaint.locationPlaceholder' | translate }}"
             >
             <div *ngIf="submitted && complaintForm.get('location')?.errors" class="text-red-500 text-xs mt-1">
-              <div *ngIf="complaintForm.get('location')?.errors?.['required']">Location is required</div>
+              <div *ngIf="complaintForm.get('location')?.errors?.['required']">{{ 'validation.locationRequired' | translate }}</div>
             </div>
           </div>
           
           <div class="mb-6">
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">{{ 'complaint.description' | translate }}</label>
             <textarea 
               id="description" 
               formControlName="description"
               rows="5"
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Please describe what happened in detail"
+              placeholder="{{ 'complaint.descriptionPlaceholder' | translate }}"
             ></textarea>
             <div *ngIf="submitted && complaintForm.get('description')?.errors" class="text-red-500 text-xs mt-1">
-              <div *ngIf="complaintForm.get('description')?.errors?.['required']">Description is required</div>
-              <div *ngIf="complaintForm.get('description')?.errors?.['minlength']">Description must be at least 20 characters</div>
+              <div *ngIf="complaintForm.get('description')?.errors?.['required']">{{ 'validation.descriptionRequired' | translate }}</div>
+              <div *ngIf="complaintForm.get('description')?.errors?.['minlength']">{{ 'validation.descriptionMinLength' | translate }}</div>
             </div>
           </div>
 
           <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Evidence (Optional)</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'complaint.evidence' | translate }} {{ isEditMode ? ('complaint.addNewEvidence' | translate) : ('complaint.optional' | translate) }}</label>
+            <p *ngIf="isEditMode && existingComplaint && existingComplaint.evidences && existingComplaint.evidences.length > 0" class="text-sm text-gray-600 mb-2">
+              {{ 'complaint.existingEvidence' | translate: { count: existingComplaint.evidences.length } }}
+            </p>
             <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
               <div class="space-y-1 text-center">
                 <svg *ngIf="!selectedFile" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -82,29 +89,30 @@
                     </svg>
                     <span class="text-sm text-gray-700">{{ selectedFile.name }}</span>
                   </div>
-                  <button type="button" (click)="removeSelectedFile()" class="text-red-500 text-xs mt-2">Remove</button>
+                  <button type="button" (click)="removeSelectedFile()" class="text-red-500 text-xs mt-2">{{ 'actions.remove' | translate }}</button>
                 </div>
                 
                 <div class="flex text-sm text-gray-600">
                   <label for="file-upload"
                          class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                    <span>{{ selectedFile ? 'Change file' : 'Upload a file' }}</span>
+                    <span>{{ selectedFile ? ('actions.changeFile' | translate) : ('actions.uploadFile' | translate) }}</span>
                     <input id="file-upload" name="file-upload" type="file" class="sr-only" (change)="onFileSelected($event)">
                   </label>
-                  <p class="pl-1" *ngIf="!selectedFile">or drag and drop</p>
+                  <p class="pl-1" *ngIf="!selectedFile">{{ 'actions.dragDrop' | translate }}</p>
                 </div>
-                <p class="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
+                <p class="text-xs text-gray-500">{{ 'complaint.fileTypes' | translate }}</p>
               </div>
             </div>
           </div>
 
           <div class="flex justify-end space-x-4">
-            <a
-              [routerLink]="['/complaints']"
+            <button
+              type="button"
+              (click)="onCancel()"
               class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 flex items-center justify-center"
             >
-              Cancel
-            </a>
+              {{ 'actions.cancel' | translate }}
+            </button>
             <button 
               type="submit"
               class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
@@ -116,7 +124,7 @@
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </span>
-              Submit Report
+              {{ isEditMode ? ('actions.updateComplaint' | translate) : ('actions.submitReport' | translate) }}
             </button>
           </div>
         </form>

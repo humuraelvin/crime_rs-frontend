@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavComponent } from './core/components/nav/nav.component';
+import { TranslationService } from './core/services/translation.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-root',
@@ -28,9 +30,17 @@ import { NavComponent } from './core/components/nav/nav.component';
 })
 export class AppComponent implements OnInit {
   
-  constructor() { }
+  constructor(
+    private translationService: TranslationService,
+    private toastr: ToastrService
+  ) { }
 
   ngOnInit(): void {
-    // Initialize any app-wide services or configurations
+    // Clear any existing toasts from previous sessions
+    this.toastr.clear();
+    
+    // Load translations for the current language (using local files now)
+    const currentLang = this.translationService.getCurrentLanguage();
+    this.translationService.loadTranslations(currentLang).subscribe();
   }
 }

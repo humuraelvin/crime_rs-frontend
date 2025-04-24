@@ -101,9 +101,13 @@ export interface ComplaintCreateRequest {
 
 export interface ComplaintUpdateRequest {
   id: number;
+  userId?: number;
   status?: string;
   assignedOfficerId?: number;
   notes?: string;
+  crimeType?: string;
+  description?: string;
+  location?: string;
 }
 
 export interface EvidenceUploadRequest {
@@ -250,7 +254,7 @@ export class ComplaintService {
   }
 
   updateComplaint(complaint: ComplaintUpdateRequest): Observable<ComplaintResponse> {
-    return this.http.put<ComplaintResponse>(`${this.apiUrl}/${complaint.id}`, complaint, {
+    return this.http.post<ComplaintResponse>(`${this.apiUrl}/${complaint.id}/update`, complaint, {
       headers: this.getAuthHeaders()
     }).pipe(
       catchError(error => {

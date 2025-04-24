@@ -42,10 +42,10 @@ interface Complaint {
   selector: 'app-complaint-assignment',
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
-    RouterModule, 
-    LoadingSpinnerComponent, 
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    LoadingSpinnerComponent,
     FormsModule
   ],
   template: `
@@ -64,9 +64,9 @@ interface Complaint {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Status Filter</label>
-              <select 
+              <select
                 (change)="applyFilters()"
-                [(ngModel)]="statusFilter" 
+                [(ngModel)]="statusFilter"
                 class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">All Statuses</option>
                 <option value="SUBMITTED">Submitted</option>
@@ -81,9 +81,9 @@ interface Complaint {
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Category Filter</label>
-              <select 
+              <select
                 (change)="applyFilters()"
-                [(ngModel)]="categoryFilter" 
+                [(ngModel)]="categoryFilter"
                 class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">All Categories</option>
                 <option value="THEFT">Theft</option>
@@ -97,11 +97,11 @@ interface Complaint {
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 [(ngModel)]="searchQuery"
                 (input)="applyFilters()"
-                placeholder="Search complaints..." 
+                placeholder="Search complaints..."
                 class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
             </div>
@@ -129,7 +129,7 @@ interface Complaint {
                 <td class="py-3 px-4">{{complaint.description | slice:0:30}}{{complaint.description.length > 30 ? '...' : ''}}</td>
                 <td class="py-3 px-4">{{complaint.category}}</td>
                 <td class="py-3 px-4">{{complaint.location}}</td>
-                <td class="py-3 px-4">{{complaint.dateFiled | date:'shortDate'}}</td>
+                <td class="py-3 px-4">{{(complaint.dateFiled | date:'shortDate') || 'N/A'}}</td>
                 <td class="py-3 px-4">
                   <span [ngClass]="getStatusClass(complaint.status)">{{complaint.status}}</span>
                 </td>
@@ -138,7 +138,7 @@ interface Complaint {
                   <span *ngIf="!complaint.assignedOfficerName" class="text-gray-500">Not Assigned</span>
                 </td>
                 <td class="py-3 px-4 whitespace-nowrap">
-                  <button 
+                  <button
                     (click)="openAssignmentModal(complaint)"
                     class="text-blue-600 hover:text-blue-900 mr-3"
                     [disabled]="complaint.status === 'RESOLVED' || complaint.status === 'CLOSED'"
@@ -147,7 +147,7 @@ interface Complaint {
                     <span class="material-icons text-sm">assignment_ind</span>
                     Assign
                   </button>
-                  <button 
+                  <button
                     (click)="viewDetails(complaint)"
                     class="text-green-600 hover:text-green-900"
                   >
@@ -176,11 +176,11 @@ interface Complaint {
             <span class="material-icons">close</span>
           </button>
         </div>
-        
+
         <div *ngIf="modalLoading" class="flex justify-center my-4">
           <app-loading-spinner [size]="'md'" [color]="'primary'"></app-loading-spinner>
         </div>
-        
+
         <div *ngIf="!modalLoading">
           <div class="mb-4">
             <h3 class="font-medium">Complaint Details:</h3>
@@ -192,11 +192,11 @@ interface Complaint {
               <span class="font-medium">Currently Assigned To:</span> {{selectedComplaint?.assignedOfficerName}}
             </p>
           </div>
-          
+
           <form [formGroup]="assignmentForm" (ngSubmit)="assignOfficer()">
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-1">Select Officer</label>
-              <select 
+              <select
                 formControlName="officerId"
                 class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option [ngValue]="null">-- Select an Officer --</option>
@@ -208,10 +208,10 @@ interface Complaint {
                 Please select an officer.
               </div>
             </div>
-            
+
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
-              <select 
+              <select
                 formControlName="status"
                 class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="ASSIGNED">Assigned</option>
@@ -219,24 +219,24 @@ interface Complaint {
                 <option value="PENDING_EVIDENCE">Pending Evidence</option>
               </select>
             </div>
-            
+
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea 
+              <textarea
                 formControlName="notes"
                 rows="3"
                 placeholder="Add any notes about this assignment..."
                 class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
-            
+
             <div class="flex justify-end">
-              <button 
+              <button
                 type="button"
                 (click)="closeAssignmentModal()"
                 class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded mr-2">
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 [disabled]="assignmentForm.invalid || submitting"
                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex items-center">
@@ -257,12 +257,12 @@ export class ComplaintAssignmentComponent implements OnInit {
   loading: boolean = true;
   complaints: Complaint[] = [];
   filteredComplaints: Complaint[] = [];
-  
+
   // Filters
   statusFilter: string = '';
   categoryFilter: string = '';
   searchQuery: string = '';
-  
+
   // Assignment modal properties
   showAssignmentModal: boolean = false;
   modalLoading: boolean = false;
@@ -299,7 +299,7 @@ export class ComplaintAssignmentComponent implements OnInit {
               id: complaint.id,
               description: complaint.description || 'No description',
               location: complaint.location || 'Unknown location',
-              dateFiled: complaint.dateFiled,
+              dateFiled: complaint.dateFiled || complaint.createdAt || new Date().toISOString(),
               dateLastUpdated: complaint.dateLastUpdated,
               status: complaint.status,
               crimeType: complaint.crimeType,
@@ -308,10 +308,11 @@ export class ComplaintAssignmentComponent implements OnInit {
               userName: complaint.userName,
               priorityScore: complaint.priorityScore,
               assignedOfficerId: complaint.assignedOfficerId,
-              assignedOfficerName: complaint.assignedOfficerName
+              assignedOfficerName: complaint.assignedOfficerName,
+              createdAt: complaint.createdAt
             };
           });
-          
+
           this.filteredComplaints = [...this.complaints];
           this.loading = false;
         },
@@ -327,11 +328,11 @@ export class ComplaintAssignmentComponent implements OnInit {
     this.filteredComplaints = this.complaints.filter(complaint => {
       const matchesStatus = !this.statusFilter || complaint.status === this.statusFilter;
       const matchesCategory = !this.categoryFilter || complaint.category === this.categoryFilter;
-      const matchesSearch = !this.searchQuery || 
+      const matchesSearch = !this.searchQuery ||
         (complaint.description && complaint.description.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
         (complaint.location && complaint.location.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
         (complaint.assignedOfficerName && complaint.assignedOfficerName.toLowerCase().includes(this.searchQuery.toLowerCase()));
-      
+
       return matchesStatus && matchesCategory && matchesSearch;
     });
   }
@@ -363,21 +364,21 @@ export class ComplaintAssignmentComponent implements OnInit {
     this.selectedComplaint = complaint;
     this.showAssignmentModal = true;
     this.modalLoading = true;
-    
+
     // Reset the form
     this.assignmentForm.reset({
       officerId: null,
       status: 'ASSIGNED',
       notes: ''
     });
-    
+
     // Load officers
     this.http.get<PoliceOfficer[]>(`${environment.apiUrl}/admin/officers`)
       .subscribe({
         next: (officers) => {
           this.officers = officers;
           this.modalLoading = false;
-          
+
           // If complaint already has an assigned officer, pre-select them
           if (complaint.assignedOfficerId) {
             this.assignmentForm.patchValue({
@@ -403,16 +404,16 @@ export class ComplaintAssignmentComponent implements OnInit {
     if (this.assignmentForm.invalid || !this.selectedComplaint) {
       return;
     }
-    
+
     this.submitting = true;
     const assignmentData = this.assignmentForm.value;
-    
+
     this.http.post(`${environment.apiUrl}/admin/complaints/${this.selectedComplaint.id}/assign`, assignmentData)
       .subscribe({
         next: () => {
           const officer = this.officers.find(o => o.id === assignmentData.officerId);
           const officerName = officer ? `${officer.firstName} ${officer.lastName}` : 'Unknown';
-          
+
           this.toastr.success(`Complaint #${this.selectedComplaint?.id} assigned to ${officerName}`);
           this.submitting = false;
           this.closeAssignmentModal();
@@ -429,4 +430,4 @@ export class ComplaintAssignmentComponent implements OnInit {
   viewDetails(complaint: Complaint): void {
     this.router.navigate(['/admin/complaints', complaint.id]);
   }
-} 
+}

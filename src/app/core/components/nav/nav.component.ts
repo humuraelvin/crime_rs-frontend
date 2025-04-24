@@ -3,6 +3,8 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { UserRole } from '../../models/user.model';
+import { TranslateModule } from '@ngx-translate/core';
+import { LanguageSelectorComponent } from '../../../shared/components/language-selector/language-selector.component';
 
 interface NavItem {
   label: string;
@@ -16,7 +18,7 @@ interface NavItem {
   templateUrl: './nav.component.html',
   styleUrls: ['./nav.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive]
+  imports: [CommonModule, RouterLink, RouterLinkActive, TranslateModule, LanguageSelectorComponent]
 })
 export class NavComponent implements OnInit, OnDestroy {
   user: any;
@@ -25,9 +27,9 @@ export class NavComponent implements OnInit, OnDestroy {
   isBrowser: boolean;
   
   navItems: NavItem[] = [
-    { label: 'Dashboard', route: '/dashboard', icon: 'dashboard', roles: [UserRole.CITIZEN] },
-    { label: 'Reports', route: '/complaints', icon: 'description', roles: [UserRole.CITIZEN] },
-    { label: 'Report Crime', route: '/complaints/create', icon: 'add_circle', roles: [UserRole.CITIZEN] },
+    { label: 'nav.dashboard', route: '/dashboard', icon: 'dashboard', roles: [UserRole.CITIZEN] },
+    { label: 'nav.complaints', route: '/complaints', icon: 'description', roles: [UserRole.CITIZEN] },
+    { label: 'nav.report', route: '/complaints/create', icon: 'add_circle', roles: [UserRole.CITIZEN] },
   ];
 
   constructor(

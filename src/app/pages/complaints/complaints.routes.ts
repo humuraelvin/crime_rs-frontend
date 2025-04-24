@@ -13,6 +13,10 @@ export const COMPLAINTS_ROUTES: Routes = [
     component: CreateComplaintComponent
   },
   {
+    path: ':id/edit',
+    component: CreateComplaintComponent
+  },
+  {
     path: ':id',
     component: ComplaintDetailsComponent
   }

@@ -5,28 +5,29 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { User } from '../../../core/models/user.model';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule],
   template: `
     <div class="container my-4">
       <div class="mb-3">
         <a routerLink="/profile" class="btn btn-outline-secondary">
-          <i class="bi bi-arrow-left"></i> Back to Profile
+          <i class="bi bi-arrow-left"></i> {{ 'actions.back' | translate }}
         </a>
       </div>
       
-      <h2>Edit Profile</h2>
+      <h2>{{ 'profile.updateInfo' | translate }}</h2>
       
       <form #profileForm="ngForm" (ngSubmit)="profileForm.valid && onSubmit()">
         <div class="card mb-3">
-          <div class="card-header">Personal Information</div>
+          <div class="card-header">{{ 'profile.personalInfo' | translate }}</div>
           <div class="card-body">
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="firstName" class="form-label">First Name</label>
+                <label for="firstName" class="form-label">{{ 'auth.firstName' | translate }}</label>
                 <input 
                   type="text" 
                   class="form-control" 
@@ -37,11 +38,11 @@ import { User } from '../../../core/models/user.model';
                   #firstName="ngModel"
                 >
                 <div *ngIf="firstName.invalid && (firstName.dirty || firstName.touched)" class="text-danger">
-                  First name is required
+                  {{ 'validation.firstNameRequired' | translate }}
                 </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label for="lastName" class="form-label">Last Name</label>
+                <label for="lastName" class="form-label">{{ 'auth.lastName' | translate }}</label>
                 <input 
                   type="text" 
                   class="form-control" 
@@ -52,7 +53,7 @@ import { User } from '../../../core/models/user.model';
                   #lastName="ngModel"
                 >
                 <div *ngIf="lastName.invalid && (lastName.dirty || lastName.touched)" class="text-danger">
-                  Last name is required
+                  {{ 'validation.lastNameRequired' | translate }}
                 </div>
               </div>
             </div>
@@ -60,11 +61,11 @@ import { User } from '../../../core/models/user.model';
         </div>
         
         <div class="card mb-3">
-          <div class="card-header">Contact Information</div>
+          <div class="card-header">{{ 'profile.contactInfo' | translate }}</div>
           <div class="card-body">
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="email" class="form-label">Email</label>
+                <label for="email" class="form-label">{{ 'auth.email' | translate }}</label>
                 <input 
                   type="email" 
                   class="form-control" 
@@ -76,12 +77,12 @@ import { User } from '../../../core/models/user.model';
                   #email="ngModel"
                 >
                 <div *ngIf="email.invalid && (email.dirty || email.touched)" class="text-danger">
-                  <span *ngIf="email.errors?.['required']">Email is required</span>
-                  <span *ngIf="email.errors?.['email']">Please enter a valid email</span>
+                  <span *ngIf="email.errors?.['required']">{{ 'validation.emailRequired' | translate }}</span>
+                  <span *ngIf="email.errors?.['email']">{{ 'validation.emailInvalid' | translate }}</span>
                 </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label for="phone" class="form-label">Phone Number</label>
+                <label for="phone" class="form-label">{{ 'auth.phoneNumber' | translate }}</label>
                 <input 
                   type="tel" 
                   class="form-control" 
@@ -92,12 +93,12 @@ import { User } from '../../../core/models/user.model';
                   #phone="ngModel"
                 >
                 <div *ngIf="phone.invalid && (phone.dirty || phone.touched)" class="text-danger">
-                  Please enter a valid 10-digit phone number
+                  {{ 'validation.phoneInvalid' | translate }}
                 </div>
               </div>
             </div>
             <div class="mb-3">
-              <label for="address" class="form-label">Address</label>
+              <label for="address" class="form-label">{{ 'auth.address' | translate }}</label>
               <textarea 
                 class="form-control" 
                 id="address" 
@@ -110,7 +111,7 @@ import { User } from '../../../core/models/user.model';
         </div>
         
         <div class="card mb-3">
-          <div class="card-header">Preferences</div>
+          <div class="card-header">{{ 'profile.preferences' | translate }}</div>
           <div class="card-body">
             <div class="form-check mb-2">
               <input 
@@ -121,7 +122,7 @@ import { User } from '../../../core/models/user.model';
                 [(ngModel)]="profileData.emailNotifications"
               >
               <label class="form-check-label" for="emailNotifications">
-                Email Notifications
+                {{ 'profile.emailNotifications' | translate }}
               </label>
             </div>
             <div class="form-check">
@@ -133,7 +134,7 @@ import { User } from '../../../core/models/user.model';
                 [(ngModel)]="profileData.smsNotifications"
               >
               <label class="form-check-label" for="smsNotifications">
-                SMS Notifications
+                {{ 'profile.smsNotifications' | translate }}
               </label>
             </div>
           </div>
@@ -142,7 +143,7 @@ import { User } from '../../../core/models/user.model';
         <div class="d-flex justify-content-end">
           <button type="submit" class="btn btn-primary" [disabled]="profileForm.invalid || isSubmitting">
             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-            {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
+            {{ isSubmitting ? ('actions.saving' | translate) : ('actions.save' | translate) }}
           </button>
         </div>
       </form>
@@ -185,7 +186,8 @@ export class EditProfileComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private translateService: TranslateService
   ) { }
 
   ngOnInit(): void {
@@ -214,12 +216,16 @@ export class EditProfileComponent implements OnInit {
       .subscribe({
         next: (updatedUser: User) => {
           this.isSubmitting = false;
-          this.toastr.success('Profile updated successfully');
+          this.translateService.get('messages.profileUpdated').subscribe((res: string) => {
+            this.toastr.success(res);
+          });
           this.router.navigate(['/profile']);
         },
         error: (error) => {
           this.isSubmitting = false;
-          this.toastr.error(error.message || 'Failed to update profile. Please try again.');
+          this.translateService.get('messages.profileUpdateFailed').subscribe((res: string) => {
+            this.toastr.error(error.message || res);
+          });
         }
       });
   }

@@ -5,6 +5,7 @@ import { ComplaintService, ComplaintResponse } from '../../../core/services/comp
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models/user.model';
+import { TranslateModule } from '@ngx-translate/core';
 
 // Define an interface for the paginated response
 interface PaginatedResponse<T> {
@@ -34,19 +35,19 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
 @Component({
   selector: 'app-complaints-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslateModule],
   template: `
     <div class="min-h-screen bg-gray-100">
       <div class="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">My Submitted Complaints</h1>
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ 'complaint.my_complaints' | translate }}</h1>
           <button
             *ngIf="isCitizen"
             routerLink="/complaints/create"
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center text-sm sm:text-base"
           >
             <span class="material-icons mr-2">add</span>
-            New Complaint
+            {{ 'complaint.create' | translate }}
           </button>
         </div>
 
@@ -55,13 +56,13 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
           <table class="w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">ID</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">Description</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden sm:table-cell">Category</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden md:table-cell">Location</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">Status</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden lg:table-cell">Date</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">Actions</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">{{ 'complaint.id' | translate }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">{{ 'complaint.description' | translate }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden sm:table-cell">{{ 'complaint.type' | translate }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden md:table-cell">{{ 'complaint.location' | translate }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">{{ 'complaint.status' | translate }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden lg:table-cell">{{ 'complaint.date_filed' | translate }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">{{ 'actions.title' | translate }}</th>
             </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -72,23 +73,23 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span class="ml-2">Loading complaints...</span>
+                  <span class="ml-2">{{ 'messages.loading' | translate }}</span>
                 </div>
               </td>
             </tr>
             <tr *ngIf="!loading && complaints.length === 0" class="text-center">
               <td colspan="7" class="px-4 py-4 sm:px-6">
-                <p class="text-gray-500">No complaints found</p>
+                <p class="text-gray-500">{{ 'messages.noComplaints' | translate }}</p>
                 <button *ngIf="isCitizen"
                         routerLink="/complaints/create"
                         class="mt-2 text-blue-600 hover:text-blue-800 text-sm sm:text-base">
-                  Create your first complaint
+                  {{ 'messages.createFirst' | translate }}
                 </button>
               </td>
             </tr>
             <tr *ngFor="let complaint of complaints" class="hover:bg-gray-50">
               <td class="px-4 py-4 text-sm text-gray-500 sm:px-6">#{{complaint.id}}</td>
-              <td class="px-4 py-4 text-sm text-gray-900 sm:px-6">{{complaint.crimeType}}</td>
+              <td class="px-4 py-4 text-sm text-gray-900 sm:px-6">{{complaint.description}}</td>
               <td class="px-4 py-4 text-sm text-gray-900 sm:px-6 hidden sm:table-cell">{{complaint.category || 'N/A'}}</td>
               <td class="px-4 py-4 text-sm text-gray-900 sm:px-6 hidden md:table-cell">{{complaint.location || 'N/A'}}</td>
               <td class="px-4 py-4 sm:px-6">
@@ -104,12 +105,17 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
               </td>
               <td class="px-4 py-4 text-sm text-gray-500 sm:px-6 hidden lg:table-cell">
                 <div class="flex flex-col">
-                  <span>Filed: {{formatDate(complaint.dateFiled)}}</span>
-                  <span class="text-xs">Updated: {{formatDate(complaint.dateLastUpdated)}}</span>
+                  <span>{{ 'complaint.date_filed' | translate }}: {{formatDate(complaint.dateFiled)}}</span>
+                  <span class="text-xs">{{ 'complaint.date_updated' | translate }}: {{formatDate(complaint.dateLastUpdated)}}</span>
                 </div>
               </td>
               <td class="px-4 py-4 text-sm font-medium sm:px-6">
-                <a [routerLink]="['/complaints', complaint.id]" class="text-blue-600 hover:text-blue-900">View</a>
+                <a [routerLink]="['/complaints', complaint.id]" class="text-blue-600 hover:text-blue-900">{{ 'actions.view' | translate }}</a>
+                <a *ngIf="isCitizen && complaint.status === 'SUBMITTED'" 
+                   [routerLink]="['/complaints', complaint.id, 'edit']" 
+                   class="ml-3 text-green-600 hover:text-green-900">
+                   {{ 'actions.edit' | translate }}
+                </a>
               </td>
             </tr>
             </tbody>

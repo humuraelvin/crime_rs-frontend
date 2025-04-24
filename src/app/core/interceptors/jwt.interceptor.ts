@@ -21,7 +21,8 @@ export const jwtInterceptor: HttpInterceptorFn = (
   if (request.url.includes('/auth/login') || 
       request.url.includes('/auth/register') || 
       request.url.includes('/auth/refresh-token') ||
-      request.url.includes('/password/')) {
+      request.url.includes('/password/') ||
+      request.url.includes('/languages')) {
     return next(request);
   }
 
@@ -51,7 +52,9 @@ export const jwtInterceptor: HttpInterceptorFn = (
       console.log('JWT Interceptor - Invalid token format, skipping authentication for:', request.url);
       
       // For certain public endpoints, we'll let the request through without a token
-      if (request.url.includes('/public/') || request.url.includes('/api/v1/public/')) {
+      if (request.url.includes('/public/') || 
+          request.url.includes('/api/v1/public/') || 
+          request.url.includes('/languages')) {
         return next(request);
       }
       

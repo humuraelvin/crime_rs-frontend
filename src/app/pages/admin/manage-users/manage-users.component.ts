@@ -166,7 +166,7 @@ interface UserRole {
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -295,13 +295,13 @@ export class ManageUsersComponent implements OnInit {
       role: user.role,
       status: user.status
     });
-    
+
     // Remove password validators for edit mode
     this.userForm.get('password')?.clearValidators();
     this.userForm.get('confirmPassword')?.clearValidators();
     this.userForm.get('password')?.updateValueAndValidity();
     this.userForm.get('confirmPassword')?.updateValueAndValidity();
-    
+
     this.showForm = true;
   }
 
@@ -367,4 +367,4 @@ export class ManageUsersComponent implements OnInit {
     const roleObj = this.userRoles.find(r => r.value === role);
     return roleObj ? roleObj.label : role;
   }
-} 
+}

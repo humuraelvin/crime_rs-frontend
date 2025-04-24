@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface UserProfile {
   firstName: string;
@@ -16,13 +17,13 @@ interface UserProfile {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, LoadingSpinnerComponent],
+  imports: [CommonModule, RouterModule, LoadingSpinnerComponent, TranslateModule],
   template: `
     <div class="min-h-screen bg-gray-100">
       <div class="container mx-auto px-4 py-8">
         <div class="max-w-3xl mx-auto">
           <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+            <h1 class="text-3xl font-bold text-gray-900">{{ 'profile.title' | translate }}</h1>
             <button 
               (click)="refreshProfile()" 
               class="text-blue-500 hover:text-blue-700"
@@ -58,11 +59,11 @@ interface UserProfile {
               <div class="flex space-x-4">
                 <a routerLink="edit" 
                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                  Edit Profile
+                  {{ 'profile.updateInfo' | translate }}
                 </a>
                 <a routerLink="change-password" 
                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                  Change Password
+                  {{ 'profile.changePassword' | translate }}
                 </a>
               </div>
             </div>
@@ -71,33 +72,33 @@ interface UserProfile {
             <div class="p-6">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 class="text-lg font-semibold text-gray-700 mb-4">Personal Information</h3>
+                  <h3 class="text-lg font-semibold text-gray-700 mb-4">{{ 'profile.personalInfo' | translate }}</h3>
                   <div class="space-y-3">
                     <p class="text-gray-600">
-                      <span class="font-medium">First Name:</span> {{ userData.firstName }}
+                      <span class="font-medium">{{ 'auth.firstName' | translate }}:</span> {{ userData.firstName }}
                     </p>
                     <p class="text-gray-600">
-                      <span class="font-medium">Last Name:</span> {{ userData.lastName }}
+                      <span class="font-medium">{{ 'auth.lastName' | translate }}:</span> {{ userData.lastName }}
                     </p>
                     <p class="text-gray-600">
-                      <span class="font-medium">Email:</span> {{ userData.email }}
+                      <span class="font-medium">{{ 'auth.email' | translate }}:</span> {{ userData.email }}
                     </p>
                     <p class="text-gray-600">
-                      <span class="font-medium">Phone:</span> {{ userData.phone || 'Not provided' }}
+                      <span class="font-medium">{{ 'auth.phoneNumber' | translate }}:</span> {{ userData.phone || ('profile.notProvided' | translate) }}
                     </p>
                   </div>
                 </div>
                 
                 <div>
-                  <h3 class="text-lg font-semibold text-gray-700 mb-4">Preferences</h3>
+                  <h3 class="text-lg font-semibold text-gray-700 mb-4">{{ 'profile.preferences' | translate }}</h3>
                   <div class="space-y-3">
                     <p class="text-gray-600">
-                      <span class="font-medium">Email Notifications:</span>
-                      {{ userData.emailNotifications ? 'Enabled' : 'Disabled' }}
+                      <span class="font-medium">{{ 'profile.emailNotifications' | translate }}:</span>
+                      {{ (userData.emailNotifications ? 'profile.enabled' : 'profile.disabled') | translate }}
                     </p>
                     <p class="text-gray-600">
-                      <span class="font-medium">SMS Notifications:</span>
-                      {{ userData.smsNotifications ? 'Enabled' : 'Disabled' }}
+                      <span class="font-medium">{{ 'profile.smsNotifications' | translate }}:</span>
+                      {{ (userData.smsNotifications ? 'profile.enabled' : 'profile.disabled') | translate }}
                     </p>
                   </div>
                 </div>

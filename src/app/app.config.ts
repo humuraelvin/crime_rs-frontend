@@ -11,6 +11,7 @@ import { SharedModule } from './shared/shared.module';
 import { LOCALE_ID } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeEn from '@angular/common/locales/en';
+import { TranslationModule } from './core/modules/translation.module';
 
 // Required for JIT compilation
 import '@angular/compiler';
@@ -48,7 +49,8 @@ export const appConfig: ApplicationConfig = {
       }),
       // Import the CoreModule and SharedModule to ensure their services are available
       CoreModule,
-      SharedModule
+      SharedModule,
+      TranslationModule
     )
   ]
 };

@@ -4,24 +4,25 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { PasswordResetService } from '../../../core/services/password-reset.service';
 import { ToastrService } from 'ngx-toastr';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule],
   template: `
     <div class="min-h-screen flex items-center justify-center bg-gray-100">
       <div class="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold text-center text-gray-900 mb-4">Forgot Password</h2>
+        <h2 class="text-2xl font-bold text-center text-gray-900 mb-4">{{ 'forgotPassword.title' | translate }}</h2>
         
         <!-- Step 1: Enter Email -->
         <div *ngIf="currentStep === 1" class="space-y-6">
-          <p class="text-center text-gray-600 mb-6">Enter your email address and we'll send you a 6-digit code to reset your password.</p>
+          <p class="text-center text-gray-600 mb-6">{{ 'forgotPassword.enterEmail' | translate }}</p>
           
           <form (ngSubmit)="requestResetCode()" #emailForm="ngForm" class="space-y-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1" for="email">
-                Email Address
+                {{ 'forgotPassword.emailAddress' | translate }}
               </label>
               <input
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -33,7 +34,7 @@ import { ToastrService } from 'ngx-toastr';
                 #emailInput="ngModel"
               >
               <div *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)" class="text-xs text-red-500 mt-1">
-                <div *ngIf="emailInput.errors?.['required']">Email is required</div>
+                <div *ngIf="emailInput.errors?.['required']">{{ 'validation.emailRequired' | translate }}</div>
               </div>
             </div>
             
@@ -49,7 +50,7 @@ import { ToastrService } from 'ngx-toastr';
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </span>
-                Send Reset Code
+                {{ 'forgotPassword.sendCode' | translate }}
               </button>
             </div>
           </form>
@@ -57,12 +58,12 @@ import { ToastrService } from 'ngx-toastr';
         
         <!-- Step 2: Enter Verification Code -->
         <div *ngIf="currentStep === 2" class="space-y-6">
-          <p class="text-center text-gray-600 mb-6">Please enter the 6-digit code sent to your email.</p>
+          <p class="text-center text-gray-600 mb-6">{{ 'forgotPassword.enterCode' | translate }}</p>
           
           <form (ngSubmit)="verifyCode()" #codeForm="ngForm" class="space-y-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1" for="resetCode">
-                Verification Code
+                {{ 'forgotPassword.verificationCode' | translate }}
               </label>
               <input
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -76,8 +77,8 @@ import { ToastrService } from 'ngx-toastr';
                 #codeInput="ngModel"
               >
               <div *ngIf="codeInput.invalid && (codeInput.dirty || codeInput.touched)" class="text-xs text-red-500 mt-1">
-                <div *ngIf="codeInput.errors?.['required']">Code is required</div>
-                <div *ngIf="codeInput.errors?.['minlength'] || codeInput.errors?.['maxlength']">Code must be 6 digits</div>
+                <div *ngIf="codeInput.errors?.['required']">{{ 'validation.codeRequired' | translate }}</div>
+                <div *ngIf="codeInput.errors?.['minlength'] || codeInput.errors?.['maxlength']">{{ 'validation.codeInvalid' | translate }}</div>
               </div>
             </div>
             
@@ -87,7 +88,7 @@ import { ToastrService } from 'ngx-toastr';
                 (click)="goToStep(1)"
                 class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Back
+                {{ 'actions.back' | translate }}
               </button>
               
               <button
@@ -101,7 +102,7 @@ import { ToastrService } from 'ngx-toastr';
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </span>
-                Verify Code
+                {{ 'forgotPassword.verifyCode' | translate }}
               </button>
             </div>
           </form>
@@ -109,12 +110,12 @@ import { ToastrService } from 'ngx-toastr';
         
         <!-- Step 3: Reset Password -->
         <div *ngIf="currentStep === 3" class="space-y-6">
-          <p class="text-center text-gray-600 mb-6">Enter your new password.</p>
+          <p class="text-center text-gray-600 mb-6">{{ 'forgotPassword.enterNewPassword' | translate }}</p>
           
           <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" class="space-y-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1" for="newPassword">
-                New Password
+                {{ 'forgotPassword.newPassword' | translate }}
               </label>
               <input
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -127,14 +128,14 @@ import { ToastrService } from 'ngx-toastr';
                 #passwordInput="ngModel"
               >
               <div *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)" class="text-xs text-red-500 mt-1">
-                <div *ngIf="passwordInput.errors?.['required']">Password is required</div>
-                <div *ngIf="passwordInput.errors?.['minlength']">Password must be at least 8 characters</div>
+                <div *ngIf="passwordInput.errors?.['required']">{{ 'validation.passwordRequired' | translate }}</div>
+                <div *ngIf="passwordInput.errors?.['minlength']">{{ 'validation.passwordMinLength' | translate }}</div>
               </div>
             </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1" for="confirmPassword">
-                Confirm Password
+                {{ 'forgotPassword.confirmPassword' | translate }}
               </label>
               <input
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -146,7 +147,7 @@ import { ToastrService } from 'ngx-toastr';
                 #confirmInput="ngModel"
               >
               <div *ngIf="confirmInput.dirty && newPassword !== confirmPassword" class="text-xs text-red-500 mt-1">
-                Passwords do not match
+                {{ 'validation.passwordMismatch' | translate }}
               </div>
             </div>
             
@@ -156,7 +157,7 @@ import { ToastrService } from 'ngx-toastr';
                 (click)="goToStep(2)"
                 class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Back
+                {{ 'actions.back' | translate }}
               </button>
               
               <button
@@ -170,7 +171,7 @@ import { ToastrService } from 'ngx-toastr';
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </span>
-                Reset Password
+                {{ 'forgotPassword.resetPassword' | translate }}
               </button>
             </div>
           </form>
@@ -183,7 +184,7 @@ import { ToastrService } from 'ngx-toastr';
             </div>
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-white text-gray-500">
-                Remember your password?
+                {{ 'forgotPassword.rememberPassword' | translate }}
               </span>
             </div>
           </div>
@@ -193,7 +194,7 @@ import { ToastrService } from 'ngx-toastr';
               routerLink="/auth/login"
               class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Back to Login
+              {{ 'forgotPassword.backToLogin' | translate }}
             </a>
           </div>
         </div>
@@ -212,7 +213,8 @@ export class ForgotPasswordComponent {
   
   constructor(
     private passwordResetService: PasswordResetService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private translateService: TranslateService
   ) {}
   
   goToStep(step: number) {
@@ -220,60 +222,74 @@ export class ForgotPasswordComponent {
   }
   
   requestResetCode() {
-    if (this.isLoading || !this.email) return;
+    if (this.isLoading) return;
     
     this.isLoading = true;
     
     this.passwordResetService.requestPasswordReset(this.email).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
-        this.toastr.success(response.message || 'Reset code sent to your email');
+        this.translateService.get('messages.passwordResetRequestSuccess').subscribe((res: string) => {
+          this.toastr.success(res);
+        });
         this.goToStep(2);
       },
       error: (error) => {
         this.isLoading = false;
-        this.toastr.error(error.error?.error || error.error?.message || 'Failed to send reset code');
+        this.translateService.get('messages.passwordResetRequestFailed').subscribe((res: string) => {
+          this.toastr.error(error.message || res);
+        });
       }
     });
   }
   
   verifyCode() {
-    if (this.isLoading || !this.resetCode) return;
+    if (this.isLoading) return;
     
     this.isLoading = true;
     
     this.passwordResetService.verifyResetCode(this.email, this.resetCode).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
-        if (response.valid) {
-          this.toastr.success('Code verified successfully');
-          this.goToStep(3);
-        } else {
-          this.toastr.error('Invalid or expired code');
-        }
+        this.translateService.get('messages.passwordResetCodeVerified').subscribe((res: string) => {
+          this.toastr.success(res);
+        });
+        this.goToStep(3);
       },
       error: (error) => {
         this.isLoading = false;
-        this.toastr.error(error.error?.error || error.error?.message || 'Failed to verify code');
+        this.translateService.get('messages.passwordResetCodeInvalid').subscribe((res: string) => {
+          this.toastr.error(error.message || res);
+        });
       }
     });
   }
   
   resetPassword() {
-    if (this.isLoading || !this.newPassword || this.newPassword !== this.confirmPassword) return;
+    if (this.isLoading) return;
+    
+    if (this.newPassword !== this.confirmPassword) {
+      this.translateService.get('validation.passwordMismatch').subscribe((res: string) => {
+        this.toastr.error(res);
+      });
+      return;
+    }
     
     this.isLoading = true;
     
     this.passwordResetService.resetPassword(this.email, this.resetCode, this.newPassword).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
-        this.toastr.success(response.message || 'Password reset successfully');
-        // Navigate to login page
+        this.translateService.get('messages.passwordResetSuccess').subscribe((res: string) => {
+          this.toastr.success(res);
+        });
         window.location.href = '/auth/login';
       },
       error: (error) => {
         this.isLoading = false;
-        this.toastr.error(error.error?.error || error.error?.message || 'Failed to reset password');
+        this.translateService.get('messages.passwordResetFailed').subscribe((res: string) => {
+          this.toastr.error(error.message || res);
+        });
       }
     });
   }

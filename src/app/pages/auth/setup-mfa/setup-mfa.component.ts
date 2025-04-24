@@ -4,17 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService, TwoFactorAuthSetupResponse } from '../../../core/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-setup-mfa',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule],
   template: `
     <div class="min-h-screen flex items-center justify-center bg-gray-100">
       <div class="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold text-center text-gray-900 mb-4">Two-Factor Authentication Setup</h2>
+        <h2 class="text-2xl font-bold text-center text-gray-900 mb-4">{{ 'auth.setupMfa' | translate }}</h2>
         <p class="text-center text-gray-600 mb-8">
-          Scan the QR code with your authenticator app and enter the verification code to enable two-factor authentication.
+          {{ 'auth.twoFactorExplanation' | translate }}
         </p>
         
         <div *ngIf="isLoading" class="flex justify-center mb-6">
@@ -30,14 +31,14 @@ import { ToastrService } from 'ngx-toastr';
           </div>
           
           <div class="bg-gray-100 p-3 rounded-lg text-center mb-4">
-            <p class="text-sm text-gray-700 mb-1">If you cannot scan the QR code, use this secret key:</p>
+            <p class="text-sm text-gray-700 mb-1">{{ 'auth.secretKey' | translate }}</p>
             <code class="text-xs bg-gray-200 p-1 rounded">{{ mfaSetupData.secretKey }}</code>
           </div>
           
           <form (ngSubmit)="onSubmit()" #verifyForm="ngForm" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1" for="verificationCode">
-                Verification Code
+                {{ 'auth.mfaCode' | translate }}
               </label>
               <input
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -53,9 +54,9 @@ import { ToastrService } from 'ngx-toastr';
                 #code="ngModel"
               >
               <div *ngIf="code.invalid && (code.dirty || code.touched)" class="text-xs text-red-500 mt-1">
-                <div *ngIf="code.errors?.['required']">Verification code is required</div>
+                <div *ngIf="code.errors?.['required']">{{ 'validation.codeRequired' | translate }}</div>
                 <div *ngIf="code.errors?.['pattern'] || code.errors?.['minlength'] || code.errors?.['maxlength']">
-                  Please enter a valid 6-digit code
+                  {{ 'validation.codeInvalid' | translate }}
                 </div>
               </div>
             </div>
@@ -66,7 +67,7 @@ import { ToastrService } from 'ngx-toastr';
                 (click)="onSkip()"
                 class="bg-gray-500 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               >
-                Skip for now
+                {{ 'actions.skip' | translate }}
               </button>
               
               <button
@@ -80,7 +81,7 @@ import { ToastrService } from 'ngx-toastr';
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </span>
-                Verify
+                {{ 'actions.verify' | translate }}
               </button>
             </div>
           </form>
@@ -106,7 +107,8 @@ export class SetupMfaComponent implements OnInit {
     private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private translateService: TranslateService
   ) {}
 
   ngOnInit() {
@@ -139,7 +141,9 @@ export class SetupMfaComponent implements OnInit {
 
   onSubmit() {
     if (!this.email || !this.verificationCode) {
-      this.toastr.error('Email and verification code are required');
+      this.translateService.get('validation.codeRequired').subscribe((res: string) => {
+        this.toastr.error(res);
+      });
       return;
     }
     
@@ -148,18 +152,24 @@ export class SetupMfaComponent implements OnInit {
     
     this.authService.enableMfa(this.email, this.verificationCode).subscribe({
       next: () => {
-        this.toastr.success('Two-factor authentication has been enabled successfully');
+        this.translateService.get('messages.mfaSetupSuccess').subscribe((res: string) => {
+          this.toastr.success(res);
+        });
         this.router.navigate(['/auth/login']);
       },
       error: (error) => {
-        this.error = error.message || 'Invalid verification code. Please try again.';
         this.isSubmitting = false;
+        this.translateService.get('messages.invalidTwoFactorCode').subscribe((res: string) => {
+          this.error = error.message || res;
+        });
       }
     });
   }
 
   onSkip() {
-    this.toastr.info('Two-factor authentication setup was skipped. You can enable it later in your profile settings.');
+    this.translateService.get('messages.mfaSetupSkipped').subscribe((res: string) => {
+      this.toastr.info(res);
+    });
     this.router.navigate(['/auth/login']);
   }
 } 

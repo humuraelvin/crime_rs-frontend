@@ -6,24 +6,25 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { UserRole } from '../../../core/models/user.model';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule],
   template: `
     <div class="min-h-screen flex items-center justify-center bg-gray-100 py-8">
       <div class="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold text-center text-gray-900 mb-8">Register as a Citizen</h2>
+        <h2 class="text-2xl font-bold text-center text-gray-900 mb-8">{{ 'auth.registerTitle' | translate }}</h2>
         <p class="text-center text-gray-600 mb-6">
-          Create an account to report crimes and track your cases
+          {{ 'auth.registerSubtitle' | translate }}
         </p>
 
         <form (ngSubmit)="onSubmit()" #registerForm="ngForm" class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1" for="firstName">
-                First Name <span class="text-red-500">*</span>
+                {{ 'auth.firstName' | translate }} <span class="text-red-500">*</span>
               </label>
               <input
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -36,14 +37,14 @@ import { UserRole } from '../../../core/models/user.model';
                 #firstName="ngModel"
               >
               <div *ngIf="firstName.invalid && (firstName.dirty || firstName.touched)" class="text-xs text-red-500 mt-1">
-                <div *ngIf="firstName.errors?.['required']">First name is required</div>
-                <div *ngIf="firstName.errors?.['minlength']">First name must be at least 2 characters</div>
+                <div *ngIf="firstName.errors?.['required']">{{ 'validation.firstNameRequired' | translate }}</div>
+                <div *ngIf="firstName.errors?.['minlength']">{{ 'validation.firstNameMinLength' | translate }}</div>
               </div>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1" for="lastName">
-                Last Name <span class="text-red-500">*</span>
+                {{ 'auth.lastName' | translate }} <span class="text-red-500">*</span>
               </label>
               <input
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -56,15 +57,15 @@ import { UserRole } from '../../../core/models/user.model';
                 #lastName="ngModel"
               >
               <div *ngIf="lastName.invalid && (lastName.dirty || lastName.touched)" class="text-xs text-red-500 mt-1">
-                <div *ngIf="lastName.errors?.['required']">Last name is required</div>
-                <div *ngIf="lastName.errors?.['minlength']">Last name must be at least 2 characters</div>
+                <div *ngIf="lastName.errors?.['required']">{{ 'validation.lastNameRequired' | translate }}</div>
+                <div *ngIf="lastName.errors?.['minlength']">{{ 'validation.lastNameMinLength' | translate }}</div>
               </div>
             </div>
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1" for="username">
-              Username <span class="text-red-500">*</span>
+              {{ 'auth.username' | translate }} <span class="text-red-500">*</span>
             </label>
             <input
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -77,14 +78,14 @@ import { UserRole } from '../../../core/models/user.model';
               #username="ngModel"
             >
             <div *ngIf="username.invalid && (username.dirty || username.touched)" class="text-xs text-red-500 mt-1">
-              <div *ngIf="username.errors?.['required']">Username is required</div>
-              <div *ngIf="username.errors?.['minlength']">Username must be at least 3 characters</div>
+              <div *ngIf="username.errors?.['required']">{{ 'validation.usernameRequired' | translate }}</div>
+              <div *ngIf="username.errors?.['minlength']">{{ 'validation.usernameMinLength' | translate }}</div>
             </div>
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1" for="email">
-              Email <span class="text-red-500">*</span>
+              {{ 'auth.email' | translate }} <span class="text-red-500">*</span>
             </label>
             <input
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -97,14 +98,14 @@ import { UserRole } from '../../../core/models/user.model';
               #email="ngModel"
             >
             <div *ngIf="email.invalid && (email.dirty || email.touched)" class="text-xs text-red-500 mt-1">
-              <div *ngIf="email.errors?.['required']">Email is required</div>
-              <div *ngIf="email.errors?.['pattern']">Please enter a valid email</div>
+              <div *ngIf="email.errors?.['required']">{{ 'validation.emailRequired' | translate }}</div>
+              <div *ngIf="email.errors?.['pattern']">{{ 'validation.emailInvalid' | translate }}</div>
             </div>
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1" for="phoneNumber">
-              Phone Number <span class="text-red-500">*</span>
+              {{ 'auth.phoneNumber' | translate }} <span class="text-red-500">*</span>
             </label>
             <input
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -118,14 +119,14 @@ import { UserRole } from '../../../core/models/user.model';
               #phone="ngModel"
             >
             <div *ngIf="phone.invalid && (phone.dirty || phone.touched)" class="text-xs text-red-500 mt-1">
-              <div *ngIf="phone.errors?.['required']">Phone number is required</div>
-              <div *ngIf="phone.errors?.['pattern']">Please enter a valid phone number</div>
+              <div *ngIf="phone.errors?.['required']">{{ 'validation.phoneRequired' | translate }}</div>
+              <div *ngIf="phone.errors?.['pattern']">{{ 'validation.phoneInvalid' | translate }}</div>
             </div>
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1" for="address">
-              Address
+              {{ 'auth.address' | translate }}
             </label>
             <input
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -138,7 +139,7 @@ import { UserRole } from '../../../core/models/user.model';
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1" for="password">
-              Password <span class="text-red-500">*</span>
+              {{ 'auth.password' | translate }} <span class="text-red-500">*</span>
             </label>
             <div class="relative">
               <input
@@ -167,9 +168,9 @@ import { UserRole } from '../../../core/models/user.model';
               </button>
             </div>
             <div *ngIf="password.invalid && (password.dirty || password.touched)" class="text-xs text-red-500 mt-1">
-              <div *ngIf="password.errors?.['required']">Password is required</div>
-              <div *ngIf="password.errors?.['minlength']">Password must be at least 8 characters</div>
-              <div *ngIf="password.errors?.['pattern']">Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character</div>
+              <div *ngIf="password.errors?.['required']">{{ 'validation.passwordRequired' | translate }}</div>
+              <div *ngIf="password.errors?.['minlength']">{{ 'validation.passwordMinLength' | translate }}</div>
+              <div *ngIf="password.errors?.['pattern']">{{ 'validation.passwordPattern' | translate }}</div>
             </div>
           </div>
 
@@ -182,7 +183,7 @@ import { UserRole } from '../../../core/models/user.model';
               [(ngModel)]="registerData.enableMfa"
             >
             <label class="ml-2 block text-sm text-gray-900" for="enableMfa">
-              Enable Two-Factor Authentication
+              {{ 'auth.enableMfa' | translate }}
             </label>
           </div>
 
@@ -190,15 +191,21 @@ import { UserRole } from '../../../core/models/user.model';
             <button
               class="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
               type="submit"
-              [disabled]="!registerForm.form.valid"
+              [disabled]="!registerForm.form.valid || isSubmitting"
             >
-              Register
+              <span *ngIf="isSubmitting" class="mr-2">
+                <svg class="inline-block animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              {{ 'auth.register' | translate }}
             </button>
           </div>
 
           <div class="text-center mt-4">
             <a class="text-sm text-blue-500 hover:text-blue-800" routerLink="/auth/login">
-              Already have an account? Login
+              {{ 'auth.haveAccount' | translate }}
             </a>
           </div>
         </form>
@@ -219,28 +226,40 @@ export class RegisterComponent {
     role: UserRole.CITIZEN,
     enableMfa: false
   };
-  showPassword = false; // New property to track password visibility
+  showPassword = false;
+  isSubmitting = false;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private translateService: TranslateService
   ) {}
 
   onSubmit() {
+    this.isSubmitting = true;
+    
     this.authService.register(this.registerData).subscribe({
       next: (response) => {
+        this.isSubmitting = false;
         if (response.mfaRequired) {
-          this.toastr.success('Registration successful. Please complete the two-factor authentication setup.');
+          this.translateService.get('messages.registerSuccess').subscribe((res: string) => {
+            this.toastr.success(res);
+          });
           this.router.navigate(['/auth/setup-mfa'], { queryParams: { email: this.registerData.email } });
         } else {
-          this.toastr.success('Registration successful. Please login to continue.');
+          this.translateService.get('messages.registerSuccess').subscribe((res: string) => {
+            this.toastr.success(res);
+          });
           this.router.navigate(['/auth/login']);
         }
       },
       error: (error) => {
+        this.isSubmitting = false;
         console.error('Registration error:', error);
-        this.toastr.error(error.message || 'Registration failed. Please check your information and try again.');
+        this.translateService.get('messages.registerFailed').subscribe((res: string) => {
+          this.toastr.error(error.message || res);
+        });
       }
     });
   }
