@@ -1,7 +1,7 @@
 {
   "app.title": "Crime Reporting System",
   "app.welcome": "Welcome to the Crime Reporting System",
-  
+
   "nav.home": "Home",
   "nav.complaints": "Complaints",
   "nav.report": "Report Crime",
@@ -17,8 +17,7 @@
   "auth.signInAccount": "Sign in to your account",
   "auth.createAccount": "Create an account",
   "auth.signIn": "Sign In",
-  
-  
+
   "complaint.title": "Complaints",
   "complaint.create": "Report a Crime",
   "complaint.edit": "Edit Complaint",
@@ -50,7 +49,7 @@
   "complaint.add_evidence": "Add Evidence",
   "complaint.remove_evidence": "Remove",
   "complaint.id": "ID",
-  
+
   "crimeTypes.theft": "Theft",
   "crimeTypes.assault": "Assault",
   "crimeTypes.burglary": "Burglary",
@@ -59,7 +58,7 @@
   "crimeTypes.harassment": "Harassment",
   "crimeTypes.drugRelated": "Drug Related",
   "crimeTypes.other": "Other",
-  
+
   "validation.crimeTypeRequired": "Crime type is required",
   "validation.locationRequired": "Location is required",
   "validation.descriptionRequired": "Description is required",
@@ -77,7 +76,7 @@
   "validation.usernameMinLength": "Username must be at least 3 characters",
   "validation.phoneRequired": "Phone number is required",
   "validation.phoneInvalid": "Please enter a valid phone number",
-  
+
   "actions.cancel": "Cancel",
   "actions.remove": "Remove",
   "actions.changeFile": "Change file",
@@ -96,7 +95,7 @@
   "actions.previous": "Previous",
   "actions.title": "Actions",
   "actions.saving": "Saving...",
-  
+
   "auth.login": "Login",
   "auth.loginTitle": "Login to your account",
   "auth.loginSubtitle": "Enter your credentials to access your account",
@@ -119,7 +118,7 @@
   "auth.mfaCode": "Verification Code",
   "auth.scan": "Scan the QR code with your authenticator app",
   "auth.enterCode": "Enter the verification code from your authenticator app",
-  
+
   "status.submitted": "Submitted",
   "status.under_review": "Under Review",
   "status.assigned": "Assigned",
@@ -127,7 +126,7 @@
   "status.resolved": "Resolved",
   "status.rejected": "Rejected",
   "status.closed": "Closed",
-  
+
   "messages.loading": "Loading...",
   "messages.success": "Success!",
   "messages.error": "Error!",
@@ -149,7 +148,7 @@
   "messages.passwordChangeFailed": "Failed to change password",
   "messages.profileUpdated": "Profile updated successfully",
   "messages.profileUpdateFailed": "Failed to update profile. Please try again.",
-  
+
   "profile.title": "My Profile",
   "profile.personalInfo": "Personal Information",
   "profile.updateInfo": "Edit Profile",
@@ -165,7 +164,7 @@
   "profile.enabled": "Enabled",
   "profile.disabled": "Disabled",
   "profile.notProvided": "Not provided",
-  
+
   "dashboard.title": "Dashboard",
   "dashboard.welcomeHeader": "Welcome to Crime Reporting System",
   "dashboard.welcomeMessage": "As a citizen, you can report crimes, view your submitted complaints, and track their status.",
@@ -185,8 +184,45 @@
   "dashboard.stats.inProgressComplaints": "In Progress Complaints",
   "dashboard.recentComplaints": "Recent Complaints",
   "dashboard.viewAll": "View All",
-  
+
+  "home.hero.title": "Crime Reporting System",
+  "home.hero.subtitle": "Secure. Efficient. Transparent. Report incidents with confidence.",
+  "home.hero.tagline": "Empowering Communities, One Report at a Time",
+  "home.features.title": "Core Features",
+  "home.features.secureReporting.title": "Secure Crime Reporting",
+  "home.features.secureReporting.description": "Report incidents online while maintaining anonymity and safety.",
+  "home.features.tracking.title": "Real-Time Complaint Tracking",
+  "home.features.tracking.description": "Track the status of your complaint using unique IDs with live updates.",
+  "home.features.caseManagement.title": "Case Management",
+  "home.features.caseManagement.description": "Officers can manage investigations, assign tasks, and update progress.",
+  "home.features.evidenceHandling.title": "Evidence Handling",
+  "home.features.evidenceHandling.description": "Digital storage of photos, documents, and files tied to each case securely.",
+  "home.features.officerDashboard.title": "Officer Dashboard",
+  "home.features.officerDashboard.description": "Dedicated tools for law enforcement to manage reports and communication.",
+  "home.features.safetyPrivacy.title": "User Safety & Privacy",
+  "home.features.safetyPrivacy.description": "Top-tier protection of user identity and data through encrypted protocols.",
+  "home.howItWorks.title": "How It Works",
+  "home.howItWorks.submit.title": "Submit a Report",
+  "home.howItWorks.submit.description": "Fill in details of the incident with or without personal information.",
+  "home.howItWorks.track.title": "Track Progress",
+  "home.howItWorks.track.description": "Use the unique tracking ID to check your report's progress anytime.",
+  "home.howItWorks.notify.title": "Get Notified",
+  "home.howItWorks.notify.description": "Receive timely updates on investigations and outcomes securely.",
+  "home.faq.title": "Frequently Asked Questions",
+  "home.faq.q1.question": "What happens after I report a crime?",
+  "home.faq.q1.answer": "Your report is received by law enforcement, and an investigation is initiated. You can track the progress using your complaint ID.",
+  "home.faq.q2.question": "Is my identity protected?",
+  "home.faq.q2.answer": "Yes. All reports can be made anonymously. If contact is needed, encrypted communication methods are used.",
+  "home.faq.q3.question": "Can I report on someone else's behalf?",
+  "home.faq.q3.answer": "Absolutely. The system allows third-party reporting to ensure no crime goes unnoticed.",
+  "home.support.title": "Need Help?",
+  "home.support.description": "Reach out to our team via email at",
+  "home.support.email": "support@crimereporting.com",
+  "home.footer.copyright": "© {{year}} Crime Reporting System. All rights reserved.",
+  "home.footer.developedBy": "Developed with ❤️ by",
+  "home.footer.developerName": "Elvin Humura",
+
   "language.en": "English",
   "language.fr": "French",
   "language.rw": "Kinyarwanda"
-} 
+}

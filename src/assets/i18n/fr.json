@@ -1,7 +1,7 @@
 {
   "app.title": "Système de Signalement des Crimes",
   "app.welcome": "Bienvenue sur le Système de Signalement des Crimes",
-  
+
   "nav.home": "Accueil",
   "nav.complaints": "Plaintes",
   "nav.report": "Signaler un Crime",
@@ -12,7 +12,7 @@
   "nav.logout": "Déconnexion",
   "nav.admin": "Panneau d'Administration",
   "nav.police": "Tableau de Bord de la Police",
-  
+
   "complaint.title": "Plaintes",
   "complaint.create": "Signaler un Crime",
   "complaint.edit": "Modifier la Plainte",
@@ -44,7 +44,7 @@
   "complaint.add_evidence": "Ajouter une Preuve",
   "complaint.remove_evidence": "Supprimer",
   "complaint.id": "ID",
-  
+
   "crimeTypes.theft": "Vol",
   "crimeTypes.assault": "Agression",
   "crimeTypes.burglary": "Cambriolage",
@@ -53,7 +53,7 @@
   "crimeTypes.harassment": "Harcèlement",
   "crimeTypes.drugRelated": "Lié à la Drogue",
   "crimeTypes.other": "Autre",
-  
+
   "validation.crimeTypeRequired": "Le type de crime est requis",
   "validation.locationRequired": "Le lieu est requis",
   "validation.descriptionRequired": "La description est requise",
@@ -74,7 +74,7 @@
   "validation.codeRequired": "Le code de vérification est requis",
   "validation.codeInvalid": "Veuillez entrer un code à 6 chiffres valide",
   "validation.passwordMismatch": "Les mots de passe ne correspondent pas",
-  
+
   "actions.cancel": "Annuler",
   "actions.remove": "Supprimer",
   "actions.changeFile": "Changer de fichier",
@@ -96,7 +96,7 @@
   "actions.verify": "Vérifier",
   "actions.resend": "Renvoyer le Code",
   "actions.skip": "Ignorer pour l'instant",
-  
+
   "auth.login": "Connexion",
   "auth.loginTitle": "Connectez-vous à votre compte",
   "auth.loginSubtitle": "Entrez vos identifiants pour accéder à votre compte",
@@ -127,7 +127,7 @@
   "auth.twoFactorExplanation": "Scannez le code QR avec votre application d'authentification et entrez le code de vérification pour activer l'authentification à deux facteurs.",
   "auth.createAccount": "Créer un compte",
   "auth.requiredField": "Champ obligatoire",
-  
+
   "forgotPassword.title": "Mot de Passe Oublié",
   "forgotPassword.enterEmail": "Entrez votre adresse e-mail et nous vous enverrons un code à 6 chiffres pour réinitialiser votre mot de passe.",
   "forgotPassword.enterCode": "Veuillez entrer le code à 6 chiffres envoyé à votre e-mail.",
@@ -141,7 +141,7 @@
   "forgotPassword.resetPassword": "Réinitialiser le Mot de Passe",
   "forgotPassword.rememberPassword": "Vous vous souvenez de votre mot de passe?",
   "forgotPassword.backToLogin": "Retour à la Connexion",
-  
+
   "status.submitted": "Soumis",
   "status.under_review": "En Cours d'Examen",
   "status.assigned": "Assigné",
@@ -149,7 +149,7 @@
   "status.resolved": "Résolu",
   "status.rejected": "Rejeté",
   "status.closed": "Fermé",
-  
+
   "messages.loading": "Chargement...",
   "messages.success": "Succès!",
   "messages.error": "Erreur!",
@@ -181,7 +181,7 @@
   "messages.enterTwoFactorCode": "Veuillez entrer votre code d'authentification à deux facteurs",
   "messages.invalidTwoFactorCode": "Code d'authentification à deux facteurs invalide. Veuillez réessayer.",
   "messages.connectionError": "Impossible de se connecter au serveur. Veuillez réessayer plus tard.",
-  
+
   "profile.title": "Mon Profil",
   "profile.personalInfo": "Informations Personnelles",
   "profile.updateInfo": "Modifier le Profil",
@@ -198,7 +198,7 @@
   "profile.disabled": "Désactivé",
   "profile.notProvided": "Non fourni",
   "profile.refreshProfile": "Actualiser le Profil",
-  
+
   "dashboard.title": "Tableau de Bord",
   "dashboard.welcomeHeader": "Bienvenue sur le Système de Signalement des Crimes",
   "dashboard.welcomeMessage": "En tant que citoyen, vous pouvez signaler des crimes, consulter vos plaintes soumises et suivre leur statut.",
@@ -218,8 +218,45 @@
   "dashboard.stats.inProgressComplaints": "Plaintes en Cours",
   "dashboard.recentComplaints": "Plaintes Récentes",
   "dashboard.viewAll": "Voir Tout",
-  
+
+  "home.hero.title": "Système de Signalement des Crimes",
+  "home.hero.subtitle": "Sécurisé. Efficace. Transparent. Signalez les incidents en toute confiance.",
+  "home.hero.tagline": "Renforcer les Communautés, un Rapport à la Fois",
+  "home.features.title": "Fonctionnalités Principales",
+  "home.features.secureReporting.title": "Signalement Sécurisé des Crimes",
+  "home.features.secureReporting.description": "Signalez les incidents en ligne tout en maintenant l'anonymat et la sécurité.",
+  "home.features.tracking.title": "Suivi des Plaintes en Temps Réel",
+  "home.features.tracking.description": "Suivez l'état de votre plainte à l'aide d'identifiants uniques avec des mises à jour en direct.",
+  "home.features.caseManagement.title": "Gestion des Cas",
+  "home.features.caseManagement.description": "Les officiers peuvent gérer les enquêtes, assigner des tâches et mettre à jour les progrès.",
+  "home.features.evidenceHandling.title": "Gestion des Preuves",
+  "home.features.evidenceHandling.description": "Stockage numérique sécurisé des photos, documents et fichiers liés à chaque cas.",
+  "home.features.officerDashboard.title": "Tableau de Bord des Officiers",
+  "home.features.officerDashboard.description": "Outils dédiés pour les forces de l'ordre pour gérer les rapports et la communication.",
+  "home.features.safetyPrivacy.title": "Sécurité et Confidentialité des Utilisateurs",
+  "home.features.safetyPrivacy.description": "Protection de haut niveau de l'identité et des données des utilisateurs grâce à des protocoles cryptés.",
+  "home.howItWorks.title": "Comment Ça Fonctionne",
+  "home.howItWorks.submit.title": "Soumettre un Rapport",
+  "home.howItWorks.submit.description": "Remplissez les détails de l'incident avec ou sans informations personnelles.",
+  "home.howItWorks.track.title": "Suivre les Progrès",
+  "home.howItWorks.track.description": "Utilisez l'identifiant de suivi unique pour vérifier l'avancement de votre rapport à tout moment.",
+  "home.howItWorks.notify.title": "Être Notifié",
+  "home.howItWorks.notify.description": "Recevez des mises à jour opportunes sur les enquêtes et les résultats de manière sécurisée.",
+  "home.faq.title": "Questions Fréquemment Posées",
+  "home.faq.q1.question": "Que se passe-t-il après que j'ai signalé un crime?",
+  "home.faq.q1.answer": "Votre rapport est reçu par les forces de l'ordre, et une enquête est initiée. Vous pouvez suivre l'avancement à l'aide de l'identifiant de votre plainte.",
+  "home.faq.q2.question": "Mon identité est-elle protégée?",
+  "home.faq.q2.answer": "Oui. Tous les rapports peuvent être faits de manière anonyme. Si un contact est nécessaire, des méthodes de communication cryptées sont utilisées.",
+  "home.faq.q3.question": "Puis-je signaler au nom de quelqu'un d'autre?",
+  "home.faq.q3.answer": "Absolument. Le système permet le signalement par des tiers pour s'assurer qu'aucun crime ne passe inaperçu.",
+  "home.support.title": "Besoin d'Aide?",
+  "home.support.description": "Contactez notre équipe par e-mail à",
+  "home.support.email": "support@crimereporting.com",
+  "home.footer.copyright": "© {{year}} Système de Signalement des Crimes. Tous droits réservés.",
+  "home.footer.developedBy": "Développé avec ❤️ par",
+  "home.footer.developerName": "Elvin Humura",
+
   "language.en": "Anglais",
   "language.fr": "Français",
   "language.rw": "Kinyarwanda"
-} 
+}
