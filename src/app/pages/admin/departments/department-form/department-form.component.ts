@@ -20,12 +20,12 @@ interface Department {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, LoadingSpinnerComponent],
   template: `
-    <div class="container mx-auto p-4">
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-2xl font-bold text-gray-800">{{ isEditMode ? 'Edit' : 'Create' }} Department</h1>
-          <a routerLink="/admin/departments" class="text-blue-600 hover:text-blue-800 flex items-center">
-            <span class="material-icons mr-1">arrow_back</span>
+    <div class="container mx-auto px-4 py-12">
+      <div class="bg-white rounded-xl shadow-md p-8 max-w-3xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+          <h1 class="text-3xl font-semibold text-gray-900">{{ isEditMode ? 'Edit' : 'Create' }} Department</h1>
+          <a routerLink="/admin/departments" class="text-blue-600 hover:text-blue-800 flex items-center text-sm font-medium transition duration-200">
+            <span class="material-icons mr-1 text-xl">arrow_back</span>
             Back to Departments
           </a>
         </div>
@@ -37,73 +37,73 @@ interface Department {
         <form *ngIf="!loading" [formGroup]="departmentForm" (ngSubmit)="onSubmit()" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Department Name <span class="text-red-600">*</span></label>
-              <input 
-                type="text" 
-                id="name" 
+              <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Department Name <span class="text-red-600">*</span></label>
+              <input
+                type="text"
+                id="name"
                 formControlName="name"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="w-full rounded-lg border-gray-300 bg-gray-50 py-3 px-4 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200"
               >
-              <div *ngIf="submitted && f['name'].errors" class="mt-1 text-sm text-red-600">
+              <div *ngIf="submitted && f['name'].errors" class="mt-2 text-sm text-red-600">
                 <div *ngIf="f['name'].errors['required']">Name is required</div>
               </div>
             </div>
 
             <div>
-              <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location <span class="text-red-600">*</span></label>
-              <input 
-                type="text" 
-                id="location" 
+              <label for="location" class="block text-sm font-semibold text-gray-700 mb-2">Location <span class="text-red-600">*</span></label>
+              <input
+                type="text"
+                id="location"
                 formControlName="location"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="w-full rounded-lg border-gray-300 bg-gray-50 py-3 px-4 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200"
               >
-              <div *ngIf="submitted && f['location'].errors" class="mt-1 text-sm text-red-600">
+              <div *ngIf="submitted && f['location'].errors" class="mt-2 text-sm text-red-600">
                 <div *ngIf="f['location'].errors['required']">Location is required</div>
               </div>
             </div>
           </div>
 
           <div>
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description <span class="text-red-600">*</span></label>
-            <textarea 
-              id="description" 
+            <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">Description <span class="text-red-600">*</span></label>
+            <textarea
+              id="description"
               formControlName="description"
               rows="4"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              class="w-full rounded-lg border-gray-300 bg-gray-50 py-3 px-4 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200 resize-y"
             ></textarea>
-            <div *ngIf="submitted && f['description'].errors" class="mt-1 text-sm text-red-600">
+            <div *ngIf="submitted && f['description'].errors" class="mt-2 text-sm text-red-600">
               <div *ngIf="f['description'].errors['required']">Description is required</div>
             </div>
           </div>
 
           <div>
-            <label for="contactInfo" class="block text-sm font-medium text-gray-700 mb-1">Contact Information <span class="text-red-600">*</span></label>
-            <textarea 
-              id="contactInfo" 
+            <label for="contactInfo" class="block text-sm font-semibold text-gray-700 mb-2">Contact Information <span class="text-red-600">*</span></label>
+            <textarea
+              id="contactInfo"
               formControlName="contactInfo"
               rows="3"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              class="w-full rounded-lg border-gray-300 bg-gray-50 py-3 px-4 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200 resize-y"
             ></textarea>
-            <div *ngIf="submitted && f['contactInfo'].errors" class="mt-1 text-sm text-red-600">
+            <div *ngIf="submitted && f['contactInfo'].errors" class="mt-2 text-sm text-red-600">
               <div *ngIf="f['contactInfo'].errors['required']">Contact information is required</div>
             </div>
           </div>
 
-          <div class="flex justify-end space-x-3">
+          <div class="flex justify-end space-x-4 pt-4">
             <button
               type="button"
               routerLink="/admin/departments"
-              class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              class="py-3 px-4 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200"
             >
               Cancel
             </button>
             <button
               type="submit"
               [disabled]="isSubmitting"
-              class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
+              class="py-3 px-4 border border-transparent rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200 flex items-center"
             >
               <span *ngIf="isSubmitting" class="mr-2">
-                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -115,7 +115,71 @@ interface Department {
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    :host {
+      display: block;
+    }
+
+    /* Ensure the form container is responsive */
+    .max-w-3xl {
+      max-width: 48rem;
+    }
+
+    /* Enhance form controls */
+    input, textarea {
+      font-size: 0.875rem;
+      line-height: 1.5;
+      border-width: 1px;
+    }
+
+    /* Improve textarea resizing */
+    textarea {
+      resize: vertical;
+    }
+
+    /* Button disabled state */
+    button:disabled {
+      opacity: 0.7;
+    }
+
+    /* Add subtle shadow to form container */
+    .shadow-md {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Improve link hover effect */
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Ensure material icons align properly */
+    .material-icons {
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+      .max-w-3xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      .flex.justify-between {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .space-x-4 {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      button {
+        width: 100%;
+      }
+      .md\\:grid-cols-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  `]
 })
 export class DepartmentFormComponent implements OnInit {
   departmentForm!: FormGroup;
@@ -222,4 +286,4 @@ export class DepartmentFormComponent implements OnInit {
         });
     }
   }
-} 
+}
