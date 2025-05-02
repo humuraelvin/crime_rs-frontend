@@ -113,9 +113,24 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
         <!-- MFA form - visible when MFA code is needed -->
         <div *ngIf="showMfaField" class="space-y-6">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                  {{ 'auth.verificationCodeSent' | translate }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2" for="mfaCode">
-              {{ 'auth.twoFactorCode' | translate }}
+              {{ 'auth.emailVerificationCode' | translate }}
             </label>
             <input
               class="w-full rounded-lg border-gray-300 bg-gray-50 py-3 px-4 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200"
@@ -124,7 +139,14 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
               name="mfaCode"
               [(ngModel)]="loginData.mfaCode"
               required
+              minlength="6"
+              maxlength="6"
+              pattern="[0-9]+"
+              placeholder="Enter 6-digit code"
             >
+            <p class="text-sm text-gray-500 mt-2">
+              {{ 'auth.checkEmailForCode' | translate }}
+            </p>
           </div>
 
           <div class="flex justify-between gap-4">
@@ -147,6 +169,16 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
                 </svg>
               </span>
               {{ 'actions.verify' | translate }}
+            </button>
+          </div>
+
+          <div class="text-center pt-2">
+            <button
+              type="button"
+              (click)="resendMfaCode()"
+              class="text-sm text-blue-600 hover:text-blue-800"
+            >
+              {{ 'auth.resendCode' | translate }}
             </button>
           </div>
         </div>
@@ -243,6 +275,7 @@ export class LoginComponent {
   showMfaField = false;
   isLoading = false;
   showPassword = false;
+  error: string | null = null;
 
   constructor(
     private authService: AuthService,
@@ -293,13 +326,17 @@ export class LoginComponent {
             this.toastr.error(res);
           });
         } else if (error.status === 403) {
-          this.toastr.error(error.error?.message || 'Accès non autorisé');
+          this.translateService.get('messages.unauthorized').subscribe((res: string) => {
+            this.toastr.error(error.error?.message || res);
+          });
         } else if (error.status === 0) {
           this.translateService.get('messages.connectionError').subscribe((res: string) => {
             this.toastr.error(res);
           });
         } else {
-          this.toastr.error(error.error?.message || error.message || 'Échec de connexion');
+          this.translateService.get('messages.loginFailed').subscribe((res: string) => {
+            this.toastr.error(error.error?.message || error.message || res);
+          });
         }
       }
     });
@@ -348,5 +385,31 @@ export class LoginComponent {
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  resendMfaCode(): void {
+    this.isLoading = true;
+    
+    // First clear any existing errors
+    this.error = null;
+    
+    // Call the login API again which will trigger a new MFA code to be sent
+    this.authService.login({
+      email: this.loginData.email,
+      password: this.loginData.password
+    }).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.translateService.get('messages.codeSent').subscribe((res: string) => {
+          this.toastr.info(res);
+        });
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.translateService.get('messages.errorResendingCode').subscribe((res: string) => {
+          this.toastr.error(res);
+        });
+      }
+    });
   }
 }

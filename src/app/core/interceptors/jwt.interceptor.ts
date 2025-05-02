@@ -1,14 +1,14 @@
 import { HttpRequest, HttpHandlerFn, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
+import { AuthTokenService } from '../services/auth-token.service';
 
 export const jwtInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>, 
   next: HttpHandlerFn
 ) => {
-  const authService = inject(AuthService);
+  const authTokenService = inject(AuthTokenService);
   const router = inject(Router);
   const isApiUrl = request.url.startsWith(environment.apiUrl);
   
@@ -28,11 +28,11 @@ export const jwtInterceptor: HttpInterceptorFn = (
 
   try {
     // Check if user is authenticated - safer method that handles exceptions
-    const isAuthenticated = authService.isAuthenticated();
+    const isAuthenticated = authTokenService.isAuthenticated();
     console.log('JWT Interceptor - Is authenticated:', isAuthenticated);
     
-    // Get authorization header from AuthService
-    const authHeader = authService.getAuthorizationHeader();
+    // Get authorization header from AuthTokenService
+    const authHeader = authTokenService.getAuthorizationHeader();
     
     if (authHeader && authHeader.includes('Bearer ') && authHeader.split(' ')[1]?.length > 10) {
       // Only log the first part of the token for security
@@ -63,16 +63,8 @@ export const jwtInterceptor: HttpInterceptorFn = (
         return next(request);
       }
       
-      // Force logout and redirect to login if token is invalid on protected endpoints
-      if (!request.url.includes('/complaints/statistics')) {
-        // Don't force logout for statistics endpoint to prevent circular redirects
-        authService.logout();
-        router.navigate(['/auth/login'], { 
-          queryParams: { returnUrl: router.url, reason: 'invalid_token' } 
-        });
-      }
-      
-      // Still send the original request - the server will return 401/403 which will be handled by error interceptor
+      // For protected endpoints without valid token, let the request continue
+      // The server will return 401/403 which will be handled by error interceptor
       return next(request);
     }
   } catch (error) {

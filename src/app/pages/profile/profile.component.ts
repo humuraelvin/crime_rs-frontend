@@ -137,19 +137,45 @@ export class ProfileComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
     
-    const user = this.authService.currentUserValue;
-    if (user) {
-      this.userData = {
-        ...this.userData,
-        ...user,
-        emailNotifications: user.emailNotifications || false,
-        smsNotifications: user.smsNotifications || false
-      };
-      this.isLoading = false;
-    } else {
-      this.error = 'Unable to load profile data. Please try again.';
-      this.isLoading = false;
-    }
+    // First fetch the latest user profile from the backend
+    this.authService.getUserProfile().subscribe({
+      next: () => {
+        // After successful refresh, get the updated user data
+        const user = this.authService.currentUserValue;
+        if (user) {
+          this.userData = {
+            ...this.userData,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || '',
+            phone: user.phoneNumber || '',
+            emailNotifications: user.emailNotifications || false,
+            smsNotifications: user.smsNotifications || false
+          };
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Failed to fetch profile data', error);
+        // Fall back to using local cached data
+        const user = this.authService.currentUserValue;
+        if (user) {
+          this.userData = {
+            ...this.userData,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || '',
+            phone: user.phoneNumber || '',
+            emailNotifications: user.emailNotifications || false,
+            smsNotifications: user.smsNotifications || false
+          };
+          this.isLoading = false;
+        } else {
+          this.error = 'Unable to load profile data. Please try again.';
+          this.isLoading = false;
+        }
+      }
+    });
   }
 
   refreshProfile() {

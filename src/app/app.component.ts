@@ -1,8 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavComponent } from './core/components/nav/nav.component';
 import { TranslationService } from './core/services/translation.service';
 import { ToastrService } from 'ngx-toastr';
+import { AuthService } from './core/services/auth.service';
+import { AuthTokenService } from './core/services/auth-token.service';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-root',
@@ -29,18 +32,31 @@ import { ToastrService } from 'ngx-toastr';
   `]
 })
 export class AppComponent implements OnInit {
-  
-  constructor(
-    private translationService: TranslationService,
-    private toastr: ToastrService
-  ) { }
+  private isBrowser: boolean;
 
-  ngOnInit(): void {
-    // Clear any existing toasts from previous sessions
-    this.toastr.clear();
+  constructor(
+    private toastr: ToastrService,
+    private translationService: TranslationService,
+    private authService: AuthService,
+    private authTokenService: AuthTokenService,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  ngOnInit() {
+    // Clear any existing toasts
+    if (this.isBrowser) {
+      this.toastr.clear();
+    }
     
-    // Load translations for the current language (using local files now)
+    // Load current language
     const currentLang = this.translationService.getCurrentLanguage();
     this.translationService.loadTranslations(currentLang).subscribe();
+    
+    // If user is logged in, refresh their profile silently
+    if (this.isBrowser && this.authTokenService.isAuthenticated()) {
+      this.authService.refreshUserProfile();
+    }
   }
 }

@@ -7,7 +7,10 @@ import { environment } from '@environments/environment';
 import { User, UserRole } from '../models/user.model';
 import { isPlatformBrowser } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
-import { inject } from '@angular/core';
+import { I18nHelperService } from './i18n-helper.service';
+import { AuthTokenService } from './auth-token.service';
+import { jwtDecode } from 'jwt-decode';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface LoginRequest {
   email: string;
@@ -40,8 +43,9 @@ export interface RegisterRequest {
 }
 
 export interface TwoFactorAuthSetupResponse {
-  secretKey: string;
-  qrCodeUrl: string;
+  message: string;
+  qrCodeUrl?: string;
+  secretKey?: string;
 }
 
 export interface MfaVerificationRequest {
@@ -62,7 +66,10 @@ export class AuthService {
     private http: HttpClient,
     private router: Router,
     @Inject(PLATFORM_ID) platformId: Object,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private i18nHelper: I18nHelperService,
+    private authTokenService: AuthTokenService,
+    private translate: TranslateService
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
     this.currentUserSubject = new BehaviorSubject<User | null>(this.getUserFromStorage());
@@ -78,90 +85,11 @@ export class AuthService {
   }
 
   public isAuthenticated(): boolean {
-    try {
-      const user = this.currentUserValue;
-      if (!user || !user.accessToken) {
-        console.log('Auth Service - No user or token found');
-        return false;
-      }
-
-      // Validate token format before trying to parse
-      if (!this.isValidJwtFormat(user.accessToken)) {
-        console.log('Auth Service - Invalid token format');
-        this.handleInvalidToken();
-        return false;
-      }
-
-      try {
-        const tokenData = this.parseJwt(user.accessToken);
-        if (!tokenData || !tokenData.exp) {
-          console.log('Auth Service - Invalid token data (no exp field)');
-          this.handleInvalidToken();
-          return false;
-        }
-
-        const expiryTime = new Date(tokenData.exp * 1000);
-        const now = new Date();
-        
-        // Log the token expiration details
-        const timeToExpiry = expiryTime.getTime() - now.getTime();
-        const minutesToExpiry = Math.floor(timeToExpiry / 60000);
-        console.log(`Auth Service - Token expires in ${minutesToExpiry} minutes (${new Date(tokenData.exp * 1000).toLocaleTimeString()})`);
-        
-        // If token is expired
-        if (expiryTime <= now) {
-          console.log('Auth Service - Token is expired');
-          this.handleInvalidToken();
-          return false;
-        }
-        
-        // If token is about to expire within 1 minute, try to refresh it
-        if (timeToExpiry < 60000) {
-          // Try to refresh the token
-          console.log('Auth Service - Token is about to expire, attempting refresh');
-          this.refreshToken().subscribe({
-            next: () => {
-              console.log('Auth Service - Token refreshed successfully');
-              return true;
-            },
-            error: (error) => {
-              console.error('Auth Service - Token refresh failed:', error);
-              this.handleInvalidToken();
-              return false;
-            }
-          });
-        }
-        
-        return true;
-      } catch (e) {
-        console.error('Auth Service - Error parsing token:', e);
-        this.handleInvalidToken();
-        return false;
-      }
-    } catch (e) {
-      console.error('Auth Service - Error in isAuthenticated:', e);
-      return false;
-    }
+    return this.authTokenService.isAuthenticated();
   }
 
-  public getAuthorizationHeader(): string | null {
-    try {
-      const user = this.currentUserValue;
-      if (!user || !user.accessToken) {
-        return null;
-      }
-      
-      // Ensure token is in valid JWT format before returning
-      if (!this.isValidJwtFormat(user.accessToken)) {
-        console.log('Auth Service - Invalid token format in getAuthorizationHeader');
-        return null;
-      }
-      
-      return `Bearer ${user.accessToken}`;
-    } catch (e) {
-      console.error('Auth Service - Error in getAuthorizationHeader:', e);
-      return null;
-    }
+  public getAuthorizationHeader(): string {
+    return this.authTokenService.getAuthorizationHeader();
   }
 
   private getUserFromStorage(): User | null {
@@ -214,6 +142,10 @@ export class AuthService {
             
             if (this.isBrowser) {
               localStorage.setItem('currentUser', JSON.stringify(user));
+              localStorage.setItem('access_token', response.accessToken);
+              if (response.refreshToken) {
+                localStorage.setItem('refresh_token', response.refreshToken);
+              }
             }
             this.currentUserSubject.next(user);
             this.startRefreshTokenTimer();
@@ -346,14 +278,18 @@ export class AuthService {
       // Clear user data from localStorage
       if (this.isBrowser) {
         localStorage.removeItem('currentUser');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
       }
       
       // Clear user from BehaviorSubject
       this.currentUserSubject.next(null);
       
-      // Show success message
+      // Show success message using translate service
       if (this.isBrowser) {
-        this.toastr.success('You have been successfully logged out');
+        this.translate.get('messages.logoutSuccess').subscribe((res: string) => {
+          this.toastr.success(res);
+        });
       }
       
       // Navigate to login page
@@ -450,6 +386,22 @@ export class AuthService {
       );
   }
 
+  getUserProfile(): Observable<User> {
+    return this.http.get<User>(`${environment.apiUrl}/auth/users/profile`)
+      .pipe(
+        tap(userData => {
+          const user = { ...this.currentUserValue, ...userData };
+          if (this.isBrowser) {
+            localStorage.setItem('currentUser', JSON.stringify(user));
+          }
+          this.currentUserSubject.next(user);
+        }),
+        catchError(error => {
+          return throwError(() => new Error(error.error?.message || 'Failed to fetch profile'));
+        })
+      );
+  }
+
   hasRole(role: UserRole | UserRole[]): boolean {
     const user = this.currentUserValue;
     if (!user) {
@@ -490,16 +442,20 @@ export class AuthService {
       return;
     }
 
-    // Parse the JWT token to get expiration time
-    const jwtToken = this.parseJwt(user.accessToken);
-    if (!jwtToken || !jwtToken.exp) {
-      return;
-    }
+    try {
+      // Parse the JWT token to get expiration time
+      const decodedToken: any = jwtDecode(user.accessToken);
+      if (!decodedToken || !decodedToken.exp) {
+        return;
+      }
 
-    // Set a timeout to refresh the token 1 minute before it expires
-    const expires = new Date(jwtToken.exp * 1000);
-    const timeout = expires.getTime() - Date.now() - (60 * 1000);
-    this.refreshTokenTimeout = setTimeout(() => this.refreshToken().subscribe(), timeout);
+      // Set a timeout to refresh the token 1 minute before it expires
+      const expires = new Date(decodedToken.exp * 1000);
+      const timeout = expires.getTime() - Date.now() - (60 * 1000);
+      this.refreshTokenTimeout = setTimeout(() => this.refreshToken().subscribe(), timeout);
+    } catch (error) {
+      console.error('Error starting token refresh timer:', error);
+    }
   }
 
   private stopRefreshTokenTimer(): void {
@@ -594,7 +550,30 @@ export class AuthService {
 
   // Method to get the JWT token
   getToken(): string {
-    const user = this.currentUserValue;
-    return user?.accessToken || '';
+    return this.authTokenService.getToken() || '';
+  }
+
+  /**
+   * Silently refreshes the user profile data in the background
+   * This doesn't return an observable and won't trigger loading states
+   */
+  refreshUserProfile(): void {
+    if (!this.isLoggedIn) return;
+    
+    this.http.get<User>(`${environment.apiUrl}/auth/users/profile`)
+      .pipe(
+        tap(userData => {
+          const user = { ...this.currentUserValue, ...userData };
+          if (this.isBrowser) {
+            localStorage.setItem('currentUser', JSON.stringify(user));
+          }
+          this.currentUserSubject.next(user);
+        }),
+        catchError(error => {
+          console.error('Silent profile refresh failed:', error);
+          return throwError(() => new Error('Failed to fetch profile'));
+        })
+      )
+      .subscribe();
   }
 } 

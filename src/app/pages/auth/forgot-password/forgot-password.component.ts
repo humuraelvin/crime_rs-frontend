@@ -20,27 +20,28 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
           <p class="text-center text-gray-600 mb-6">{{ 'forgotPassword.enterEmail' | translate }}</p>
           
           <form (ngSubmit)="requestResetCode()" #emailForm="ngForm" class="space-y-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="email">
+            <div class="form-group">
+              <label class="form-label" for="email">
                 {{ 'forgotPassword.emailAddress' | translate }}
               </label>
               <input
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="form-input"
                 id="email"
                 type="email"
                 name="email"
                 [(ngModel)]="email"
                 required
                 #emailInput="ngModel"
+                placeholder="example@email.com"
               >
-              <div *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)" class="text-xs text-red-500 mt-1">
+              <div *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)" class="form-error">
                 <div *ngIf="emailInput.errors?.['required']">{{ 'validation.emailRequired' | translate }}</div>
               </div>
             </div>
             
             <div>
               <button
-                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="form-button-primary"
                 type="submit"
                 [disabled]="!emailForm.form.valid || isLoading"
               >
@@ -61,12 +62,12 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
           <p class="text-center text-gray-600 mb-6">{{ 'forgotPassword.enterCode' | translate }}</p>
           
           <form (ngSubmit)="verifyCode()" #codeForm="ngForm" class="space-y-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="resetCode">
+            <div class="form-group">
+              <label class="form-label" for="resetCode">
                 {{ 'forgotPassword.verificationCode' | translate }}
               </label>
               <input
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="form-input"
                 id="resetCode"
                 type="text"
                 name="resetCode"
@@ -75,8 +76,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
                 maxlength="6"
                 minlength="6"
                 #codeInput="ngModel"
+                placeholder="123456"
               >
-              <div *ngIf="codeInput.invalid && (codeInput.dirty || codeInput.touched)" class="text-xs text-red-500 mt-1">
+              <div *ngIf="codeInput.invalid && (codeInput.dirty || codeInput.touched)" class="form-error">
                 <div *ngIf="codeInput.errors?.['required']">{{ 'validation.codeRequired' | translate }}</div>
                 <div *ngIf="codeInput.errors?.['minlength'] || codeInput.errors?.['maxlength']">{{ 'validation.codeInvalid' | translate }}</div>
               </div>
@@ -86,13 +88,13 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
               <button
                 type="button"
                 (click)="goToStep(1)"
-                class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="form-button-secondary flex-1"
               >
                 {{ 'actions.back' | translate }}
               </button>
               
               <button
-                class="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="form-button-primary flex-1"
                 type="submit"
                 [disabled]="!codeForm.form.valid || isLoading"
               >
@@ -113,12 +115,12 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
           <p class="text-center text-gray-600 mb-6">{{ 'forgotPassword.enterNewPassword' | translate }}</p>
           
           <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" class="space-y-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="newPassword">
+            <div class="form-group">
+              <label class="form-label" for="newPassword">
                 {{ 'forgotPassword.newPassword' | translate }}
               </label>
               <input
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="form-input"
                 id="newPassword"
                 type="password"
                 name="newPassword"
@@ -126,27 +128,29 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
                 required
                 minlength="8"
                 #passwordInput="ngModel"
+                placeholder="••••••••"
               >
-              <div *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)" class="text-xs text-red-500 mt-1">
+              <div *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)" class="form-error">
                 <div *ngIf="passwordInput.errors?.['required']">{{ 'validation.passwordRequired' | translate }}</div>
                 <div *ngIf="passwordInput.errors?.['minlength']">{{ 'validation.passwordMinLength' | translate }}</div>
               </div>
             </div>
             
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="confirmPassword">
+            <div class="form-group">
+              <label class="form-label" for="confirmPassword">
                 {{ 'forgotPassword.confirmPassword' | translate }}
               </label>
               <input
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="form-input"
                 id="confirmPassword"
                 type="password"
                 name="confirmPassword"
                 [(ngModel)]="confirmPassword"
                 required
                 #confirmInput="ngModel"
+                placeholder="••••••••"
               >
-              <div *ngIf="confirmInput.dirty && newPassword !== confirmPassword" class="text-xs text-red-500 mt-1">
+              <div *ngIf="confirmInput.dirty && newPassword !== confirmPassword" class="form-error">
                 {{ 'validation.passwordMismatch' | translate }}
               </div>
             </div>
@@ -155,13 +159,13 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
               <button
                 type="button"
                 (click)="goToStep(2)"
-                class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="form-button-secondary flex-1"
               >
                 {{ 'actions.back' | translate }}
               </button>
               
               <button
-                class="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="form-button-primary flex-1"
                 type="submit"
                 [disabled]="!passwordForm.form.valid || newPassword !== confirmPassword || isLoading"
               >
@@ -192,7 +196,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
           <div class="mt-6">
             <a
               routerLink="/auth/login"
-              class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              class="form-button-secondary"
             >
               {{ 'forgotPassword.backToLogin' | translate }}
             </a>

@@ -1,18 +1,18 @@
 import { HttpErrorResponse, HttpRequest, HttpHandlerFn, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
-import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../environments/environment';
+import { AuthTokenService } from '../services/auth-token.service';
 
 export const errorInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>, 
   next: HttpHandlerFn
 ) => {
-  const authService = inject(AuthService);
   const router = inject(Router);
   const toastr = inject(ToastrService);
+  const authTokenService = inject(AuthTokenService);
 
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -32,10 +32,14 @@ export const errorInterceptor: HttpInterceptorFn = (
       
       // Handle errors based on status code and endpoint
       if (error.status === 401) {
-        console.log('Error Interceptor - 401 Unauthorized error, logging out');
+        console.log('Error Interceptor - 401 Unauthorized error');
         // Don't log out if it's a password reset endpoint
         if (!isPasswordResetEndpoint) {
-          authService.logout();
+          // Clear local storage and redirect to login
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          
           router.navigate(['/auth/login'], { 
             queryParams: { returnUrl: router.url, reason: 'session_expired' } 
           });
@@ -45,8 +49,13 @@ export const errorInterceptor: HttpInterceptorFn = (
         // Only force logout on 403 if it's not from specific protected endpoints
         // For statistics and other read-only endpoints, we'll handle 403 within the components
         if (!isComplaintEndpoint && !isStatisticsEndpoint && !isPasswordResetEndpoint && !isLanguageEndpoint) {
-          console.log('Error Interceptor - 403 Forbidden error (requires logout), logging out');
-          authService.logout();
+          console.log('Error Interceptor - 403 Forbidden error (requires logout)');
+          
+          // Clear local storage and redirect to login
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          
           router.navigate(['/auth/login']);
           toastr.error('Your session has expired or you lack sufficient permissions.');
         } else {
