@@ -173,6 +173,42 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
               <div *ngIf="password.errors?.['pattern']">{{ 'validation.passwordPattern' | translate }}</div>
             </div>
           </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2" for="confirmPassword">
+              {{ 'auth.confirmPassword' | translate }} <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input
+                class="w-full rounded-lg border-gray-300 bg-gray-50 py-3 px-4 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200"
+                id="confirmPassword"
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                name="confirmPassword"
+                [(ngModel)]="registerData.confirmPassword"
+                required
+                #confirmPassword="ngModel"
+              >
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-sm leading-5"
+                (click)="toggleConfirmPasswordVisibility()"
+              >
+                <svg *ngIf="!showConfirmPassword" class="h-5 w-5 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <svg *ngIf="showConfirmPassword" class="h-5 w-5 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.79m0 0L21 21"></path>
+                </svg>
+              </button>
+            </div>
+            <div *ngIf="confirmPassword.invalid && (confirmPassword.dirty || confirmPassword.touched)" class="text-sm text-red-600 mt-2">
+              <div *ngIf="confirmPassword.errors?.['required']">{{ 'validation.confirmPasswordRequired' | translate }}</div>
+            </div>
+            <div *ngIf="confirmPassword.valid && password.valid && registerData.password !== registerData.confirmPassword" class="text-sm text-red-600 mt-2">
+              {{ 'validation.passwordsDoNotMatch' | translate }}
+            </div>
+          </div>
 
           <div class="flex items-center">
             <input
@@ -191,7 +227,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
             <button
               class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition duration-200"
               type="submit"
-              [disabled]="!registerForm.form.valid || isSubmitting"
+              [disabled]="!registerForm.form.valid || isSubmitting || registerData.password !== registerData.confirmPassword"
             >
               <span *ngIf="isSubmitting" class="mr-2">
                 <svg class="inline-block animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -272,13 +308,15 @@ export class RegisterComponent {
     lastName: '',
     username: '',
     email: '',
-    password: '',
     phoneNumber: '',
     address: '',
-    role: UserRole.CITIZEN,
-    enableMfa: false
+    password: '',
+    confirmPassword: '',
+    enableMfa: false,
+    role: UserRole.CITIZEN
   };
   showPassword = false;
+  showConfirmPassword = false;
   isSubmitting = false;
 
   constructor(
@@ -289,34 +327,38 @@ export class RegisterComponent {
   ) {}
 
   onSubmit() {
-    this.isSubmitting = true;
+    if (this.registerData.password !== this.registerData.confirmPassword) {
+      this.toastr.error(this.translateService.instant('validation.passwordsDoNotMatch'), 'Error');
+      return;
+    }
 
-    this.authService.register(this.registerData).subscribe({
+    this.isSubmitting = true;
+    
+    // Create a copy of the data without confirmPassword
+    const registrationData = { ...this.registerData };
+    delete (registrationData as any).confirmPassword;
+    
+    this.authService.register(registrationData).subscribe({
       next: (response) => {
         this.isSubmitting = false;
-        if (response.mfaRequired) {
-          this.translateService.get('messages.registerSuccess').subscribe((res: string) => {
-            this.toastr.success(res);
-          });
-          this.router.navigate(['/auth/setup-mfa'], { queryParams: { email: this.registerData.email } });
-        } else {
-          this.translateService.get('messages.registerSuccess').subscribe((res: string) => {
-            this.toastr.success(res);
-          });
-          this.router.navigate(['/auth/login']);
-        }
+        this.toastr.success(this.translateService.instant('auth.registerSuccess'), 'Success');
+        this.router.navigate(['/auth/login']);
       },
       error: (error) => {
         this.isSubmitting = false;
-        console.error('Registration error:', error);
-        this.translateService.get('messages.registerFailed').subscribe((res: string) => {
-          this.toastr.error(error.message || res);
-        });
+        this.toastr.error(
+          error.error?.message || this.translateService.instant('errors.generalError'),
+          this.translateService.instant('errors.registerFailed')
+        );
       }
     });
   }
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
+  }
+  
+  toggleConfirmPasswordVisibility() {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 }

@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 
 interface Department {
   id: number;
@@ -32,7 +33,7 @@ interface PoliceOfficer {
 @Component({
   selector: 'app-officer-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, LoadingSpinnerComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, LoadingSpinnerComponent, TranslateModule],
   template: `
     <div class="container mx-auto p-4">
       <div class="bg-white rounded-lg shadow-md p-6">
@@ -129,6 +130,34 @@ interface PoliceOfficer {
                 </div>
                 <div *ngIf="officerForm.get('password')?.invalid && officerForm.get('password')?.touched" class="text-red-600 text-sm mt-1">
                   Password is required (minimum 8 characters)
+                </div>
+              </div>
+              
+              <div class="form-group" *ngIf="!isEditMode">
+                <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">{{ 'auth.confirmPassword' | translate }} *</label>
+                <div class="relative">
+                  <input
+                    [type]="showConfirmPassword ? 'text' : 'password'"
+                    id="confirmPassword"
+                    formControlName="confirmPassword"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Confirm password"
+                  >
+                  <button
+                    type="button"
+                    (click)="toggleConfirmPasswordVisibility()"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
+                  >
+                    <span class="material-icons">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
+                  </button>
+                </div>
+                <div *ngIf="officerForm.get('confirmPassword')?.invalid && officerForm.get('confirmPassword')?.touched" class="text-red-600 text-sm mt-1">
+                  {{ 'validation.confirmPasswordRequired' | translate }}
+                </div>
+                <div *ngIf="officerForm.get('confirmPassword')?.valid && officerForm.get('password')?.valid && 
+                  officerForm.get('password')?.value !== officerForm.get('confirmPassword')?.value" 
+                  class="text-red-600 text-sm mt-1">
+                  {{ 'validation.passwordsDoNotMatch' | translate }}
                 </div>
               </div>
             </div>
@@ -250,14 +279,16 @@ export class OfficerFormComponent implements OnInit {
   loading = false;
   submitting = false;
   departments: Department[] = [];
-  showPassword = false; // Added for password toggle
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
     private router: Router,
     private route: ActivatedRoute,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private translateService: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -277,15 +308,14 @@ export class OfficerFormComponent implements OnInit {
   }
 
   initForm(): void {
-    // Initialize with default values
     this.officerForm = this.fb.group({
       firstName: ['', [Validators.required]],
       lastName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: [''],
-      password: this.isEditMode ? [''] : ['', [Validators.required, Validators.minLength(8)]],
+      password: ['', this.isEditMode ? [] : [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', this.isEditMode ? [] : [Validators.required]],
       badgeNumber: ['', [Validators.required]],
-      // Initialize with null but will be set when departments are loaded
       departmentId: [null, [Validators.required]],
       rank: ['', [Validators.required]],
       specialization: [''],
@@ -294,9 +324,12 @@ export class OfficerFormComponent implements OnInit {
     });
   }
 
-  // Added method to toggle password visibility
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   loadDepartments(): void {
@@ -375,6 +408,12 @@ export class OfficerFormComponent implements OnInit {
       return;
     }
 
+    // Check if passwords match when creating a new officer
+    if (!this.isEditMode && this.officerForm.get('password')?.value !== this.officerForm.get('confirmPassword')?.value) {
+      this.toastr.error(this.translateService.instant('validation.passwordsDoNotMatch'), 'Validation Error');
+      return;
+    }
+
     // Check specifically for department ID and make sure it's a valid number
     const departmentId = this.officerForm.get('departmentId')?.value;
     console.log('Department ID before conversion:', departmentId, 'Type:', typeof departmentId);
@@ -410,25 +449,9 @@ export class OfficerFormComponent implements OnInit {
     console.log('All departments:', this.departments);
     console.log('Matching department:', this.departments.find(d => Number(d.id) === numericDepartmentId));
     
-    // Create a data object with an explicit 'any' type to avoid TypeScript errors
-    const officerData: any = {
-      firstName: this.officerForm.get('firstName')?.value || '',
-      lastName: this.officerForm.get('lastName')?.value || '',
-      email: this.officerForm.get('email')?.value || '',
-      phoneNumber: this.officerForm.get('phoneNumber')?.value || '',
-      badgeNumber: this.officerForm.get('badgeNumber')?.value || '',
-      // CRITICAL FIX: Use the numeric ID with no possibility of string conversion
-      departmentId: numericDepartmentId,
-      rank: this.officerForm.get('rank')?.value || '',
-      specialization: this.officerForm.get('specialization')?.value || '',
-      contactInfo: this.officerForm.get('contactInfo')?.value || '',
-      jurisdiction: this.officerForm.get('jurisdiction')?.value || ''
-    };
-    
-    // Add password only in create mode
-    if (!this.isEditMode) {
-      officerData.password = this.officerForm.get('password')?.value || '12345678';
-    }
+    // Create a copy of the form value and remove confirmPassword
+    const officerData = { ...this.officerForm.value };
+    delete officerData.confirmPassword;
 
     console.log('Sending officer data:', JSON.stringify(officerData));
     console.log('Department ID in payload:', officerData.departmentId, 'Type:', typeof officerData.departmentId);
