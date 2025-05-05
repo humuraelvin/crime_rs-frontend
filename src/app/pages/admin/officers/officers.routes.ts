@@ -5,14 +5,17 @@ import { OfficerFormComponent } from './officer-form/officer-form.component';
 export const OFFICER_ROUTES: Routes = [
   {
     path: '',
-    component: OfficerListComponent
+    component: OfficerListComponent,
+    title: 'Police Officers'
   },
   {
     path: 'create',
-    component: OfficerFormComponent
+    component: OfficerFormComponent,
+    title: 'Add Officer'
   },
   {
     path: 'edit/:id',
-    component: OfficerFormComponent
+    component: OfficerFormComponent,
+    title: 'Edit Officer'
   }
 ]; 

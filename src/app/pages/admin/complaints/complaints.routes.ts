@@ -4,10 +4,12 @@ import { ComplaintAssignmentComponent } from './complaint-assignment/complaint-a
 export const ADMIN_COMPLAINT_ROUTES: Routes = [
   {
     path: '',
-    component: ComplaintAssignmentComponent
+    component: ComplaintAssignmentComponent,
+    title: 'Complaint Assignment'
   },
   {
     path: ':id',
-    loadComponent: () => import('../../../pages/complaints/complaint-details/complaint-details.component').then(m => m.ComplaintDetailsComponent)
+    loadComponent: () => import('../../../pages/complaints/complaint-details/complaint-details.component').then(m => m.ComplaintDetailsComponent),
+    title: 'Complaint Details'
   }
 ]; 

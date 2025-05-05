@@ -15,15 +15,18 @@ export const POLICE_ROUTES: Routes = [
       },
       {
         path: 'dashboard',
-        component: PoliceDashboardComponent
+        component: PoliceDashboardComponent,
+        title: 'Police Dashboard'
       },
       {
         path: 'assign',
-        component: AssignedComplaintsComponent
+        component: AssignedComplaintsComponent,
+        title: 'Assigned Complaints'
       },
       {
         path: 'my-cases',
-        loadComponent: () => import('./cases/my-cases.component').then(c => c.MyCasesComponent)
+        loadComponent: () => import('./cases/my-cases.component').then(c => c.MyCasesComponent),
+        title: 'My Cases'
       }
     ]
   }

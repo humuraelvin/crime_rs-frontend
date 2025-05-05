@@ -6,18 +6,22 @@ import { CreateComplaintComponent } from './create-complaint/create-complaint.co
 export const COMPLAINTS_ROUTES: Routes = [
   {
     path: '',
-    component: ComplaintsListComponent
+    component: ComplaintsListComponent,
+    title: 'My Complaints'
   },
   {
     path: 'create',
-    component: CreateComplaintComponent
+    component: CreateComplaintComponent,
+    title: 'Report a Complaint'
   },
   {
     path: ':id/edit',
-    component: CreateComplaintComponent
+    component: CreateComplaintComponent,
+    title: 'Edit Complaint'
   },
   {
     path: ':id',
-    component: ComplaintDetailsComponent
+    component: ComplaintDetailsComponent,
+    title: 'Complaint Details'
   }
 ]; 

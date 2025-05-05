@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from './core/services/auth.service';
 import { AuthTokenService } from './core/services/auth-token.service';
 import { isPlatformBrowser } from '@angular/common';
+import { TitleService } from './core/services/title.service';
 
 @Component({
   selector: 'app-root',
@@ -39,6 +40,7 @@ export class AppComponent implements OnInit {
     private translationService: TranslationService,
     private authService: AuthService,
     private authTokenService: AuthTokenService,
+    private titleService: TitleService,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -58,5 +60,8 @@ export class AppComponent implements OnInit {
     if (this.isBrowser && this.authTokenService.isAuthenticated()) {
       this.authService.refreshUserProfile();
     }
+    
+    // Initialize title service to update page titles
+    this.titleService.init();
   }
 }

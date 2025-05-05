@@ -12,6 +12,9 @@ import { LOCALE_ID } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeEn from '@angular/common/locales/en';
 import { TranslationModule } from './core/modules/translation.module';
+import { provideClientHydration } from '@angular/platform-browser';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { Title } from '@angular/platform-browser';
 
 // Required for JIT compilation
 import '@angular/compiler';
@@ -28,6 +31,10 @@ export const appConfig: ApplicationConfig = {
     ),
     // Provide locale for date formatting
     { provide: LOCALE_ID, useValue: 'en-US' },
+    // Provide Title service for managing the document title
+    Title,
+    provideAnimations(),
+    provideClientHydration(),
     importProvidersFrom(
       BrowserAnimationsModule,
       ToastrModule.forRoot({

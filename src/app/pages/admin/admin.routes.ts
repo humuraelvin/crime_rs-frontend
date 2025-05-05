@@ -18,27 +18,33 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'dashboard',
-        loadComponent: () => import('./dashboard/admin-dashboard.component').then(c => c.AdminDashboardComponent)
+        loadComponent: () => import('./dashboard/admin-dashboard.component').then(c => c.AdminDashboardComponent),
+        title: 'Admin Dashboard'
       },
       {
         path: 'departments',
-        children: DEPARTMENT_ROUTES
+        children: DEPARTMENT_ROUTES,
+        title: 'Departments'
       },
       {
         path: 'officers',
-        children: OFFICER_ROUTES
+        children: OFFICER_ROUTES,
+        title: 'Police Officers'
       },
       {
         path: 'complaints',
-        children: ADMIN_COMPLAINT_ROUTES
+        children: ADMIN_COMPLAINT_ROUTES,
+        title: 'Complaint Management'
       },
       {
         path: 'users',
-        component: ManageUsersComponent
+        component: ManageUsersComponent,
+        title: 'User Management'
       },
       {
         path: 'settings',
-        component: SystemSettingsComponent
+        component: SystemSettingsComponent,
+        title: 'System Settings'
       }
     ]
   }

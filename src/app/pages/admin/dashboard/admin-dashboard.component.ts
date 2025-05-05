@@ -1,10 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { Chart, registerables } from 'chart.js';
+
+// Register Chart.js components
+Chart.register(...registerables);
 
 interface AdminStats {
   totalUsers: number;
@@ -87,26 +91,20 @@ interface AdminStats {
             </a>
           </div>
 
-          <!-- Recent Activity -->
+          <!-- Complaint Statistics with Charts -->
           <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">Complaint Statistics</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h3 class="text-lg font-medium text-gray-700 mb-2">By Status</h3>
-                <div class="space-y-2">
-                  <div *ngFor="let status of getStatusList()" class="flex items-center justify-between border-b pb-2">
-                    <span class="text-gray-700">{{ formatStatusLabel(status) }}</span>
-                    <span class="font-medium">{{ stats.complaintsByStatus[status] || 0 }}</span>
-                  </div>
+                <h3 class="text-lg font-medium text-gray-700 mb-4">By Status</h3>
+                <div class="h-80">
+                  <canvas id="statusChart"></canvas>
                 </div>
               </div>
               <div>
-                <h3 class="text-lg font-medium text-gray-700 mb-2">Recent Months</h3>
-                <div class="space-y-2">
-                  <div *ngFor="let month of getRecentMonthsList()" class="flex items-center justify-between border-b pb-2">
-                    <span class="text-gray-700">{{ month }}</span>
-                    <span class="font-medium">{{ stats.complaintsByMonth[month] || 0 }}</span>
-                  </div>
+                <h3 class="text-lg font-medium text-gray-700 mb-4">Recent Months</h3>
+                <div class="h-80">
+                  <canvas id="monthsChart"></canvas>
                 </div>
               </div>
             </div>
@@ -117,8 +115,11 @@ interface AdminStats {
   `,
   styles: []
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminDashboardComponent implements OnInit, OnDestroy {
   loading = true;
+  statusChart: Chart | null = null;
+  monthsChart: Chart | null = null;
+  
   stats: AdminStats = {
     totalUsers: 0,
     citizenCount: 0,
@@ -142,6 +143,12 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.fetchAdminStats();
   }
+  
+  ngOnDestroy(): void {
+    // Destroy charts to prevent memory leaks
+    if (this.statusChart) this.statusChart.destroy();
+    if (this.monthsChart) this.monthsChart.destroy();
+  }
 
   fetchAdminStats(): void {
     this.loading = true;
@@ -150,6 +157,11 @@ export class AdminDashboardComponent implements OnInit {
         next: (response) => {
           this.stats = response;
           this.loading = false;
+          // Initialize charts after data is loaded
+          setTimeout(() => {
+            this.createStatusChart();
+            this.createMonthsChart();
+          }, 0);
         },
         error: (error) => {
           console.error('Failed to fetch admin stats:', error);
@@ -186,6 +198,12 @@ export class AdminDashboardComponent implements OnInit {
               'April': 12
             }
           };
+          
+          // Initialize charts with example data
+          setTimeout(() => {
+            this.createStatusChart();
+            this.createMonthsChart();
+          }, 0);
         }
       });
   }
@@ -205,5 +223,127 @@ export class AdminDashboardComponent implements OnInit {
 
   formatStatusLabel(status: string): string {
     return status.charAt(0) + status.slice(1).toLowerCase().replace('_', ' ');
+  }
+  
+  createStatusChart(): void {
+    const ctx = document.getElementById('statusChart') as HTMLCanvasElement;
+    if (!ctx) return;
+    
+    // Destroy previous chart if it exists
+    if (this.statusChart) {
+      this.statusChart.destroy();
+    }
+    
+    const statuses = this.getStatusList();
+    const formattedLabels = statuses.map(status => this.formatStatusLabel(status));
+    const data = statuses.map(status => this.stats.complaintsByStatus[status] || 0);
+    
+    // Define a color palette for the status chart
+    const statusColors = [
+      'rgba(54, 162, 235, 0.8)',   // blue - Submitted
+      'rgba(255, 206, 86, 0.8)',    // yellow - Under Review
+      'rgba(75, 192, 192, 0.8)',    // teal - Assigned
+      'rgba(153, 102, 255, 0.8)',   // purple - Investigating
+      'rgba(255, 99, 132, 0.8)',    // red - Rejected
+      'rgba(255, 159, 64, 0.8)',    // orange - Pending Evidence
+      'rgba(46, 204, 113, 0.8)',    // green - Resolved
+      'rgba(149, 165, 166, 0.8)'    // gray - Closed
+    ];
+    
+    this.statusChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: formattedLabels,
+        datasets: [{
+          label: 'Complaints by Status',
+          data: data,
+          backgroundColor: statusColors.slice(0, data.length),
+          borderColor: statusColors.slice(0, data.length).map(color => color.replace('0.8', '1')),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `Count: ${context.formattedValue}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  createMonthsChart(): void {
+    const ctx = document.getElementById('monthsChart') as HTMLCanvasElement;
+    if (!ctx) return;
+    
+    // Destroy previous chart if it exists
+    if (this.monthsChart) {
+      this.monthsChart.destroy();
+    }
+    
+    const months = this.getRecentMonthsList();
+    const data = months.map(month => this.stats.complaintsByMonth[month] || 0);
+    
+    this.monthsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [{
+          label: 'Complaints by Month',
+          data: data,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true,
+          pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `Count: ${context.formattedValue}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
   }
 }
