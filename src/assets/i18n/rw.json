@@ -1,6 +1,6 @@
 {
-  "app.title": "Sisitemu yo Gutanga Raporo y'Ibyaha",
-  "app.welcome": "Murakaza neza kuri Sisitemu yo Gutanga Raporo y'Ibyaha",
+  "app.title": "Sisitemu yo Gucunga Polisi n'Ibyaha",
+  "app.welcome": "Murakaza neza kuri Sisitemu yo Gucunga Polisi n'Ibyaha",
 
   "nav.home": "Ahabanza",
   "nav.complaints": "Ibirego",
@@ -219,7 +219,7 @@
   "profile.addressReadOnly": "Kuvugurura aderesi ntibifashishwa ubu. Aha hari aho ureba gusa.",
 
   "dashboard.title": "Ikibaho",
-  "dashboard.welcomeHeader": "Murakaza neza kuri Sisitemu yo Gutanga Raporo y'Ibyaha",
+  "dashboard.welcomeHeader": "Murakaza neza kuri Sisitemu yo Gucunga Polisi n'Ibyaha",
   "dashboard.welcomeMessage": "Nk'umuturage, ushobora gutanga ibirego by'ibyaha, kureba ibirego by'ibyaha watanze no gukurikirana aho bigeze.",
   "dashboard.viewComplaints": "Reba Ibirego Byanjye",
   "dashboard.reportNewCrime": "Tanga Ikirego Gishya",
@@ -238,7 +238,7 @@
   "dashboard.recentComplaints": "Ibirego Vuba",
   "dashboard.viewAll": "Reba Byose",
 
-  "home.hero.title": "Sisitemu yo Gutanga Raporo y'Ibyaha",
+  "home.hero.title": "Sisitemu yo Gucunga Polisi n'Ibyaha",
   "home.hero.subtitle": "Byizewe. Byihuse. Byeruye. Tanga ibirego by'icyaha wihanganye.",
   "home.hero.tagline": "Gutera Abaturage Imbaraga, Raporo Imwe Ku Yindi",
   "home.features.title": "Ibintu by'Ibanze",
@@ -271,7 +271,7 @@
   "home.support.title": "Urimo Guhura n'Ikibazo?",
   "home.support.description": "Twandikire kuri imeyili",
   "home.support.email": "support@crimereporting.com",
-  "home.footer.copyright": "© {{year}} Sisitemu yo Gutanga Raporo y'Ibyaha. Uburenganzira bwose burabitswe.",
+  "home.footer.copyright": "© {{year}} Sisitemu yo Gucunga Polisi n'Ibyaha. Uburenganzira bwose bwihariwe.",
   "home.footer.developedBy": "Yakozwe n'❤️ na",
   "home.footer.developerName": "Elvin Humura",
 

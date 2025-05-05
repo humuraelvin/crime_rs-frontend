@@ -1,0 +1,21 @@
+Base64-encoded favicon for Police & Crime Management System
+
+This file contains instructions for manually creating the favicon.ico file.
+
+1. Option 1: Use the SVG file directly
+   - The SVG file has been created at src/assets/police-badge.svg
+   - Modern browsers support SVG favicons, so you can use it directly by changing the link tag in index.html:
+   
+   ```html
+   <link rel="icon" type="image/svg+xml" href="assets/police-badge.svg">
+   ```
+
+2. Option 2: Convert SVG to ICO using online tools
+   - Upload the SVG file to an online converter like https://convertio.co/svg-ico/
+   - Download the ICO file and save it as src/favicon.ico
+
+3. Option 3: Create a simple favicon.ico file
+   - Create a new file named favicon.ico in the src/ directory
+   - Use a simple police badge or shield icon that represents the system
+   
+The update from "Crime Reporting System" to "Police & Crime Management System" has been completed throughout the codebase. The only remaining step is to add the actual favicon.ico file in the src/ directory. 

@@ -1,6 +1,6 @@
 {
-  "app.title": "Crime Reporting System",
-  "app.welcome": "Welcome to the Crime Reporting System",
+  "app.title": "Police & Crime Management System",
+  "app.welcome": "Welcome to the Police & Crime Management System",
 
   "nav.home": "Home",
   "nav.complaints": "Complaints",
@@ -191,7 +191,7 @@
   "profile.addressReadOnly": "Address updates are not supported yet. This field is view-only.",
 
   "dashboard.title": "Dashboard",
-  "dashboard.welcomeHeader": "Welcome to Crime Reporting System",
+  "dashboard.welcomeHeader": "Welcome to Police & Crime Management System",
   "dashboard.welcomeMessage": "As a citizen, you can report crimes, view your submitted complaints, and track their status.",
   "dashboard.viewComplaints": "View My Complaints",
   "dashboard.reportNewCrime": "Report New Crime",
@@ -210,7 +210,7 @@
   "dashboard.recentComplaints": "Recent Complaints",
   "dashboard.viewAll": "View All",
 
-  "home.hero.title": "Crime Reporting System",
+  "home.hero.title": "Police & Crime Management System",
   "home.hero.subtitle": "Secure. Efficient. Transparent. Report incidents with confidence.",
   "home.hero.tagline": "Empowering Communities, One Report at a Time",
   "home.features.title": "Core Features",
@@ -243,7 +243,7 @@
   "home.support.title": "Need Help?",
   "home.support.description": "Reach out to our team via email at",
   "home.support.email": "support@crimereporting.com",
-  "home.footer.copyright": "© {{year}} Crime Reporting System. All rights reserved.",
+  "home.footer.copyright": "© {{year}} Police & Crime Management System. All rights reserved.",
   "home.footer.developedBy": "Developed with ❤️ by",
   "home.footer.developerName": "Elvin Humura",
 

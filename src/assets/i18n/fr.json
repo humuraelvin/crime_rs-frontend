@@ -1,6 +1,6 @@
 {
-  "app.title": "Système de Signalement des Crimes",
-  "app.welcome": "Bienvenue sur le Système de Signalement des Crimes",
+  "app.title": "Système de Gestion de la Police & des Crimes",
+  "app.welcome": "Bienvenue sur le Système de Gestion de la Police & des Crimes",
 
   "nav.home": "Accueil",
   "nav.complaints": "Plaintes",
@@ -219,7 +219,7 @@
   "profile.addressReadOnly": "La mise à jour de l'adresse n'est pas encore prise en charge. Ce champ est en lecture seule.",
 
   "dashboard.title": "Tableau de Bord",
-  "dashboard.welcomeHeader": "Bienvenue sur le Système de Signalement des Crimes",
+  "dashboard.welcomeHeader": "Bienvenue sur le Système de Gestion de la Police & des Crimes",
   "dashboard.welcomeMessage": "En tant que citoyen, vous pouvez signaler des crimes, consulter vos plaintes soumises et suivre leur statut.",
   "dashboard.viewComplaints": "Voir Mes Plaintes",
   "dashboard.reportNewCrime": "Signaler un Nouveau Crime",
@@ -238,7 +238,7 @@
   "dashboard.recentComplaints": "Plaintes Récentes",
   "dashboard.viewAll": "Voir Tout",
 
-  "home.hero.title": "Système de Signalement des Crimes",
+  "home.hero.title": "Système de Gestion de la Police & des Crimes",
   "home.hero.subtitle": "Sécurisé. Efficace. Transparent. Signalez les incidents en toute confiance.",
   "home.hero.tagline": "Renforcer les Communautés, un Rapport à la Fois",
   "home.features.title": "Fonctionnalités Principales",
@@ -271,7 +271,7 @@
   "home.support.title": "Besoin d'Aide?",
   "home.support.description": "Contactez notre équipe par e-mail à",
   "home.support.email": "support@crimereporting.com",
-  "home.footer.copyright": "© {{year}} Système de Signalement des Crimes. Tous droits réservés. ",
+  "home.footer.copyright": "© {{year}} Système de Gestion de la Police & des Crimes. Tous droits réservés.",
   "home.footer.developedBy": "Développé avec ❤️ par",
   "home.footer.developerName": "Elvin Humura",
 
