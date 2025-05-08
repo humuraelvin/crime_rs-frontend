@@ -92,7 +92,8 @@ export class CreateComplaintComponent implements OnInit {
         this.complaintForm.patchValue({
           crimeType: complaint.crimeType,
           location: complaint.location,
-          description: complaint.description
+          description: complaint.description,
+          priority: (complaint as any).priority || 'MEDIUM'
         });
         
         this.loading = false;
@@ -110,7 +111,8 @@ export class CreateComplaintComponent implements OnInit {
     this.complaintForm = this.formBuilder.group({
       crimeType: ['', Validators.required],
       location: ['', Validators.required],
-      description: ['', [Validators.required, Validators.minLength(20)]]
+      description: ['', [Validators.required, Validators.minLength(20)]],
+      priority: ['MEDIUM']
     });
   }
 
@@ -157,6 +159,7 @@ export class CreateComplaintComponent implements OnInit {
       crimeType: this.complaintForm.value.crimeType,
       description: this.complaintForm.value.description,
       location: this.complaintForm.value.location,
+      priority: this.complaintForm.value.priority,
       evidenceFiles: this.selectedFile ? [this.selectedFile] : undefined
     };
 
@@ -252,13 +255,14 @@ export class CreateComplaintComponent implements OnInit {
     formData.append('type', complaintData.crimeType);
     formData.append('description', complaintData.description);
     formData.append('location', complaintData.location);
+    formData.append('priority', complaintData.priority || 'MEDIUM');
 
-    // Add the file if it exists
     if (complaintData.evidenceFiles && complaintData.evidenceFiles.length > 0) {
-      formData.append('files', complaintData.evidenceFiles[0]);
+      complaintData.evidenceFiles.forEach((file, index) => {
+        formData.append('files', file);
+      });
     }
 
-    // Use a direct API call with proper authorization header
     const headers = {
       'Authorization': `Bearer ${this.authService.getToken()}`
     };

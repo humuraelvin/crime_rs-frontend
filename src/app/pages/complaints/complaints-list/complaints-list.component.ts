@@ -6,6 +6,9 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models/user.model';
 import { TranslateModule } from '@ngx-translate/core';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { SortableDirective, SortEvent } from '../../../shared/directives/sortable.directive';
+import { FormsModule } from '@angular/forms';
 
 // Define an interface for the paginated response
 interface PaginatedResponse<T> {
@@ -19,23 +22,42 @@ interface PaginatedResponse<T> {
   empty: boolean;
 }
 
-interface RawComplaintData extends Partial<ComplaintResponse> {
+// Define the raw data interface with basic fields
+interface RawComplaintData {
+  id: number;
+  userId?: number;
+  userName?: string;
+  description?: string;
+  location?: string;
+  status?: string;
+  crimeType?: string;
+  category?: string;
   type?: string;
-  crime_type?: string;
-  complaint_type?: string;
-  complaintType?: string;
-  createTime?: string;
+  title?: string;
+  
+  // Common date fields
+  dateFiled?: string;
   createdAt?: string;
-  created_at?: string;
-  updateTime?: string;
+  date?: string;
+  incidentDate?: string;
+  
+  // Update date fields
+  dateLastUpdated?: string;
   updatedAt?: string;
-  updated_at?: string;
+
+  // Other fields
+  priorityScore?: number;
+  evidences?: any[];
+  comments?: any[];
+  
+  // Allow dynamic keys for flexibility
+  [key: string]: any;
 }
 
 @Component({
   selector: 'app-complaints-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule],
+  imports: [CommonModule, RouterModule, TranslateModule, PaginationComponent, SortableDirective, FormsModule],
   template: `
     <div class="min-h-screen bg-gray-100">
       <div class="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -51,17 +73,90 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
           </button>
         </div>
 
+        <!-- Search and Filter Controls -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'complaint.type' | translate }}</label>
+              <select
+                [(ngModel)]="typeFilter"
+                (change)="applyFilters()"
+                class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">{{ 'search.allTypes' | translate }}</option>
+                <option value="THEFT">{{ 'crimeTypes.theft' | translate }}</option>
+                <option value="ASSAULT">{{ 'crimeTypes.assault' | translate }}</option>
+                <option value="BURGLARY">{{ 'crimeTypes.burglary' | translate }}</option>
+                <option value="FRAUD">{{ 'crimeTypes.fraud' | translate }}</option>
+                <option value="VANDALISM">{{ 'crimeTypes.vandalism' | translate }}</option>
+                <option value="HARASSMENT">{{ 'crimeTypes.harassment' | translate }}</option>
+                <option value="DRUG_RELATED">{{ 'crimeTypes.drugRelated' | translate }}</option>
+                <option value="OTHER">{{ 'crimeTypes.other' | translate }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'complaint.status' | translate }}</label>
+              <select
+                [(ngModel)]="statusFilter"
+                (change)="applyFilters()"
+                class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">{{ 'search.allStatuses' | translate }}</option>
+                <option value="SUBMITTED">{{ 'status.submitted' | translate }}</option>
+                <option value="UNDER_REVIEW">{{ 'status.under_review' | translate }}</option>
+                <option value="ASSIGNED">{{ 'status.assigned' | translate }}</option>
+                <option value="INVESTIGATING">{{ 'status.investigating' | translate }}</option>
+                <option value="RESOLVED">{{ 'status.resolved' | translate }}</option>
+                <option value="REJECTED">{{ 'status.rejected' | translate }}</option>
+                <option value="CLOSED">{{ 'status.closed' | translate }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'search' | translate }}</label>
+              <input
+                type="text"
+                [(ngModel)]="searchQuery"
+                (input)="applyFilters()"
+                placeholder="{{ 'search.searchPlaceholder' | translate }}"
+                class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+        </div>
+
         <!-- Complaints List -->
         <div class="bg-white shadow-md rounded-lg overflow-x-auto">
           <table class="w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">{{ 'complaint.id' | translate }}</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">{{ 'complaint.description' | translate }}</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden sm:table-cell">{{ 'complaint.type' | translate }}</th>
+              <th 
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6"
+                [appSortable]="'id'"
+                [direction]="sortColumn === 'id' ? sortDirection : ''"
+                (sort)="onSort($event)"
+              >{{ 'complaint.id' | translate }}</th>
+              <th 
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6"
+                [appSortable]="'description'"
+                [direction]="sortColumn === 'description' ? sortDirection : ''"
+                (sort)="onSort($event)"
+              >{{ 'complaint.description' | translate }}</th>
+              <th 
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden sm:table-cell"
+                [appSortable]="'category'"
+                [direction]="sortColumn === 'category' ? sortDirection : ''"
+                (sort)="onSort($event)"
+              >{{ 'complaint.type' | translate }}</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden md:table-cell">{{ 'complaint.location' | translate }}</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">{{ 'complaint.status' | translate }}</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden lg:table-cell">{{ 'complaint.date_filed' | translate }}</th>
+              <th 
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6"
+                [appSortable]="'status'"
+                [direction]="sortColumn === 'status' ? sortDirection : ''"
+                (sort)="onSort($event)"
+              >{{ 'complaint.status' | translate }}</th>
+              <th 
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6 hidden lg:table-cell"
+                [appSortable]="'dateFiled'"
+                [direction]="sortColumn === 'dateFiled' ? sortDirection : ''"
+                (sort)="onSort($event)"
+              >{{ 'complaint.date_filed' | translate }}</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">{{ 'actions.title' | translate }}</th>
             </tr>
             </thead>
@@ -77,7 +172,7 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
                 </div>
               </td>
             </tr>
-            <tr *ngIf="!loading && complaints.length === 0" class="text-center">
+            <tr *ngIf="!loading && filteredComplaints.length === 0" class="text-center">
               <td colspan="7" class="px-4 py-4 sm:px-6">
                 <p class="text-gray-500">{{ 'messages.noComplaints' | translate }}</p>
                 <button *ngIf="isCitizen"
@@ -87,7 +182,7 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
                 </button>
               </td>
             </tr>
-            <tr *ngFor="let complaint of complaints" class="hover:bg-gray-50">
+            <tr *ngFor="let complaint of pagedComplaints" class="hover:bg-gray-50">
               <td class="px-4 py-4 text-sm text-gray-500 sm:px-6">#{{complaint.id}}</td>
               <td class="px-4 py-4 text-sm text-gray-900 sm:px-6">{{complaint.description}}</td>
               <td class="px-4 py-4 text-sm text-gray-900 sm:px-6 hidden sm:table-cell">{{complaint.category || 'N/A'}}</td>
@@ -120,6 +215,16 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
             </tr>
             </tbody>
           </table>
+          
+          <!-- Pagination -->
+          <app-pagination
+            *ngIf="filteredComplaints.length > 0"
+            [totalItems]="filteredComplaints.length"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          ></app-pagination>
         </div>
       </div>
     </div>
@@ -128,10 +233,25 @@ interface RawComplaintData extends Partial<ComplaintResponse> {
 })
 export class ComplaintsListComponent implements OnInit {
   complaints: ComplaintResponse[] = [];
+  filteredComplaints: ComplaintResponse[] = [];
+  pagedComplaints: ComplaintResponse[] = [];
   loading = true;
   isCitizen = false;
   isAdmin = false;
   isPoliceOfficer = false;
+  
+  // Search and filter properties
+  searchQuery: string = '';
+  typeFilter: string = '';
+  statusFilter: string = '';
+  
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  
+  // Sorting
+  sortColumn: string = 'dateFiled';
+  sortDirection: 'asc' | 'desc' | '' = 'desc';
 
   constructor(
     private complaintService: ComplaintService,
@@ -154,18 +274,16 @@ export class ComplaintsListComponent implements OnInit {
     let observable = this.complaintService.getComplaints();
 
     if (this.isCitizen) {
-      // For citizens, only show their own complaints
       console.log('Loading complaints for citizen');
       observable = this.complaintService.getMyComplaints();
     } else if (this.isAdmin || this.isPoliceOfficer) {
-      // For admin/police, show all complaints
       console.log('Loading all complaints for admin/police');
       observable = this.complaintService.getComplaints();
     }
 
     observable.subscribe({
       next: (data: any) => {
-        console.log('Raw complaint data:', data); // Add debugging
+        console.log('Raw complaint data:', data);
 
         // Check if the response is paginated
         if (data && data.content && Array.isArray(data.content)) {
@@ -178,7 +296,10 @@ export class ComplaintsListComponent implements OnInit {
           this.complaints = [];
           this.toastr.error('Invalid data format received from server');
         }
-        console.log('Processed complaints:', this.complaints); // Add debugging
+        
+        // Apply filters and sort the data
+        this.applyFilters();
+        
         this.loading = false;
       },
       error: (error) => {
@@ -190,27 +311,28 @@ export class ComplaintsListComponent implements OnInit {
     });
   }
 
-  // Helper method to map complaint data
+  // Helper method to map complaint data - simplified version but still handling dates correctly
   private mapComplaintData(rawComplaint: RawComplaintData): ComplaintResponse {
     if (!rawComplaint) return {} as ComplaintResponse;
 
-    // Log the incoming complaint data to debug TYPE field
-    console.log('Mapping complaint data:', rawComplaint);
-
-    // Look for TYPE in all possible fields
+    // Extract type field
     const typeValue = this.extractTypeField(rawComplaint);
-    console.log('Extracted TYPE value:', typeValue);
-
+    
+    // Extract date fields - simplified but keeping the fix
+    let dateFiled = rawComplaint.dateFiled || rawComplaint.createdAt || rawComplaint.date || rawComplaint.incidentDate || new Date().toISOString();
+    let dateLastUpdated = rawComplaint.dateLastUpdated || rawComplaint.updatedAt || dateFiled;
+    
+    // Build complaint response
     const complaint: ComplaintResponse = {
       id: rawComplaint.id || 0,
       userId: rawComplaint.userId || 0,
       userName: rawComplaint.userName || 'Unknown',
       crimeType: typeValue,
-      category: rawComplaint.category || 'N/A',
+      category: rawComplaint.category || rawComplaint.crimeType || 'N/A',
       description: rawComplaint.description || '',
       status: rawComplaint.status || 'PENDING',
-      dateFiled: rawComplaint.dateFiled || rawComplaint.createdAt || rawComplaint.createTime || rawComplaint.created_at || new Date().toISOString(),
-      dateLastUpdated: rawComplaint.dateLastUpdated || rawComplaint.updatedAt || rawComplaint.updateTime || rawComplaint.updated_at || new Date().toISOString(),
+      dateFiled: dateFiled,
+      dateLastUpdated: dateLastUpdated,
       location: rawComplaint.location || 'N/A',
       priorityScore: rawComplaint.priorityScore || 0,
       evidences: rawComplaint.evidences || [],
@@ -220,96 +342,124 @@ export class ComplaintsListComponent implements OnInit {
     return complaint;
   }
 
-  // Helper to extract type value from all possible field names
+  // Helper to extract type value - simplified
   private extractTypeField(complaint: any): string {
-    // Log the FULL object in raw JSON format
-    console.log('Raw complaint JSON:', JSON.stringify(complaint, null, 2));
-
-    // Look for exact key with "type" in it
-    console.log('Object keys:', Object.keys(complaint));
-
-    // Convert to regular object to access dynamically
-    const obj = { ...complaint };
-
-    // Based on the console logs, title or category field should be used for TYPE
-    if (obj.title) {
-      console.log('Using title for type:', obj.title);
-      return obj.title;
-    }
-
-    if (obj.category) {
-      console.log('Using category for type:', obj.category);
-      return obj.category;
-    }
-
-    // Special handling for backend fields structure
-    // Direct extraction of type if we find a known structure
-    if (obj.crime && obj.crime.type) {
-      console.log('Found crime.type:', obj.crime.type);
-      return obj.crime.type;
-    }
-
-    if (obj.complaint && obj.complaint.type) {
-      console.log('Found complaint.type:', obj.complaint.type);
-      return obj.complaint.type;
-    }
-
-    // First priority - extract from direct types
-    if (obj.crimeType) return obj.crimeType;
-    if (obj.type) return obj.type;
-
-    // Check for any field that contains 'type' case-insensitive
-    for (const key in obj) {
-      if (typeof obj[key] === 'string' && key.toLowerCase().includes('type')) {
-        console.log(`Found type-like field: ${key} = ${obj[key]}`);
-        if (obj[key]) return obj[key];
-      }
-    }
-
-    // Try all possible field names for type as a backup
-    const possibleFields = [
-      'crimeType', 'type', 'crime_type', 'complaintType',
-      'complaint_type', 'crimetype', 'CRIME_TYPE'
-    ];
-
-    // Check specific known field names
-    for (const field of possibleFields) {
-      if (obj[field]) {
-        console.log(`Found in known fields: ${field} = ${obj[field]}`);
-        return obj[field];
-      }
-    }
-
-    // Last resort - examine nested objects
-    for (const key in obj) {
-      if (obj[key] && typeof obj[key] === 'object') {
-        console.log(`Checking nested object: ${key}`);
-        for (const nestedKey in obj[key]) {
-          if (nestedKey.toLowerCase().includes('type')) {
-            console.log(`Found nested type field: ${key}.${nestedKey} = ${obj[key][nestedKey]}`);
-            if (obj[key][nestedKey]) return obj[key][nestedKey];
-          }
-        }
-      }
-    }
-
-    return 'N/A';
+    if (!complaint) return 'N/A';
+    
+    // Try common field names for the type
+    return complaint.crimeType || 
+           complaint.type || 
+           complaint.category || 
+           complaint.title || 
+           'N/A';
   }
 
-  // Add formatDate method to the component class
-  formatDate(date: string | null): string {
+  // Apply filters method
+  applyFilters(): void {
+    this.filteredComplaints = this.complaints.filter(complaint => {
+      const matchesType = !this.typeFilter || complaint.crimeType === this.typeFilter || complaint.category === this.typeFilter;
+      const matchesStatus = !this.statusFilter || complaint.status === this.statusFilter;
+      const matchesSearch = !this.searchQuery || 
+        (complaint.description && complaint.description.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+        (complaint.location && complaint.location.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+        (complaint.id.toString().includes(this.searchQuery));
+      
+      return matchesType && matchesStatus && matchesSearch;
+    });
+    
+    // Sort the filtered data
+    this.sortData();
+    
+    // Reset to first page when filters change
+    this.currentPage = 0;
+    this.updatePage();
+  }
+
+  // Simplified formatDate method that still handles different formats
+  formatDate(date: string | null | undefined): string {
     if (!date) return 'N/A';
+    
     try {
-      return new Date(date).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      // Parse the date string
+      const parsedDate = new Date(date);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short', 
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      
+      // If parsing failed, return the original string
+      return String(date);
     } catch (e) {
       console.error('Error formatting date:', e);
-      return 'Invalid Date';
+      return String(date);
+    }
+  }
+
+  // Pagination methods
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePage();
+  }
+  
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 0; // Reset to first page when changing page size
+    this.updatePage();
+  }
+  
+  updatePage(): void {
+    const start = this.currentPage * this.pageSize;
+    const end = start + this.pageSize;
+    this.pagedComplaints = this.filteredComplaints.slice(start, end);
+  }
+  
+  // Sorting methods
+  onSort(event: SortEvent): void {
+    this.sortColumn = event.column;
+    this.sortDirection = event.direction;
+    this.sortData();
+    this.updatePage();
+  }
+  
+  sortData(): void {
+    if (this.sortColumn === '' || this.sortDirection === '') {
+      return;
+    }
+    
+    this.filteredComplaints.sort((a, b) => {
+      const valueA = this.getSortValue(a, this.sortColumn);
+      const valueB = this.getSortValue(b, this.sortColumn);
+      
+      const direction = this.sortDirection === 'asc' ? 1 : -1;
+      
+      if (valueA < valueB) {
+        return -1 * direction;
+      } else if (valueA > valueB) {
+        return 1 * direction;
+      }
+      return 0;
+    });
+  }
+  
+  getSortValue(complaint: ComplaintResponse, column: string): any {
+    switch (column) {
+      case 'id':
+        return complaint.id;
+      case 'description':
+        return complaint.description.toLowerCase();
+      case 'category':
+        return (complaint.category || '').toLowerCase();
+      case 'status':
+        return complaint.status;
+      case 'dateFiled':
+        return new Date(complaint.dateFiled);
+      default:
+        return complaint[column as keyof ComplaintResponse];
     }
   }
 }

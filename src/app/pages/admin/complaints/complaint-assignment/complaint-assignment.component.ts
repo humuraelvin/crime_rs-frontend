@@ -7,6 +7,7 @@ import { environment } from '@environments/environment';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 interface PoliceOfficer {
   id: number;
@@ -46,7 +47,8 @@ interface Complaint {
     ReactiveFormsModule,
     RouterModule,
     LoadingSpinnerComponent,
-    FormsModule
+    FormsModule,
+    PaginationComponent
   ],
   template: `
     <div class="container mx-auto p-4">
@@ -124,12 +126,17 @@ interface Complaint {
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-              <tr *ngFor="let complaint of filteredComplaints" class="hover:bg-gray-50">
+              <tr *ngFor="let complaint of pagedComplaints" class="hover:bg-gray-50">
                 <td class="py-3 px-4 whitespace-nowrap">{{complaint.id}}</td>
                 <td class="py-3 px-4">{{complaint.description | slice:0:30}}{{complaint.description.length > 30 ? '...' : ''}}</td>
                 <td class="py-3 px-4">{{complaint.category}}</td>
                 <td class="py-3 px-4">{{complaint.location}}</td>
-                <td class="py-3 px-4">{{(complaint.dateFiled | date:'shortDate') || 'N/A'}}</td>
+                <td class="py-3 px-4">
+                  <div class="flex flex-col">
+                    <span>{{formatDate(complaint.dateFiled)}}</span>
+                    <span class="text-xs text-gray-500">Updated: {{formatDate(complaint.dateLastUpdated)}}</span>
+                  </div>
+                </td>
                 <td class="py-3 px-4">
                   <span [ngClass]="getStatusClass(complaint.status)">{{complaint.status}}</span>
                 </td>
@@ -163,6 +170,16 @@ interface Complaint {
               </tr>
             </tbody>
           </table>
+          
+          <!-- Add Pagination -->
+          <app-pagination
+            *ngIf="filteredComplaints.length > 0"
+            [totalItems]="filteredComplaints.length"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          ></app-pagination>
         </div>
       </div>
     </div>
@@ -187,6 +204,9 @@ interface Complaint {
             <p><span class="font-medium">ID:</span> {{selectedComplaint?.id}}</p>
             <p><span class="font-medium">Description:</span> {{selectedComplaint?.description}}</p>
             <p><span class="font-medium">Category:</span> {{selectedComplaint?.category}}</p>
+            <p><span class="font-medium">Location:</span> {{selectedComplaint?.location}}</p>
+            <p><span class="font-medium">Date Filed:</span> {{formatDate(selectedComplaint?.dateFiled)}}</p>
+            <p><span class="font-medium">Last Updated:</span> {{formatDate(selectedComplaint?.dateLastUpdated)}}</p>
             <p><span class="font-medium">Status:</span> {{selectedComplaint?.status}}</p>
             <p *ngIf="selectedComplaint?.assignedOfficerName">
               <span class="font-medium">Currently Assigned To:</span> {{selectedComplaint?.assignedOfficerName}}
@@ -257,6 +277,11 @@ export class ComplaintAssignmentComponent implements OnInit {
   loading: boolean = true;
   complaints: Complaint[] = [];
   filteredComplaints: Complaint[] = [];
+  pagedComplaints: Complaint[] = [];
+  
+  // Pagination properties
+  currentPage = 0;
+  pageSize = 10;
 
   // Filters
   statusFilter: string = '';
@@ -292,28 +317,9 @@ export class ComplaintAssignmentComponent implements OnInit {
     this.loading = true;
     this.http.get<any[]>(`${environment.apiUrl}/admin/complaints/all`)
       .subscribe({
-        next: (complaints) => {
-          // Map backend response to our frontend model
-          this.complaints = complaints.map(complaint => {
-            return {
-              id: complaint.id,
-              description: complaint.description || 'No description',
-              location: complaint.location || 'Unknown location',
-              dateFiled: complaint.dateFiled || complaint.createdAt || new Date().toISOString(),
-              dateLastUpdated: complaint.dateLastUpdated,
-              status: complaint.status,
-              crimeType: complaint.crimeType,
-              category: complaint.category || complaint.crimeType || 'Uncategorized',
-              userId: complaint.userId,
-              userName: complaint.userName,
-              priorityScore: complaint.priorityScore,
-              assignedOfficerId: complaint.assignedOfficerId,
-              assignedOfficerName: complaint.assignedOfficerName,
-              createdAt: complaint.createdAt
-            };
-          });
-
-          this.filteredComplaints = [...this.complaints];
+        next: (data: any) => {
+          this.complaints = data.map((complaint: any) => this.processComplaintData(complaint));
+          this.applyFilters();
           this.loading = false;
         },
         error: (error) => {
@@ -322,6 +328,44 @@ export class ComplaintAssignmentComponent implements OnInit {
           this.loading = false;
         }
       });
+  }
+
+  processComplaintData(complaint: any): Complaint {
+    let dateFiled = complaint.dateFiled || complaint.createdAt || complaint.createTime || 
+                    complaint.created_at || complaint.created || complaint.date_filed || 
+                    complaint.submissionDate || complaint.submitDate || complaint.date || 
+                    complaint.incidentDate;
+    
+    let dateLastUpdated = complaint.dateLastUpdated || complaint.updatedAt || complaint.updateTime || 
+                          complaint.updated_at || complaint.updated || complaint.date_updated || 
+                          complaint.lastModified || complaint.lastUpdate;
+    
+    if (!dateLastUpdated) {
+      dateLastUpdated = dateFiled;
+    }
+    
+    if (!dateFiled) {
+      dateFiled = new Date().toISOString();
+    }
+    
+    return {
+      id: complaint.id,
+      title: complaint.title || complaint.name,
+      description: complaint.description || 'No description',
+      location: complaint.location || 'Unknown',
+      incidentDate: complaint.incidentDate,
+      dateFiled: dateFiled,
+      dateLastUpdated: dateLastUpdated,
+      status: complaint.status || 'SUBMITTED',
+      crimeType: complaint.crimeType || complaint.type || complaint.category || 'Unknown',
+      category: complaint.category || complaint.crimeType || complaint.type || 'Other',
+      assignedOfficerId: complaint.assignedOfficerId || null,
+      assignedOfficerName: complaint.assignedOfficerName || null,
+      userId: complaint.userId || 0,
+      userName: complaint.userName || 'Unknown User',
+      createdAt: complaint.createdAt || dateFiled,
+      priorityScore: complaint.priorityScore || 0
+    };
   }
 
   applyFilters(): void {
@@ -335,6 +379,85 @@ export class ComplaintAssignmentComponent implements OnInit {
 
       return matchesStatus && matchesCategory && matchesSearch;
     });
+    
+    this.updatePagedComplaints();
+  }
+
+  formatDate(date: string | null | undefined): string {
+    if (!date) return 'N/A';
+    
+    try {
+      // Handle ISO format strings that are coming directly from Java's LocalDateTime in backend
+      if (typeof date === 'string') {
+        // Handle ISO format (2023-05-15T14:30:00) 
+        if (date.includes('T') && date.length >= 19) {
+          const parsedDate = new Date(date);
+          if (!isNaN(parsedDate.getTime())) {
+            return parsedDate.toLocaleString('en-US', {
+              year: 'numeric',
+              month: 'short', 
+              day: '2-digit',
+            });
+          }
+        }
+        
+        // Handle plain date format (2023-05-15 14:30:00)
+        const dateMatch = date.match(/(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}):(\d{2}))?/);
+        if (dateMatch) {
+          const [_, year, month, day, hours = '00', minutes = '00', seconds = '00'] = dateMatch;
+          
+          const parsedDate = new Date(
+            parseInt(year, 10),
+            parseInt(month, 10) - 1,
+            parseInt(day, 10),
+            parseInt(hours, 10),
+            parseInt(minutes, 10),
+            parseInt(seconds, 10)
+          );
+          
+          if (!isNaN(parsedDate.getTime())) {
+            return parsedDate.toLocaleString('en-US', {
+              year: 'numeric',
+              month: 'short', 
+              day: '2-digit',
+            });
+          }
+        }
+        
+        // Handle numeric timestamp
+        if (/^\d+$/.test(date)) {
+          const timestamp = parseInt(date, 10);
+          const timestampDate = new Date(timestamp);
+          
+          if (!isNaN(timestampDate.getTime())) {
+            return timestampDate.toLocaleString('en-US', {
+              year: 'numeric',
+              month: 'short', 
+              day: '2-digit',
+            });
+          }
+        }
+      }
+      
+      // Try standard parsing as a last resort
+      const parsedDate = new Date(date);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short', 
+          day: '2-digit',
+        });
+      }
+      
+      // If all parsing attempts failed, show the original string rather than N/A
+      console.warn('Unable to parse date:', date);
+      return String(date);
+      
+    } catch (e) {
+      console.error('Error formatting date:', e, 'Date value was:', date);
+      // Return the original string as fallback
+      return String(date);
+    }
   }
 
   getStatusClass(status: string): string {
@@ -429,5 +552,25 @@ export class ComplaintAssignmentComponent implements OnInit {
 
   viewDetails(complaint: Complaint): void {
     this.router.navigate(['/admin/complaints', complaint.id]);
+  }
+
+  // Update paged complaints based on current page and page size
+  updatePagedComplaints(): void {
+    const start = this.currentPage * this.pageSize;
+    const end = start + this.pageSize;
+    this.pagedComplaints = this.filteredComplaints.slice(start, end);
+  }
+  
+  // Handle page change event
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePagedComplaints();
+  }
+  
+  // Handle page size change event
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize = pageSize;
+    this.currentPage = 0; // Reset to first page when changing page size
+    this.updatePagedComplaints();
   }
 }

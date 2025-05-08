@@ -10,6 +10,9 @@ import { Department } from '../../../../core/models/department.model';
 import { NotificationService } from '../../../../services/notification.service';
 import { ConfirmDialogService } from '../../../../services/confirm-dialog.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface PagedResponse {
   content: Department[];
@@ -22,7 +25,7 @@ interface PagedResponse {
 @Component({
   selector: 'app-department-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PaginationComponent, FormsModule, TranslateModule],
   template: `
     <div class="container mx-auto p-4">
       <div class="flex justify-between items-center mb-6">
@@ -30,6 +33,22 @@ interface PagedResponse {
         <a routerLink="/admin/departments/new" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
           Add Department
         </a>
+      </div>
+      
+      <!-- Search Field -->
+      <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div class="flex items-center">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'search.searchDepartments' | translate }}</label>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (input)="applyFilters()"
+              placeholder="{{ 'search.searchDepartmentsPlaceholder' | translate }}"
+              class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+          </div>
+        </div>
       </div>
       
       <div *ngIf="loading" class="text-center my-4">Loading departments...</div>
@@ -54,7 +73,7 @@ interface PagedResponse {
         </div>
       </div>
       
-      <div *ngIf="!loading && !errorMessage && departments.length > 0" class="overflow-x-auto">
+      <div *ngIf="!loading && !errorMessage && filteredDepartments.length > 0" class="overflow-x-auto">
         <table class="min-w-full bg-white border">
           <thead>
             <tr>
@@ -66,7 +85,7 @@ interface PagedResponse {
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let dept of departments">
+            <tr *ngFor="let dept of displayedDepartments">
               <td class="py-2 px-4 border-b">{{ dept.name }}</td>
               <td class="py-2 px-4 border-b">{{ dept.location }}</td>
               <td class="py-2 px-4 border-b">{{ dept.contactInfo }}</td>
@@ -78,10 +97,20 @@ interface PagedResponse {
             </tr>
           </tbody>
         </table>
+        
+        <!-- Add Pagination -->
+        <app-pagination
+          *ngIf="filteredDepartments.length > 0"
+          [totalItems]="filteredDepartments.length"
+          [currentPage]="currentPage"
+          [pageSize]="pageSize"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        ></app-pagination>
       </div>
       
-      <div *ngIf="!loading && departments.length === 0 && !errorMessage" class="text-center p-4 bg-gray-50 rounded">
-        No departments found.
+      <div *ngIf="!loading && filteredDepartments.length === 0 && !errorMessage" class="text-center p-4 bg-gray-50 rounded">
+        No departments found matching your search criteria.
       </div>
     </div>
   `,
@@ -89,10 +118,17 @@ interface PagedResponse {
 })
 export class DepartmentListComponent implements OnInit {
   departments: Department[] = [];
+  filteredDepartments: Department[] = [];
+  displayedDepartments: Department[] = [];
   loading = false;
   errorMessage = '';
   showError = false;
   showFixInstructions = false;
+  searchQuery = '';
+  
+  // Pagination properties
+  currentPage = 0;
+  pageSize = 10;
 
   constructor(
     private http: HttpClient,
@@ -115,6 +151,7 @@ export class DepartmentListComponent implements OnInit {
     this.adminService.getAllDepartmentsPaged(0, 100).subscribe({
       next: (response) => {
         this.departments = response.content;
+        this.applyFilters();
         this.loading = false;
       },
       error: (error: HttpErrorResponse) => {
@@ -149,6 +186,42 @@ public List<DepartmentResponse> getAllDepartments() {
         }
       }
     });
+  }
+
+  applyFilters(): void {
+    if (!this.searchQuery) {
+      this.filteredDepartments = [...this.departments];
+    } else {
+      const query = this.searchQuery.toLowerCase();
+      this.filteredDepartments = this.departments.filter(dept => 
+        (dept.name && dept.name.toLowerCase().includes(query)) || 
+        (dept.location && dept.location.toLowerCase().includes(query)) ||
+        (dept.contactInfo && dept.contactInfo.toLowerCase().includes(query))
+      );
+    }
+    
+    this.currentPage = 0; // Reset to first page when filters change
+    this.updateDisplayedDepartments();
+  }
+
+  // Update displayed departments based on pagination
+  updateDisplayedDepartments(): void {
+    const start = this.currentPage * this.pageSize;
+    const end = start + this.pageSize;
+    this.displayedDepartments = this.filteredDepartments.slice(start, end);
+  }
+  
+  // Handle page change event
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updateDisplayedDepartments();
+  }
+  
+  // Handle page size change event
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize = pageSize;
+    this.currentPage = 0; // Reset to first page when changing page size
+    this.updateDisplayedDepartments();
   }
 
   deleteDepartment(department: Department): void {

@@ -36,6 +36,10 @@ import { AuthMessageHandlerComponent } from '../../../shared/components/auth-mes
             <span class="material-icons mr-3">people</span>
             Users
           </a>
+          <a routerLink="/admin/reports" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+            <span class="material-icons mr-3">assessment</span>
+            Reports
+          </a>
           <a routerLink="/admin/settings" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <span class="material-icons mr-3">settings</span>
             Settings
@@ -74,6 +78,10 @@ import { AuthMessageHandlerComponent } from '../../../shared/components/auth-mes
             <a routerLink="/admin/users" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
               <span class="material-icons mr-3">people</span>
               Users
+            </a>
+            <a routerLink="/admin/reports" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+              <span class="material-icons mr-3">assessment</span>
+              Reports
             </a>
             <a routerLink="/admin/settings" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
               <span class="material-icons mr-3">settings</span>

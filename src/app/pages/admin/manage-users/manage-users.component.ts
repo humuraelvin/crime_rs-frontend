@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface UserRole {
   value: string;
@@ -14,7 +16,7 @@ interface UserRole {
 @Component({
   selector: 'app-manage-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PaginationComponent, FormsModule, TranslateModule],
   template: `
     <div class="min-h-screen bg-gray-100 py-8">
       <div class="container mx-auto px-4">
@@ -157,6 +159,43 @@ interface UserRole {
             </form>
           </div>
 
+          <!-- User Search & Filters -->
+          <div *ngIf="!showForm" class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'search.filterByRole' | translate }}</label>
+                <select
+                  [(ngModel)]="roleFilter"
+                  (change)="applyFilters()"
+                  class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">{{ 'search.allRoles' | translate }}</option>
+                  <option *ngFor="let role of userRoles" [value]="role.value">{{ role.label }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'search.filterByStatus' | translate }}</label>
+                <select
+                  [(ngModel)]="statusFilter"
+                  (change)="applyFilters()"
+                  class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">{{ 'search.allStatuses' | translate }}</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="SUSPENDED">Suspended</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'search' | translate }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="searchQuery"
+                  (input)="applyFilters()"
+                  placeholder="{{ 'search.searchPlaceholder' | translate }}"
+                  class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+          </div>
+
           <!-- Users List -->
           <div class="bg-white rounded-lg shadow-md overflow-hidden">
             <div class="overflow-x-auto">
@@ -171,7 +210,7 @@ interface UserRole {
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                  <tr *ngFor="let user of users">
+                  <tr *ngFor="let user of displayedUsers">
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="text-sm font-medium text-gray-900">{{ user.firstName }} {{ user.lastName }}</div>
                     </td>
@@ -205,6 +244,16 @@ interface UserRole {
                   </tr>
                 </tbody>
               </table>
+              
+              <!-- Add Pagination -->
+              <app-pagination
+                *ngIf="filteredUsers.length > 0"
+                [totalItems]="filteredUsers.length"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)"
+              ></app-pagination>
             </div>
           </div>
         </div>
@@ -265,16 +314,27 @@ interface UserRole {
 export class ManageUsersComponent implements OnInit {
   userForm!: FormGroup;
   users: any[] = [];
+  displayedUsers: any[] = [];
   showForm = false;
   isEditMode = false;
   isSubmitting = false;
   selectedUserId: number | null = null;
+  
+  // Pagination properties
+  currentPage = 0;
+  pageSize = 10;
 
   userRoles: UserRole[] = [
     { value: 'ADMIN', label: 'Administrator' },
     { value: 'POLICE_OFFICER', label: 'Police Officer' },
     { value: 'CITIZEN', label: 'Citizen' }
   ];
+
+  // Filter properties
+  searchQuery: string = '';
+  roleFilter: string = '';
+  statusFilter: string = '';
+  filteredUsers: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -316,14 +376,30 @@ export class ManageUsersComponent implements OnInit {
   }
 
   private loadUsers(): void {
-    this.userService.getAllUsers().subscribe({
-      next: (users) => {
-        this.users = users;
-      },
-      error: (error) => {
-        this.toastr.error('Failed to load users');
-      }
+    this.userService.getAllUsers().subscribe((users) => {
+      this.users = users;
+      this.applyFilters();
     });
+  }
+  
+  // Update displayed users based on pagination
+  updateDisplayedUsers(): void {
+    const start = this.currentPage * this.pageSize;
+    const end = start + this.pageSize;
+    this.displayedUsers = this.filteredUsers.slice(start, end);
+  }
+  
+  // Handle page change event
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updateDisplayedUsers();
+  }
+  
+  // Handle page size change event
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize = pageSize;
+    this.currentPage = 0; // Reset to first page when changing page size
+    this.updateDisplayedUsers();
   }
 
   showCreateUserForm(): void {
@@ -415,5 +491,22 @@ export class ManageUsersComponent implements OnInit {
   getRoleLabel(role: string): string {
     const roleObj = this.userRoles.find(r => r.value === role);
     return roleObj ? roleObj.label : role;
+  }
+
+  applyFilters(): void {
+    this.filteredUsers = this.users.filter(user => {
+      const matchesRole = !this.roleFilter || user.role === this.roleFilter;
+      const matchesStatus = !this.statusFilter || user.status === this.statusFilter;
+      const matchesSearch = !this.searchQuery || 
+        (user.firstName && user.firstName.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+        (user.lastName && user.lastName.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+        (user.email && user.email.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+        (`${user.firstName} ${user.lastName}`.toLowerCase().includes(this.searchQuery.toLowerCase()));
+      
+      return matchesRole && matchesStatus && matchesSearch;
+    });
+    
+    this.currentPage = 0; // Reset to first page when filters change
+    this.updateDisplayedUsers();
   }
 }

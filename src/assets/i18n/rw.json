@@ -280,6 +280,60 @@
 
   "language.en": "Icyongereza",
   "language.fr": "Igifaransa",
-  "language.rw": "Ikinyarwanda"
+  "language.rw": "Ikinyarwanda",
 
+  "pagination": {
+    "previous": "Ibanza",
+    "next": "Ikurikira",
+    "showing": "Kwerekana",
+    "to": "kugeza",
+    "of": "kuri",
+    "results": "ibisubizo",
+    "items_per_page": "ibisubizo ku rupapuro"
+  },
+  "reports": {
+    "title": "Raporo n'Isesengura",
+    "description": "Kora kandi ukuremo raporo za sisitemu yo gutanga ibirego by'ibyaha",
+    "date_range": "Igihe",
+    "start_date": "Itariki yo gutangira",
+    "end_date": "Itariki yo kurangiza",
+    "complaints_report": "Raporo y'Ibirego",
+    "complaints_report_desc": "Kora raporo irambuye y'ibirego byose hamwe n'amahitamo yo kuyisuzuma",
+    "officers_report": "Raporo y'Imikorere y'Abapolisi",
+    "officers_report_desc": "Gusesengura ibipimo by'imikorere y'abapolisi",
+    "user_activity_report": "Raporo y'Ibikorwa by'Abakoresha",
+    "user_activity_desc": "Incamake y'iyandikwa n'ibikorwa by'abakoresha",
+    "status": "Imimerere",
+    "all_statuses": "Imimerere Yose",
+    "crime_type": "Ubwoko bw'Icyaha",
+    "all_types": "Ubwoko Bwose",
+    "department": "Ishami",
+    "all_departments": "Amashami Yose",
+    "generate_pdf": "Kora Raporo ya PDF",
+    "system_overview_report": "Raporo Rusange y'Uburyo",
+    "system_overview_desc": "Raporo ihuriweho ikubiyemo amakuru yose y'uburyo harimo ibirego, imikorere y'abapolisi, n'ibikorwa by'abakoresha",
+    "generate_comprehensive_report": "Gutanga Raporo Rusange y'Uruganda"
+  },
+  "priority": {
+    "low": "Ntoya",
+    "medium": "Hagati",
+    "high": "Hejuru",
+    "critical": "Cy'ingenzi cyane"
+  },
+  "search": "Gushakisha",
+  "complaint.priority": "Ubuhutirwa",
+  "complaint.priorityHint": "Hitamo urwego rw'ubuhutirwa rukwiye ku kirego cyawe",
+  "search.filterByRole": "Shungura ku Murimo",
+  "search.filterByStatus": "Shungura ku Miterere",
+  "search.searchPlaceholder": "Shakisha abakoresha...",
+  "search.searchDepartments": "Shakisha Amashami",
+  "search.searchDepartmentsPlaceholder": "Shakisha ku izina, ahantu...",
+  "search.filterByDepartment": "Shungura ry'Ishami",
+  "search.filterByRank": "Shungura ry'Ipeti",
+  "search.searchOfficers": "Shakisha abapolisi...",
+  "search.allDepartments": "Amashami Yose",
+  "search.allRanks": "Ipeti Ryose",
+  "search.allRoles": "Imirimo Yose",
+  "search.allStatuses": "Imiterere Yose",
+  "search.allTypes": "Ubwoko Bwose"
 }

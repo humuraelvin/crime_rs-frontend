@@ -94,13 +94,7 @@ import { of } from 'rxjs';
               <p class="text-gray-600">View and manage complaints assigned to you</p>
             </a>
             
-            <a routerLink="/police/my-cases" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-              <div class="flex items-center mb-3">
-                <span class="material-icons text-green-600 mr-2">folder</span>
-                <h3 class="text-xl font-semibold text-gray-800">My Cases</h3>
-              </div>
-              <p class="text-gray-600">Access and update your active investigation cases</p>
-            </a>
+            
           </div>
           
           <!-- Recent Activity -->

@@ -8,11 +8,12 @@ import { PoliceService, AssignedComplaint } from '../../../core/services/police.
 import { FormsModule } from '@angular/forms';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-assigned-complaints',
   standalone: true,
-  imports: [CommonModule, RouterModule, LoadingSpinnerComponent, FormsModule],
+  imports: [CommonModule, RouterModule, LoadingSpinnerComponent, FormsModule, PaginationComponent],
   template: `
     <div class="min-h-screen bg-gray-100">
       <div class="container mx-auto px-4 py-8">
@@ -57,7 +58,7 @@ import { of } from 'rxjs';
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let complaint of filteredComplaints">
+                <tr *ngFor="let complaint of pagedComplaints">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">#{{ complaint.id }}</div>
                   </td>
@@ -104,6 +105,16 @@ import { of } from 'rxjs';
                 </tr>
               </tbody>
             </table>
+            
+            <!-- Add Pagination -->
+            <app-pagination
+              *ngIf="filteredComplaints.length > 0"
+              [totalItems]="filteredComplaints.length"
+              [currentPage]="currentPage"
+              [pageSize]="pageSize"
+              (pageChange)="onPageChange($event)"
+              (pageSizeChange)="onPageSizeChange($event)"
+            ></app-pagination>
           </div>
 
           <div *ngIf="filteredComplaints.length === 0" class="bg-white shadow-md rounded-lg p-8 text-center">
@@ -295,8 +306,13 @@ export class AssignedComplaintsComponent implements OnInit {
   loading = true;
   complaints: AssignedComplaint[] = [];
   filteredComplaints: AssignedComplaint[] = [];
+  pagedComplaints: AssignedComplaint[] = [];
   statusFilter = '';
   priorityFilter = '';
+  
+  // Pagination properties
+  currentPage = 0;
+  pageSize = 10;
 
   // Status update dialog
   showStatusDialog = false;
@@ -356,6 +372,7 @@ export class AssignedComplaintsComponent implements OnInit {
 
           this.filteredComplaints = [...this.complaints];
           this.loading = false;
+          this.applyFilters();
         }
       });
   }
@@ -372,6 +389,8 @@ export class AssignedComplaintsComponent implements OnInit {
 
       return includeByStatus && includeByPriority;
     });
+    
+    this.updatePagedComplaints();
   }
 
   getPriorityLabel(score: number): string {
@@ -705,5 +724,25 @@ export class AssignedComplaintsComponent implements OnInit {
 
     // Just return the original if no match
     return filename;
+  }
+
+  // Update paged complaints based on current page and page size
+  updatePagedComplaints(): void {
+    const start = this.currentPage * this.pageSize;
+    const end = start + this.pageSize;
+    this.pagedComplaints = this.filteredComplaints.slice(start, end);
+  }
+  
+  // Handle page change event
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePagedComplaints();
+  }
+  
+  // Handle page size change event
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize = pageSize;
+    this.currentPage = 0; // Reset to first page when changing page size
+    this.updatePagedComplaints();
   }
 }

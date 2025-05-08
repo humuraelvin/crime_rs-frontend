@@ -5,6 +5,8 @@ import { OFFICER_ROUTES } from './officers/officers.routes';
 import { ADMIN_COMPLAINT_ROUTES } from './complaints/complaints.routes';
 import { ManageUsersComponent } from './manage-users/manage-users.component';
 import { SystemSettingsComponent } from './system-settings/system-settings.component';
+import { ReportsComponent } from './reports/reports.component';
+import { ReportsDashboardComponent } from './reports/reports-dashboard/reports-dashboard.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -40,6 +42,21 @@ export const ADMIN_ROUTES: Routes = [
         path: 'users',
         component: ManageUsersComponent,
         title: 'User Management'
+      },
+      {
+        path: 'reports',
+        title: 'Reports & Analytics',
+        children: [
+          {
+            path: '',
+            component: ReportsComponent
+          },
+          {
+            path: 'dashboard',
+            component: ReportsDashboardComponent,
+            title: 'Reports Dashboard'
+          }
+        ]
       },
       {
         path: 'settings',

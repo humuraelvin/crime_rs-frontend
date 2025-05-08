@@ -576,4 +576,8 @@ export class AuthService {
       )
       .subscribe();
   }
+
+  public getTokenService(): AuthTokenService {
+    return this.authTokenService;
+  }
 } 

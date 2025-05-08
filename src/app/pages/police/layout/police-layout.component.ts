@@ -21,10 +21,7 @@ import { AuthService } from '../../../core/services/auth.service';
             <span class="material-icons mr-3">dashboard</span>
             Dashboard
           </a>
-          <a routerLink="/police/my-cases" routerLinkActive="bg-indigo-700 text-white" class="flex items-center px-4 py-3 text-indigo-100 hover:bg-indigo-700 hover:text-white">
-            <span class="material-icons mr-3">folder</span>
-            My Cases
-          </a>
+         
           <a routerLink="/police/assign" routerLinkActive="bg-indigo-700 text-white" class="flex items-center px-4 py-3 text-indigo-100 hover:bg-indigo-700 hover:text-white">
             <span class="material-icons mr-3">assignment</span>
             Assigned Complaints

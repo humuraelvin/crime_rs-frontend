@@ -65,6 +65,7 @@ export interface ComplaintResponse {
   updatedAt?: string;
   location: string;
   priorityScore: number;
+  priority?: string;
   evidences?: Array<{
     id?: number;
     fileUrl: string;
@@ -190,34 +191,43 @@ export class ComplaintService {
     );
   }
 
-  getMyComplaints(): Observable<ComplaintResponse[]> {
+  getMyComplaints(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/my-complaints`, {
       headers: this.getAuthHeaders()
     }).pipe(
       map(response => {
         // Handle paginated response
         const complaints = response.content || response;
-        return complaints.map((dto: any) => ({
-          id: dto.id,
-          userId: dto.userId,
-          userName: dto.userName,
-          crimeType: dto.category || 'N/A',
-          category: dto.category,
-          description: dto.description,
-          status: dto.status,
-          dateFiled: dto.createdAt || dto.incidentDate,
-          dateLastUpdated: dto.updatedAt,
-          createdAt: dto.createdAt,
-          updatedAt: dto.updatedAt,
-          location: dto.location,
-          priorityScore: dto.priorityScore || 0,
-          evidences: dto.evidenceFileNames?.map((fileName: string) => ({
-            fileUrl: `/uploads/${fileName}`,
-            fileType: null,
-            uploadedAt: null
-          })) || [],
-          comments: dto.comments || []
-        }));
+        console.log('Raw API response for complaints:', complaints);
+        
+        return complaints.map((dto: any) => {
+          console.log('Mapping complaint with dates:', {
+            id: dto.id,
+            createdAt: dto.createdAt,
+            updatedAt: dto.updatedAt,
+            incidentDate: dto.incidentDate
+          });
+          
+          return {
+            id: dto.id,
+            userId: dto.userId,
+            userName: dto.userName,
+            crimeType: dto.category || 'N/A',
+            category: dto.category,
+            description: dto.description,
+            status: dto.status,
+            dateFiled: dto.createdAt || dto.dateFiled || dto.incidentDate || null,
+            dateLastUpdated: dto.updatedAt || dto.dateLastUpdated || null,
+            location: dto.location,
+            priorityScore: dto.priorityScore || 0,
+            evidences: dto.evidenceFileNames?.map((fileName: string) => ({
+              fileUrl: `/uploads/${fileName}`,
+              fileType: null,
+              uploadedAt: null
+            })) || [],
+            comments: dto.comments || []
+          };
+        });
       }),
       catchError(error => {
         console.error('Error fetching my complaints:', error);
@@ -366,20 +376,20 @@ export class ComplaintService {
     return this.getMyComplaints().pipe(
       map(complaints => ({
         totalComplaints: complaints.length,
-        pendingComplaints: complaints.filter(c => c.status === 'SUBMITTED').length,
-        underInvestigationComplaints: complaints.filter(c =>
+        pendingComplaints: complaints.filter((c: ComplaintResponse) => c.status === 'SUBMITTED').length,
+        underInvestigationComplaints: complaints.filter((c: ComplaintResponse) =>
           ['UNDER_REVIEW', 'ASSIGNED', 'INVESTIGATING', 'PENDING_EVIDENCE'].includes(c.status)
         ).length,
-        resolvedComplaints: complaints.filter(c => c.status === 'RESOLVED').length,
-        rejectedComplaints: complaints.filter(c => c.status === 'REJECTED').length,
-        closedComplaints: complaints.filter(c => c.status === 'CLOSED').length,
-        complaintsByCategory: complaints.reduce((acc: { [key: string]: number }, c) => {
+        resolvedComplaints: complaints.filter((c: ComplaintResponse) => c.status === 'RESOLVED').length,
+        rejectedComplaints: complaints.filter((c: ComplaintResponse) => c.status === 'REJECTED').length,
+        closedComplaints: complaints.filter((c: ComplaintResponse) => c.status === 'CLOSED').length,
+        complaintsByCategory: complaints.reduce((acc: { [key: string]: number }, c: ComplaintResponse) => {
           const category = c.crimeType || 'Unknown';
           acc[category] = (acc[category] || 0) + 1;
           return acc;
         }, {}),
-        highPriorityComplaints: complaints.filter(c => c.priorityScore > 50).length,
-        totalEvidenceUploads: complaints.reduce((sum: number, c) => sum + (c.evidences?.length || 0), 0)
+        highPriorityComplaints: complaints.filter((c: ComplaintResponse) => c.priorityScore > 50).length,
+        totalEvidenceUploads: complaints.reduce((sum: number, c: ComplaintResponse) => sum + (c.evidences?.length || 0), 0)
       }))
     );
   }

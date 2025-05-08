@@ -148,6 +148,7 @@
   "forgotPassword.rememberPassword": "Vous vous souvenez de votre mot de passe?",
   "forgotPassword.backToLogin": "Retour à la Connexion",
 
+  "search.allTypes": "Tous les Types de Crimes",
   "status.submitted": "Soumis",
   "status.under_review": "En Cours d'Examen",
   "status.assigned": "Assigné",
@@ -279,5 +280,60 @@
 
   "language.en": "Anglais",
   "language.fr": "Français",
-  "language.rw": "Kinyarwanda"
+  "language.rw": "Kinyarwanda",
+
+  "pagination": {
+    "previous": "Précédent",
+    "next": "Suivant",
+    "showing": "Affichage",
+    "to": "à",
+    "of": "sur",
+    "results": "résultats",
+    "items_per_page": "éléments par page"
+  },
+  "reports": {
+    "title": "Rapports & Analyses",
+    "description": "Générer et télécharger des rapports pour le système de signalement de crimes",
+    "date_range": "Période",
+    "start_date": "Date de début",
+    "end_date": "Date de fin",
+    "complaints_report": "Rapport des Plaintes",
+    "complaints_report_desc": "Générer un rapport détaillé de toutes les plaintes avec options de filtrage",
+    "officers_report": "Rapport de Performance des Officiers",
+    "officers_report_desc": "Analyser les indicateurs de performance des agents de police",
+    "user_activity_report": "Rapport d'Activité des Utilisateurs",
+    "user_activity_desc": "Aperçu des inscriptions et de l'activité des utilisateurs",
+    "status": "Statut",
+    "all_statuses": "Tous les Statuts",
+    "crime_type": "Type de Crime",
+    "all_types": "Tous les Types",
+    "department": "Département",
+    "all_departments": "Tous les départements",
+    "generate_pdf": "Générer un rapport PDF",
+    "system_overview_report": "Rapport d'Aperçu du Système",
+    "system_overview_desc": "Rapport complet contenant toutes les données du système, y compris les plaintes, la performance des officiers et l'activité des utilisateurs",
+    "generate_comprehensive_report": "Générer un Rapport Complet du Système"
+  },
+  "priority": {
+    "low": "Basse",
+    "medium": "Moyenne",
+    "high": "Haute",
+    "critical": "Critique"
+  },
+  "search": "Recherche",
+  "complaint.priority": "Priorité",
+  "complaint.priorityHint": "Sélectionnez le niveau de priorité approprié pour votre plainte",
+  "search.filterByRole": "Filtrer par Rôle",
+  "search.filterByStatus": "Filtrer par Statut",
+  "search.searchPlaceholder": "Rechercher des utilisateurs...",
+  "search.searchDepartments": "Rechercher des Départements",
+  "search.searchDepartmentsPlaceholder": "Rechercher par nom, lieu...",
+  "search.filterByDepartment": "Filtre de Département",
+  "search.filterByRank": "Filtre de Rang",
+  "search.searchOfficers": "Rechercher des officiers...",
+  "search.allDepartments": "Tous les Départements",
+  "search.allRanks": "Tous les Rangs",
+  "search.allRoles": "Tous les Rôles",
+  "search.allStatuses": "Tous les Statuts",
+  "search.allTypes": "Tous les Types"
 }
